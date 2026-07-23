@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mouthy Minnows</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#062b45;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}
+#game{height:100%;display:flex;flex-direction:column;max-width:1100px;margin:auto;background:#087b9a;position:relative}
+header{padding:10px 14px 7px;background:linear-gradient(90deg,#073b5c,#087b9a);display:flex;justify-content:space-between;gap:8px;align-items:center;z-index:2}
+h1{font-size:clamp(20px,4vw,34px);margin:0;color:#ffe66d;letter-spacing:1px}
+.tag{font-size:clamp(10px,2vw,14px);color:#d7f8ff}
+#hud{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end;font-size:13px}
+.pill{background:#063653cc;border:1px solid #55cfe0;border-radius:20px;padding:5px 9px;white-space:nowrap}
+#stage{position:relative;flex:1;min-height:230px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#how{position:absolute;left:12px;top:10px;background:#052d45bb;border-radius:8px;padding:7px 10px;font-size:12px;pointer-events:none}
+#message{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);text-align:center;font-size:clamp(18px,4vw,32px);font-weight:800;text-shadow:0 2px 3px #034;pointer-events:none;white-space:nowrap}
+#controls{background:#064765;padding:8px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+button{border:0;border-radius:12px;background:#f4b942;color:#123047;font-weight:800;padding:11px 15px;min-width:58px;box-shadow:0 3px 0 #a66c17;touch-action:manipulation}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #a66c17}
+#pad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,34px);gap:3px}
+#pad button{padding:0;min-width:0;border-radius:8px;background:#2ab7ca;color:#fff;box-shadow:0 2px #147b91}
+#up{grid-column:2}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:3;grid-row:2}
+#bait{display:flex;gap:4px;align-items:center;font-size:12px}
+.bait{padding:7px 8px;background:#164f65;color:#d8f7ff;box-shadow:none;border:1px solid #3a91a5}
+.bait.selected{background:#ef6f6c;color:white;border-color:#ffd166}
+#reel{background:#ff6b6b;color:white;font-size:16px}
+#cast{background:#72e06d}
+@media(max-width:560px){header{display:block}#hud{justify-content:flex-start;margin-top:5px}.tag{display:none}#controls{gap:5px}button{padding:10px 11px}#how{font-size:10px}}
+</style>
+</head>
+<body>
+<div id="game">
+<header><div><h1>Mouthy Minnows</h1><div class="tag">Cast questionable bait, catch unbearable fish.</div></div>
+<div id="hud"><span class="pill">Score: <b id="score">0</b></span><span class="pill">Catch: <b id="caught">0</b>/5</span><span class="pill">Snaps: <b id="snaps">0</b>/3</span><span class="pill">Sunset: <b id="time">90</b>s</span></div></header>
+<div id="stage"><canvas id="c"></canvas><div id="how">Move: arrows / WASD · Space or CAST to toss · REEL repeatedly to land it</div><div id="message"></div></div>
+<div id="controls">
+<div id="pad"><button id="up">▲</button><button id="left">◀</button><button id="down">▼</button><button id="right">▶</button></div>
+<div id="bait"><span>Bait:</span><button class="bait selected" data-bait="Sardine">Sardine</button><button class="bait" data-bait="Sock">Sock</button><button class="bait" data-bait="Kelp">Kelp</button></div>
+<button id="cast">CAST 🎣</button><button id="reel">REEL!</button><button id="restart" style="display:none">PLAY AGAIN</button>
+</div></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+let W,H,dpr,boat,fish=[],state='play',score=0,caught=0,snaps=0,time=90,last=0,selected='Sardine',hook=null,keys={},toast='',toastUntil=0;
+const names=['Gobbler','Professor Gills','The Heckler','Sir Splash','Mackerel Jackson','Tiny Menace','Old Flapjaw'];
+const insults=['That all you got?','Your boat smells weird.','I have seen better bait in a bin.','Reel faster, landlubber!','You call that fishing?','Tell your mother I escaped.'];
+function resize(){dpr=devicePixelRatio||1;W=stage.clientWidth;H=stage.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);if(!boat)boat={x:W*.22,y:H*.52}}
+addEventListener('resize',resize);resize();
+function say(t,ms=1800){toast=t;toastUntil=performance.now()+ms}
+function spawn(){let rare=Math.random()<.18;fish.push({x:W*(.36+Math.random()*.42),y:H*(.24+Math.random()*.6),vx:(Math.random()-.5)*22,vy:(Math.random()-.5)*12,r:rare?15:11,rare,name:names[Math.floor(Math.random()*names.length)],hate:['Sardine','Sock','Kelp'][Math.floor(Math.random()*3)]})}
+for(let i=0;i<10;i++)spawn();
+function cast(){if(state!=='play'||hook)return;let target=fish.slice().sort((a,b)=>Math.hypot(a.x-boat.x,a.y-boat.y)-Math.hypot(b.x-boat.x,b.y-boat.y))[0];if(!target){say('No fish nearby. Even the fish are bored.');return}hook={f:target,progress:0,age:0,start:performance.now(),insult:'',x:target.x,y:target.y};state='hooked';say('Hooked '+target.name+'! Tap REEL!')}
+function reel(){if(state!=='hooked'||!hook)return;hook.progress+=.18;hook.age=0;score+=2;if(Math.random()<.22)hook.insult=insults[Math.floor(Math.random()*insults.length)];if(hook.progress>=1){let f=hook.f,bonus=f.rare?100:40;if(f.hate===selected)bonus+=45;score+=bonus+Math.max(0,40-Math.floor((performance.now()-hook.start)/100));caught++;fish=fish.filter(x=>x!==f);hook=null;state='play';say((f.rare?'RARE CATCH! ':'')+f.name+' landed! +'+bonus);if(caught>=5)end(true)}}
+function snap(){snaps++;score=Math.max(0,score-35);if(hook){fish=fish.filter(f=>f!==hook.f);hook=null}state='play';say('LINE SNAPPED! -35 points');if(snaps>=3)end(false)}
+function end(win){state=win?'win':'lose';document.getElementById('restart').style.display='block';say(win?'YOU WIN! The fish are furious.':'GAME OVER! The storm won.',999999)}
+function restart(){score=0;caught=0;snaps=0;time=90;fish=[];for(let i=0;i<10;i++)spawn();boat={x:W*.22,y:H*.52};hook=null;state='play';document.getElementById('restart').style.display='none';toast=''}
+function update(dt){
+if(state==='play'||state==='hooked'){time-=dt;if(time<=0)end(false)}
+if(state==='play'||state==='hooked'){let dx=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0),dy=(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0);boat.x+=dx*150*dt;boat.y+=dy*150*dt;boat.x=Math.max(25,Math.min(W-25,boat.x));boat.y=Math.max(40,Math.min(H-25,boat.y));if(boat.x>W*.79){score=Math.max(0,score-20);end(false)}}
+fish.forEach(f=>{f.x+=f.vx*dt;f.y+=f.vy*dt;if(f.x<30||f.x>W-25)f.vx*=-1;if(f.y<55||f.y>H-22)f.vy*=-1});
+if(hook){hook.age+=dt;hook.x=hook.f.x;hook.y=hook.f.y;if(hook.age>7)snap()}
+document.getElementById('score').textContent=score;document.getElementById('caught').textContent=caught;document.getElementById('snaps').textContent=snaps;document.getElementById('time').textContent=Math.max(0,Math.ceil(time))}
+function draw(){
+let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#25b4c1');g.addColorStop(1,'#075477');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#173e62';ctx.fillRect(W*.8,0,W*.2,H);ctx.fillStyle='#ff7b54';ctx.globalAlpha=.35;ctx.fillRect(W*.8,0,W*.2,H);ctx.globalAlpha=1;ctx.fillStyle='#ffc857';ctx.font='bold 12px sans-serif';ctx.fillText('STORM ZONE',W*.81,24);
+ctx.strokeStyle='#8ce4e8';ctx.globalAlpha=.25;for(let y=70;y<H;y+=42){ctx.beginPath();ctx.moveTo(0,y);ctx.quadraticCurveTo(W*.25,y-8,W*.5,y);ctx.quadraticCurveTo(W*.75,y+8,W,y);ctx.stroke()}ctx.globalAlpha=1;
+fish.forEach(f=>{ctx.save();ctx.translate(f.x,f.y);ctx.fillStyle=f.rare?'#f6c85f':'#ef6f6c';ctx.beginPath();ctx.ellipse(0,0,f.r*1.45,f.r,0,0,7);ctx.fill();ctx.beginPath();ctx.moveTo(-f.r*1.2,0);ctx.lineTo(-f.r*2,-f.r*.8);ctx.lineTo(-f.r*2,f.r*.8);ctx.fill();ctx.fillStyle='#102e4a';ctx.beginPath();ctx.arc(f.r*.65,-3,2.5,0,7);ctx.fill();ctx.restore()});
+if(hook){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(boat.x,boat.y);ctx.lineTo(hook.x,hook.y);ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.fillText(hook.insult||'...',hook.x+14,hook.y-15)}
+ctx.save();ctx.translate(boat.x,boat.y);ctx.fillStyle='#a9553d';ctx.beginPath();ctx.ellipse(0,0,30,12,0,0,7);ctx.fill();ctx.fillStyle='#f5d58a';ctx.fillRect(-10,-20,20,18);ctx.fillStyle='#063653';ctx.fillRect(-5,-17,10,7);ctx.restore();
+if(performance.now()<toastUntil){ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.fillText(toast,W/2,70);ctx.textAlign='left'}}
+function loop(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+addEventListener('keydown',e=>{keys[e.key]=true;if(e.key===' '){e.preventDefault();cast()}if(e.key.toLowerCase()==='r')reel()});addEventListener('keyup',e=>keys[e.key]=false);
+[['up','ArrowUp'],['down','ArrowDown'],['left','ArrowLeft'],['right','ArrowRight']].forEach(([id,k])=>{let b=document.getElementById(id);b.onpointerdown=e=>{e.preventDefault();keys[k]=true};b.onpointerup=b.onpointercancel=()=>keys[k]=false});
+document.getElementById('cast').onclick=cast;document.getElementById('reel').onclick=reel;document.getElementById('restart').onclick=restart;
+document.querySelectorAll('.bait').forEach(b=>b.onclick=()=>{selected=b.dataset.bait;document.querySelectorAll('.bait').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')});
+cv.addEventListener('pointerdown',()=>{if(state==='play')cast();else if(state==='hooked')reel()});
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#8fe8ff"/>
+      <stop offset="1" stop-color="#d9f8ff"/>
+    </linearGradient>
+    <linearGradient id="sea" x2="0" y2="1">
+      <stop stop-color="#29c8e8"/>
+      <stop offset="1" stop-color="#0878c4"/>
+    </linearGradient>
+    <linearGradient id="wood" x2="0" y2="1">
+      <stop stop-color="#d88942"/>
+      <stop offset="1" stop-color="#8e4527"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="320" height="200" fill="url(#sky)"/>
+  <circle cx="42" cy="35" r="17" fill="#fff4a8" opacity=".9"/>
+  <path d="M0 78 Q35 68 70 78 T140 78 T210 78 T280 78 T350 78 V200 H0Z" fill="url(#sea)"/>
+  <path d="M0 91 Q24 83 49 91 T98 91 T147 91 T196 91 T245 91 T294 91 T343 91" fill="none" stroke="#8cf0f0" stroke-width="4" opacity=".7"/>
+  <path d="M-10 130 Q20 119 49 130 T108 130 T167 130 T226 130 T285 130 T344 130" fill="none" stroke="#42d9e8" stroke-width="3" opacity=".7"/>
+
+  <!-- boat -->
+  <path d="M77 70 L247 70 L228 101 Q221 112 202 116 H119 Q99 112 91 101Z" fill="url(#wood)" stroke="#69351f" stroke-width="3"/>
+  <path d="M91 91 Q160 105 229 91" fill="none" stroke="#efad5c" stroke-width="5"/>
+  <path d="M112 69 V46 H207 V69" fill="#efb15d" stroke="#69351f" stroke-width="4"/>
+  <path d="M116 48 Q160 36 203 48" fill="#f7c875" stroke="#69351f" stroke-width="3"/>
+  <path d="M129 56 Q160 48 191 56" fill="none" stroke="#d47b3a" stroke-width="3"/>
+  <circle cx="104" cy="76" r="5" fill="#4d2c22"/>
+  <circle cx="222" cy="76" r="5" fill="#4d2c22"/>
+
+  <!-- dangling lure -->
+  <path d="M160 48 C160 67 158 78 164 93 C168 104 157 111 151 103" fill="none" stroke="#3f4058" stroke-width="3"/>
+  <path d="M164 91 C176 88 183 97 177 106 C170 115 155 108 157 99Z" fill="#ef4b9a" stroke="#612b68" stroke-width="3"/>
+  <circle cx="169" cy="98" r="3" fill="#fff4a8"/>
+  <path d="M158 106 Q151 117 145 112 M174 106 Q181 118 188 111" fill="none" stroke="#612b68" stroke-width="3"/>
+
+  <!-- fish -->
+  <g stroke="#173c70" stroke-width="3">
+    <path d="M53 139 Q69 119 94 132 L108 123 L105 143 L108 157 L92 148 Q67 160 53 139Z" fill="#ffbd45"/>
+    <circle cx="78" cy="137" r="4" fill="#fff"/>
+    <circle cx="79" cy="138" r="2" fill="#222"/>
+    <path d="M88 146 Q95 141 101 146" fill="none"/>
+    <path d="M267 136 Q251 116 227 130 L214 120 L216 141 L214 154 L230 147 Q253 157 267 136Z" fill="#f06473"/>
+    <circle cx="242" cy="134" r="4" fill="#fff"/>
+    <circle cx="241" cy="135" r="2" fill="#222"/>
+    <path d="M232 143 Q225 138 219 143" fill="none"/>
+    <path d="M126 174 Q143 151 164 165 L176 156 L174 176 L178 188 L162 181 Q141 193 126 174Z" fill="#91dc45"/>
+    <circle cx="151" cy="169" r="4" fill="#fff"/>
+    <circle cx="152" cy="170" r="2" fill="#222"/>
+    <path d="M160 177 Q166 172 171 177" fill="none"/>
+  </g>
+
+  <path d="M32 171 Q51 164 70 171 M246 178 Q270 169 291 177" fill="none" stroke="#75e9ed" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="42" cy="113" r="3" fill="#b8f8f0"/>
+  <circle cx="284" cy="111" r="4" fill="#b8f8f0"/>
+</svg>

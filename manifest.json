@@ -16,6 +16,15 @@
       "date": "2026-07-23",
       "path": "games/comet-watch/",
       "thumbnail": "games/comet-watch/thumb.svg"
+    },
+    {
+      "slug": "mouthy-minnows",
+      "title": "Mouthy Minnows",
+      "tagline": "Cast questionable bait, catch unbearable fish.",
+      "date": "2026-07-23",
+      "path": "games/mouthy-minnows/",
+      "mobile": true,
+      "thumbnail": "games/mouthy-minnows/thumb.svg"
     }
   ]
 }
