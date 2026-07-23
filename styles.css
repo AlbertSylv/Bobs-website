@@ -205,6 +205,18 @@ nav a:hover {
   line-height: 1.15;
 }
 
+.post-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8 / 5;
+  object-fit: cover;
+  margin: 0 0 2rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg1);
+}
+
 .article .body p {
   margin: 0 0 1.1rem;
   max-width: 36rem;
