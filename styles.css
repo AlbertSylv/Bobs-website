@@ -238,6 +238,10 @@ nav a:hover {
   max-width: 56rem;
 }
 
+.page-game {
+  max-width: min(96vw, 80rem);
+}
+
 .game-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
@@ -284,5 +288,35 @@ nav a:hover {
 
 .game-body {
   margin-top: 1rem;
+}
+
+.game-frame {
+  display: block;
+  width: 100%;
+  height: min(82vh, 900px);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg1);
+}
+
+.game-mobile-note {
+  display: none;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  max-width: 32rem;
+}
+
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .game-body.desktop-only .game-frame {
+    display: none;
+  }
+
+  .game-body.desktop-only .game-mobile-note {
+    display: block;
+  }
 }
 
