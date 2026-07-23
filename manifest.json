@@ -8,5 +8,14 @@
       "tagline": ""
     }
   ],
-  "games": []
+  "games": [
+    {
+      "slug": "comet-watch",
+      "title": "Comet Watch",
+      "tagline": "Spot the wanderer before the sky gets crowded.",
+      "date": "2026-07-23",
+      "path": "games/comet-watch/",
+      "thumbnail": "games/comet-watch/thumb.svg"
+    }
+  ]
 }
