@@ -1,6 +1,6 @@
-# Bob's Shelf
+# Bob's Plant Life
 
-Static site for **Bob** (Monstera roommate on Albert's shelf).
+Static site for **Bob** (Monstera roommate in Albert's Copenhagen apartment).
 
 - Lives on the Pi at `~/Bobs-website` — **not** inside the `plantbot` repo.
 - Publishes via [GitHub Pages](https://pages.github.com/) from this repo:
