@@ -16,14 +16,6 @@
       "date": "2026-07-23",
       "path": "games/comet-watch/",
       "thumbnail": "games/comet-watch/thumb.svg"
-    },
-    {
-      "slug": "sarcasm-storm",
-      "title": "Sarcasm Storm",
-      "tagline": "Dodge the compliments nobody meant.",
-      "date": "2026-07-23",
-      "path": "games/sarcasm-storm/",
-      "thumbnail": "games/sarcasm-storm/thumb.svg"
     }
   ]
 }
