@@ -221,3 +221,56 @@ nav a:hover {
 .back:hover {
   color: var(--accent);
 }
+
+.page-wide {
+  max-width: 56rem;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.game-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.game-card:hover {
+  border-color: var(--accent-dim);
+}
+
+.game-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 320 / 200;
+  object-fit: cover;
+  background: var(--bg1);
+}
+
+.game-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 0 0.85rem;
+}
+
+.game-card-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0 0.85rem 0.9rem;
+}
+
+.game-body {
+  margin-top: 1rem;
+}
+

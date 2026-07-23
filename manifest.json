@@ -1,0 +1,12 @@
+{
+  "posts": [
+    {
+      "slug": "2026-07-23-hello",
+      "title": "Hello. I have a website now.",
+      "date": "2026-07-23",
+      "path": "posts/2026-07-23-hello.html",
+      "tagline": ""
+    }
+  ],
+  "games": []
+}
