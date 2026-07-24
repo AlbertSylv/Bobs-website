@@ -5,383 +5,291 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Plant Panic Quiz</title>
 <style>
-  :root {
-    --ink: #173526;
-    --lime: #b8e86d;
-    --cream: #fff9df;
-    --card: rgba(255, 253, 235, 0.97);
-    --danger: #c84b5d;
-    --warning: #e18b28;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  html,
-  body {
-    margin: 0;
-    height: 100%;
-  }
-
-  body {
-    overflow: hidden;
-    font-family: "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif;
-    color: var(--ink);
-    background:
-      radial-gradient(circle at 10% 15%, rgba(255,255,255,.5) 0 3%, transparent 3.5%),
-      radial-gradient(circle at 86% 18%, rgba(255,255,255,.45) 0 2%, transparent 2.5%),
-      linear-gradient(145deg, #d7f4a7, #87ce8d 48%, #55a777);
-  }
-
-  button {
-    font: inherit;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
+:root {
+  --ink: #173526;
+  --cream: #fff9df;
+  --card: rgba(255, 253, 235, .97);
+  --lime: #b8e86d;
+  --danger: #d64f62;
+  --warning: #ed9c3d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  overflow: auto;
+  font-family: "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 10% 15%, rgba(255,255,255,.5) 0 3%, transparent 3.5%),
+    radial-gradient(circle at 86% 18%, rgba(255,255,255,.45) 0 2%, transparent 2.5%),
+    linear-gradient(145deg, #d7f4a7, #87ce8d 48%, #55a777);
+}
+button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.game {
+  width: 100%;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 2vw, 22px);
+}
+.panel {
+  width: min(760px, 100%);
+  padding: clamp(14px, 4vw, 34px);
+  background: var(--card);
+  border: 4px solid rgba(23, 53, 38, .9);
+  border-radius: 24px;
+  box-shadow: 0 10px 0 rgba(23, 53, 38, .22), 0 20px 38px rgba(13, 73, 43, .28);
+}
+.hud {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.hud-item {
+  min-width: 0;
+  padding: 8px 7px;
+  text-align: center;
+  background: #e8f8c8;
+  border: 2px solid #315d3d;
+  border-radius: 12px;
+  line-height: 1.05;
+}
+.hud-label {
+  display: block;
+  font-size: clamp(10px, 2.4vw, 13px);
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.hud-value {
+  display: block;
+  margin-top: 3px;
+  font-size: clamp(17px, 4vw, 24px);
+  font-weight: 900;
+}
+.tokens-value { color: #7a4a14; }
+.timer-section {
+  margin: 0 0 clamp(12px, 3vw, 20px);
+}
+.timer-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+  font-size: clamp(13px, 3vw, 16px);
+  font-weight: 900;
+}
+.timer-text {
+  font-variant-numeric: tabular-nums;
+  color: #234832;
+}
+.timer-bar {
+  height: 16px;
+  overflow: hidden;
+  background: #d8e5cc;
+  border: 2px solid #315d3d;
+  border-radius: 999px;
+}
+.timer-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #74c855, #c8eb63);
+  border-radius: inherit;
+  transition: width .1s linear, background .15s;
+}
+.timer-bar.warning .timer-fill {
+  background: linear-gradient(90deg, #ed9c3d, #ffd45c);
+}
+.timer-bar.danger .timer-fill {
+  background: linear-gradient(90deg, #d64f62, #ff8a87);
+}
+.how-to {
+  margin: 0 0 9px;
+  text-align: center;
+  font-size: clamp(12px, 2.9vw, 15px);
+  font-weight: bold;
+  line-height: 1.25;
+}
+.feedback {
+  min-height: 1.45em;
+  margin: 0 0 9px;
+  padding: 4px 9px;
+  text-align: center;
+  border-radius: 9px;
+  font-size: clamp(13px, 3vw, 16px);
+  font-weight: 900;
+  line-height: 1.25;
+}
+.feedback:empty {
+  visibility: hidden;
+}
+.feedback.good {
+  color: #195c2b;
+  background: #dff5c7;
+}
+.feedback.bad {
+  color: #8a2236;
+  background: #ffdce0;
+}
+.question {
+  margin: 0 0 clamp(12px, 3vw, 20px);
+  text-align: center;
+  font-size: clamp(22px, 5.2vw, 40px);
+  font-weight: 900;
+  line-height: 1.13;
+  letter-spacing: -.5px;
+}
+.answers {
+  display: grid;
+  gap: clamp(8px, 2vw, 14px);
+}
+.answer {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 9px 13px;
+  border: 3px solid #315d3d;
+  border-radius: 16px;
+  background: #fffef5;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  font-size: clamp(14px, 3.7vw, 20px);
+  font-weight: bold;
+  line-height: 1.15;
+  box-shadow: 0 4px 0 #315d3d;
+  transition: transform .12s, background .12s, box-shadow .12s;
+}
+.answer:hover,
+.answer:focus-visible {
+  background: #e5f9bd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #315d3d;
+  outline: none;
+}
+.answer:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #315d3d;
+}
+.answer[disabled] { cursor: default; }
+.answer.correct {
+  background: #a9e77e;
+  border-color: #337940;
+}
+.answer.wrong {
+  background: #ffb6bd;
+  border-color: #b34a5e;
+}
+.key {
+  display: inline-grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  margin-right: 11px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 14px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: auto;
+  background: rgba(23, 53, 38, .72);
+}
+.overlay.show { display: flex; }
+.result-card {
+  width: min(430px, 100%);
+  padding: 28px 22px 23px;
+  text-align: center;
+  background: var(--cream);
+  border: 4px solid var(--ink);
+  border-radius: 25px;
+  box-shadow: 0 9px 0 rgba(0, 0, 0, .22);
+}
+.result-card h2 {
+  margin: 0 0 10px;
+  font-size: clamp(27px, 7vw, 39px);
+}
+.result-card p {
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+.restart {
+  min-height: 48px;
+  padding: 10px 22px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--lime);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 var(--ink);
+}
+.restart:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+@media (max-height: 560px) {
   .game {
-    width: 100%;
-    height: 100%;
-    display: grid;
-    place-items: center;
-    padding: clamp(10px, 2.5vw, 28px);
+    display: block;
+    padding: 7px;
   }
-
   .panel {
-    width: min(760px, 100%);
-    max-height: 100%;
-    overflow-y: auto;
-    padding: clamp(16px, 4.5vw, 42px);
-    background: var(--card);
-    border: 4px solid rgba(23, 53, 38, .9);
-    border-radius: 28px;
-    box-shadow: 0 12px 0 rgba(23, 53, 38, .22), 0 22px 42px rgba(13, 73, 43, .28);
+    margin: 0 auto;
+    padding: 12px;
+    border-width: 3px;
+    border-radius: 18px;
   }
-
-  .game-title {
-    margin: 0 0 12px;
-    text-align: center;
-    font-size: clamp(20px, 4vw, 29px);
-    line-height: 1;
-    font-weight: 900;
-  }
-
   .hud {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 13px;
+    gap: 6px;
+    margin-bottom: 8px;
   }
-
-  .hud-item {
-    min-width: 0;
-    padding: 9px 7px;
-    border: 2px solid #315d3d;
-    border-radius: 13px;
-    background: #edf9cc;
-    text-align: center;
-  }
-
-  .hud-label {
-    display: block;
-    font-size: clamp(10px, 2.3vw, 12px);
-    font-weight: 900;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-
-  .hud-value {
-    display: block;
-    margin-top: 2px;
-    font-size: clamp(18px, 4vw, 25px);
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .timer-area {
-    margin-bottom: clamp(13px, 2.5vw, 20px);
-    padding: 10px 12px;
-    border: 2px solid #315d3d;
-    border-radius: 14px;
-    background: #fffef5;
-  }
-
-  .timer-heading {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 14px;
-    font-weight: 900;
-  }
-
-  .timer-heading strong {
-    font-size: 19px;
-  }
-
-  .timer-bar {
-    height: 12px;
-    margin-top: 7px;
-    overflow: hidden;
-    border-radius: 99px;
-    background: #d8e7c5;
-  }
-
-  .timer-fill {
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #65b957, #b8e86d);
-    transition: width .1s linear, background .15s;
-  }
-
-  .timer-area.warning {
-    border-color: var(--warning);
-    background: #fff4d6;
-  }
-
-  .timer-area.warning .timer-fill {
-    background: linear-gradient(90deg, #f2bd3d, #e58a27);
-  }
-
-  .timer-area.danger {
-    border-color: var(--danger);
-    background: #ffe3e5;
-    animation: pulse .65s infinite alternate;
-  }
-
-  .timer-area.danger .timer-fill {
-    background: linear-gradient(90deg, #ef7c67, #c84b5d);
-  }
-
-  @keyframes pulse {
-    from { box-shadow: 0 0 0 rgba(200, 75, 93, 0); }
-    to { box-shadow: 0 0 0 4px rgba(200, 75, 93, .18); }
-  }
-
-  .how-to-play {
-    margin: 0 0 clamp(14px, 3vw, 22px);
-    text-align: center;
-    font-size: clamp(13px, 2.8vw, 16px);
-    font-weight: bold;
-    line-height: 1.3;
-  }
-
+  .hud-item { padding: 5px 4px; }
+  .timer-section { margin-bottom: 8px; }
+  .timer-bar { height: 13px; }
+  .how-to { margin-bottom: 5px; }
+  .feedback { margin-bottom: 5px; }
   .question {
-    margin: 0 0 clamp(16px, 3vw, 25px);
-    font-size: clamp(23px, 5.2vw, 40px);
-    line-height: 1.14;
-    font-weight: 900;
-    letter-spacing: -.5px;
-    text-align: center;
+    margin-bottom: 9px;
+    font-size: clamp(19px, 4.8vw, 30px);
   }
-
-  .answers {
-    display: grid;
-    gap: clamp(9px, 2vw, 15px);
-  }
-
+  .answers { gap: 7px; }
   .answer {
-    width: 100%;
-    min-height: clamp(52px, 10vw, 68px);
-    display: flex;
-    align-items: center;
-    text-align: left;
-    padding: 10px 14px;
-    border: 3px solid #315d3d;
-    border-radius: 16px;
-    background: #fffef5;
-    color: var(--ink);
-    cursor: pointer;
-    font-size: clamp(15px, 3.7vw, 20px);
-    font-weight: bold;
-    line-height: 1.18;
-    box-shadow: 0 4px 0 #315d3d;
-    transition: transform .12s, background .12s, box-shadow .12s;
+    min-height: 44px;
+    padding: 7px 9px;
+    border-width: 2px;
+    border-radius: 12px;
   }
-
-  .answer:hover,
-  .answer:focus-visible {
-    background: #e5f9bd;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 #315d3d;
-    outline: none;
-  }
-
-  .answer:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 #315d3d;
-  }
-
-  .answer[disabled] {
-    cursor: default;
-  }
-
-  .answer.correct {
-    background: #a9e77e;
-    border-color: #337940;
-  }
-
-  .answer.wrong {
-    background: #ffb6bd;
-    border-color: #b34a5e;
-  }
-
   .key {
-    display: inline-grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    flex: 0 0 30px;
-    margin-right: 12px;
-    border-radius: 8px;
-    background: var(--ink);
-    color: var(--cream);
-    font-size: 15px;
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    margin-right: 8px;
+    border-radius: 6px;
+    font-size: 12px;
   }
-
-  .feedback {
-    min-height: 20px;
-    margin: 12px 0 0;
-    text-align: center;
-    color: #315d3d;
-    font-size: 14px;
-    font-weight: 900;
-  }
-
-  .overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 5;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(23, 53, 38, .72);
-  }
-
-  .overlay.show {
-    display: flex;
-  }
-
-  .result-card {
-    width: min(430px, 100%);
-    padding: 28px 22px 23px;
-    text-align: center;
-    background: var(--cream);
-    border: 4px solid var(--ink);
-    border-radius: 25px;
-    box-shadow: 0 9px 0 rgba(0, 0, 0, .22);
-  }
-
-  .result-card h2 {
-    margin: 0 0 10px;
-    font-size: clamp(27px, 7vw, 39px);
-  }
-
-  .result-card p {
-    margin: 0 0 20px;
-    line-height: 1.35;
-    font-size: 16px;
-  }
-
-  .restart {
-    min-height: 46px;
-    border: 3px solid var(--ink);
-    border-radius: 14px;
-    background: var(--lime);
-    color: var(--ink);
-    padding: 10px 22px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 900;
-    box-shadow: 0 4px 0 var(--ink);
-  }
-
-  .restart:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 var(--ink);
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  @media (max-height: 560px) {
-    .panel {
-      padding: 14px 18px;
-      border-radius: 20px;
-    }
-
-    .game-title {
-      margin-bottom: 8px;
-    }
-
-    .hud {
-      margin-bottom: 8px;
-    }
-
-    .hud-item {
-      padding: 6px;
-    }
-
-    .timer-area {
-      padding: 7px 10px;
-      margin-bottom: 8px;
-    }
-
-    .timer-bar {
-      height: 8px;
-      margin-top: 4px;
-    }
-
-    .how-to-play {
-      margin-bottom: 9px;
-    }
-
-    .question {
-      margin-bottom: 10px;
-      font-size: clamp(20px, 4.8vw, 30px);
-    }
-
-    .answers {
-      gap: 8px;
-    }
-
-    .answer {
-      min-height: 43px;
-      padding: 6px 10px;
-    }
-
-    .key {
-      width: 25px;
-      height: 25px;
-      flex-basis: 25px;
-      margin-right: 9px;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-
-    .feedback {
-      margin-top: 7px;
-    }
-  }
+}
 </style>
 </head>
 <body>
 <div class="game">
   <section class="panel" aria-label="Plant Panic Quiz game">
-    <h1 class="game-title">Plant Panic Quiz</h1>
-
     <div class="hud" aria-label="Game status">
       <div class="hud-item">
         <span class="hud-label">Score</span>
@@ -393,25 +301,24 @@
       </div>
       <div class="hud-item">
         <span class="hud-label">Compost tokens</span>
-        <span class="hud-value" id="tokens">3</span>
+        <span class="hud-value tokens-value"><span id="tokens">3</span> ♻</span>
       </div>
     </div>
 
-    <div class="timer-area" id="timerArea" aria-label="Answer timer">
-      <div class="timer-heading">
-        <span>Answer before time runs out!</span>
-        <strong><span id="timerText">9.0</span>s</strong>
+    <div class="timer-section" aria-label="Time remaining">
+      <div class="timer-row">
+        <span>Watering window</span>
+        <span><span id="timerText">9.0</span> seconds</span>
       </div>
-      <div class="timer-bar" aria-hidden="true">
+      <div class="timer-bar" id="timerArea" role="progressbar" aria-label="Time remaining" aria-valuemin="0" aria-valuemax="9" aria-valuenow="9">
         <div class="timer-fill" id="timerFill"></div>
       </div>
     </div>
 
-    <p class="how-to-play">How to play: tap an answer or press 1, 2, or 3. You have 9 seconds per question; a wrong or timed-out answer costs one compost token.</p>
-
+    <p class="how-to">How to play: tap an answer or press 1, 2, or 3. Wrong answers and timeouts cost a compost token.</p>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
     <div class="question" id="question" aria-live="polite"></div>
     <div class="answers" id="answers"></div>
-    <p class="feedback" id="feedback" aria-live="polite"></p>
   </section>
 </div>
 
@@ -478,22 +385,28 @@
     timerDisplayId = null;
   }
 
+  function setFeedback(message, type) {
+    feedbackEl.textContent = message;
+    feedbackEl.className = "feedback" + (type ? " " + type : "");
+  }
+
   function updateTimerDisplay() {
     const elapsed = Date.now() - startedAt;
     const remaining = Math.max(0, timeLimit - elapsed);
-    const percentage = (remaining / timeLimit) * 100;
+    const seconds = remaining / 1000;
+    const percent = (remaining / timeLimit) * 100;
 
-    timerTextEl.textContent = (remaining / 1000).toFixed(1);
-    timerFillEl.style.width = percentage + "%";
-    timerAreaEl.classList.toggle("warning", remaining <= 5000 && remaining > 2500);
-    timerAreaEl.classList.toggle("danger", remaining <= 2500);
+    timerTextEl.textContent = seconds.toFixed(1);
+    timerFillEl.style.width = percent + "%";
+    timerAreaEl.setAttribute("aria-valuenow", seconds.toFixed(1));
+    timerAreaEl.classList.toggle("warning", remaining <= 4000 && remaining > 2000);
+    timerAreaEl.classList.toggle("danger", remaining <= 2000);
   }
 
   function runTimer() {
     clearTimer();
     startedAt = Date.now();
     updateTimerDisplay();
-
     timerDisplayId = setInterval(updateTimerDisplay, 100);
     timerId = setTimeout(() => {
       if (!locked) {
@@ -506,10 +419,9 @@
   function showQuestion() {
     locked = false;
     const item = questions[order[index]];
-
     roundEl.textContent = index + 1;
     questionEl.textContent = item.q;
-    feedbackEl.textContent = "";
+    setFeedback("", "");
     answersEl.innerHTML = "";
 
     item.a.forEach((text, i) => {
@@ -520,7 +432,6 @@
       button.className = "answer";
       button.type = "button";
       button.setAttribute("aria-label", "Answer " + (i + 1) + ": " + text);
-
       key.className = "key";
       key.textContent = i + 1;
       label.textContent = text;
@@ -535,9 +446,7 @@
   }
 
   function answer(choice, timedOut) {
-    if (locked) {
-      return;
-    }
+    if (locked) return;
 
     locked = true;
     const elapsed = Date.now() - startedAt;
@@ -549,25 +458,19 @@
 
     buttons.forEach((button, i) => {
       button.disabled = true;
-      if (i === item.correct) {
-        button.classList.add("correct");
-      }
-      if (choice === i && !isCorrect) {
-        button.classList.add("wrong");
-      }
+      if (i === item.correct) button.classList.add("correct");
+      if (choice === i && !isCorrect) button.classList.add("wrong");
     });
 
     if (isCorrect) {
       const speedBonus = Math.max(0, Math.round((timeLimit - Math.min(elapsed, timeLimit)) / 90));
       score += 100 + speedBonus;
       scoreEl.textContent = score;
-      feedbackEl.textContent = "Correct! Your plant approves.";
+      setFeedback("Correct! Your plant approves.", "good");
     } else {
       tokens--;
       tokensEl.textContent = tokens;
-      feedbackEl.textContent = timedOut
-        ? "Time ran out! One compost token was used."
-        : "Not quite! One compost token was used.";
+      setFeedback(timedOut ? "Time ran out! A compost token was used." : "Not quite! A compost token was used.", "bad");
     }
 
     setTimeout(() => {
@@ -604,11 +507,9 @@
     index = 0;
     locked = false;
     order = shuffle(questions.map((_, i) => i));
-
     scoreEl.textContent = "0";
     tokensEl.textContent = "3";
     roundEl.textContent = "1";
-    timerAreaEl.classList.remove("warning", "danger");
     overlayEl.classList.remove("show");
     showQuestion();
   }
