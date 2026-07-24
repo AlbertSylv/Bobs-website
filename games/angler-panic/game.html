@@ -5,865 +5,122 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Angler Panic</title>
 <style>
-html, body { margin:0; height:100%; }
-* { box-sizing:border-box; }
-body {
-  overflow:hidden;
-  background:#071d2c;
-  color:#f7f3df;
-  font-family:Arial, Helvetica, sans-serif;
-  touch-action:none;
-}
-#game {
-  position:relative;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:linear-gradient(#8ad6e8 0%, #b8eff0 35%, #176c8b 36%, #07344f 100%);
-}
-canvas {
-  width:100%;
-  height:100%;
-  display:block;
-  touch-action:none;
-}
-#topbar {
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  padding:10px 12px 7px;
-  pointer-events:none;
-  text-shadow:0 2px 2px #123;
-}
-#heading {
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
-}
-h1 {
-  margin:0;
-  color:#fff6b0;
-  font-size:clamp(20px, 5vw, 33px);
-  letter-spacing:1px;
-  line-height:1;
-}
-#tagline {
-  margin-top:3px;
-  color:#07364b;
-  font-weight:bold;
-  font-size:clamp(10px, 2.7vw, 14px);
-}
-#hud {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  gap:6px;
-  max-width:58%;
-  font-size:clamp(11px, 2.8vw, 15px);
-  font-weight:bold;
-}
-.pill {
-  background:rgba(3,24,40,.77);
-  border:1px solid rgba(255,255,255,.32);
-  border-radius:15px;
-  padding:5px 8px;
-  white-space:nowrap;
-}
-#hint {
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:78px;
-  width:min(94%, 720px);
-  text-align:center;
-  color:#fffde7;
-  font-weight:bold;
-  font-size:clamp(11px, 3vw, 15px);
-  text-shadow:0 2px 3px #001d2b;
-  pointer-events:none;
-}
-#controls {
-  position:absolute;
-  bottom:10px;
-  left:0;
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 12px;
-  pointer-events:none;
-}
-.controlGroup {
-  display:flex;
-  gap:9px;
-  pointer-events:auto;
-}
-.depthGroup {
-  position:absolute;
-  left:50%;
-  bottom:0;
-  transform:translateX(-50%);
-  display:flex;
-  gap:8px;
-  pointer-events:auto;
-}
-button {
-  border:2px solid rgba(255,255,255,.72);
-  border-radius:50%;
-  width:54px;
-  height:54px;
-  color:white;
-  background:rgba(5,32,50,.75);
-  font-size:25px;
-  font-weight:bold;
-  box-shadow:0 3px 0 rgba(0,0,0,.25);
-  touch-action:none;
-}
-button:active {
-  transform:translateY(2px);
-  box-shadow:0 1px 0 rgba(0,0,0,.25);
-}
-#up, #down {
-  background:rgba(17,75,99,.88);
-  font-size:22px;
-}
-#action {
-  width:86px;
-  border-radius:27px;
-  background:#ff9e35;
-  color:#213;
-  font-size:13px;
-  letter-spacing:.5px;
-}
-#message {
-  position:absolute;
-  left:50%;
-  top:47%;
-  transform:translate(-50%,-50%);
-  width:min(88%, 500px);
-  padding:18px 20px;
-  text-align:center;
-  background:rgba(3,22,36,.88);
-  border:2px solid #ffdc69;
-  border-radius:18px;
-  color:white;
-  display:none;
-  z-index:3;
-}
-#message strong {
-  display:block;
-  font-size:clamp(24px,7vw,42px);
-  color:#ffeb88;
-  margin-bottom:7px;
-}
-#message p {
-  margin:5px 0 13px;
-  font-size:15px;
-}
-#restart {
-  width:auto;
-  height:auto;
-  padding:10px 22px;
-  border-radius:20px;
-  background:#ffae42;
-  color:#132332;
-  font-size:16px;
-}
-@media (max-height:500px) {
-  #hint { bottom:58px; font-size:11px; }
-  button { width:43px; height:43px; font-size:19px; }
-  #action { width:72px; font-size:11px; }
-  #controls { bottom:6px; }
-}
+html,body{margin:0;height:100%}*{box-sizing:border-box}body{overflow:hidden;background:#071d2c;color:#f7f3df;font-family:Arial,Helvetica,sans-serif;touch-action:none}#game{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(#8ad6e8 0%,#b8eff0 35%,#176c8b 36%,#07344f 100%)}canvas{width:100%;height:100%;display:block;touch-action:none}#topbar{position:absolute;top:0;left:0;right:0;padding:10px 12px 7px;pointer-events:none;text-shadow:0 2px 2px #123}#heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}h1{margin:0;color:#fff6b0;font-size:clamp(20px,5vw,33px);letter-spacing:1px;line-height:1}#tagline{margin-top:3px;color:#07364b;font-weight:bold;font-size:clamp(10px,2.7vw,14px)}#hud{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:58%;font-size:clamp(11px,2.8vw,15px);font-weight:bold}.pill{background:rgba(3,24,40,.77);border:1px solid rgba(255,255,255,.32);border-radius:15px;padding:5px 8px;white-space:nowrap}#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:78px;width:min(94%,720px);text-align:center;color:#fffde7;font-weight:bold;font-size:clamp(11px,3vw,15px);text-shadow:0 2px 3px #001d2b;pointer-events:none}#controls{position:absolute;bottom:10px;left:0;width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 12px;pointer-events:none}.controlGroup{display:flex;gap:9px;pointer-events:auto}.depthGroup{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto}button{border:2px solid rgba(255,255,255,.72);border-radius:50%;width:54px;height:54px;color:white;background:rgba(5,32,50,.75);font-size:25px;font-weight:bold;box-shadow:0 3px 0 rgba(0,0,0,.25);touch-action:none}button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25)}#up,#down{background:rgba(17,75,99,.88);font-size:22px}#action{width:86px;border-radius:27px;background:#ff9e35;color:#213;font-size:13px;letter-spacing:.5px}#message{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:min(88%,500px);padding:18px 20px;text-align:center;background:rgba(3,22,36,.88);border:2px solid #ffdc69;border-radius:18px;color:white;display:none;z-index:3}#message strong{display:block;font-size:clamp(24px,7vw,42px);color:#ffeb88;margin-bottom:7px}#message p{margin:5px 0 13px;font-size:15px}#restart{width:auto;height:auto;padding:10px 22px;border-radius:20px;background:#ffae42;color:#132332;font-size:16px}@media(max-height:500px){#hint{bottom:58px;font-size:11px}button{width:43px;height:43px;font-size:19px}#action{width:72px;font-size:11px}#controls{bottom:6px}}
 </style>
 </head>
 <body>
 <div id="game">
-  <canvas id="pond"></canvas>
-  <div id="topbar">
-    <div id="heading">
-      <div>
-        <h1>ANGLER PANIC</h1>
-        <div id="tagline">Keep your bait from the loudest fish in the lake.</div>
-      </div>
-      <div id="hud">
-        <div class="pill">SCORE <span id="score">0</span>/<span id="target">600</span></div>
-        <div class="pill">TIME <span id="time">60</span></div>
-        <div class="pill">BAIT <span id="bait">●●●●●</span></div>
-        <div class="pill">BOXES <span id="lives">▣▣▣</span></div>
-      </div>
-    </div>
-  </div>
-  <div id="hint">Aim with ◀ ▶ or drag. After casting, move the hook with ▲ ▼. Tap CAST to hook and reel. Purple fish with sound waves are loud Hecklers!</div>
-  <div id="controls">
-    <div class="controlGroup">
-      <button id="left" aria-label="Aim left">◀</button>
-      <button id="right" aria-label="Aim right">▶</button>
-    </div>
-    <div class="depthGroup">
-      <button id="up" aria-label="Raise hook">▲</button>
-      <button id="down" aria-label="Lower hook">▼</button>
-    </div>
-    <div class="controlGroup">
-      <button id="action" aria-label="Cast hook, hook fish, or reel">CAST<br>HOOK<br>REEL</button>
-    </div>
-  </div>
-  <div id="message">
-    <strong id="messageTitle">TIME'S UP!</strong>
-    <p id="messageText"></p>
-    <button id="restart">PLAY AGAIN</button>
-  </div>
+<canvas id="pond"></canvas>
+<div id="topbar">
+<div id="heading">
+<div><h1>ANGLER PANIC</h1><div id="tagline">Catch blue and gold fish. Avoid purple loud fish and red thieves!</div></div>
+<div id="hud">
+<div class="pill">SCORE <span id="score">0</span>/<span id="target">600</span></div>
+<div class="pill">TIME <span id="time">60</span></div>
+<div class="pill">BAIT <span id="bait">●●●●●</span></div>
+<div class="pill">BOXES <span id="lives">▣▣▣</span></div>
+</div>
+</div>
+</div>
+<div id="hint">How to play: aim with ◀ ▶ or drag, cast, then use ▲ ▼ to find fish. Catch blue and gold fish for points. Avoid purple LOUD fish (-100) and red thieves — a thief steals a tackle box.</div>
+<div id="controls">
+<div class="controlGroup"><button id="left" aria-label="Aim left">◀</button><button id="right" aria-label="Aim right">▶</button></div>
+<div class="depthGroup"><button id="up" aria-label="Raise hook">▲</button><button id="down" aria-label="Lower hook">▼</button></div>
+<div class="controlGroup"><button id="action" aria-label="Cast hook, hook fish, or reel">CAST<br>HOOK<br>REEL</button></div>
+</div>
+<div id="message"><strong id="messageTitle">TIME'S UP!</strong><p id="messageText"></p><button id="restart">PLAY AGAIN</button></div>
 </div>
 <script>
-(function () {
-  "use strict";
-
-  var canvas = document.getElementById("pond");
-  var ctx = canvas.getContext("2d");
-  var scoreEl = document.getElementById("score");
-  var timeEl = document.getElementById("time");
-  var baitEl = document.getElementById("bait");
-  var livesEl = document.getElementById("lives");
-  var targetEl = document.getElementById("target");
-  var messageEl = document.getElementById("message");
-  var messageTitle = document.getElementById("messageTitle");
-  var messageText = document.getElementById("messageText");
-  var restartBtn = document.getElementById("restart");
-
-  var W = 0, H = 0, DPR = 1, waterY = 0;
-  var fish = [], bubbles = [], ripples = [];
-  var score = 0, target = 600, timeLeft = 60, bait = 5, lives = 3, combo = 0;
-  var aim = 0.5, lineDepth = 0, state = "aim", hooked = null;
-  var reelNeed = 0, reelGood = 0, reelPhase = 0;
-  var running = true, last = performance.now(), elapsed = 0;
-  var announce = "", announceTimer = 0;
-  var fakePrompt = null, spawnClock = 0, thiefClock = 0;
-  var drag = null;
-  var held = { left:false, right:false, up:false, down:false };
-
-  function resize() {
-    var rect = canvas.getBoundingClientRect();
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = Math.max(1, rect.width);
-    H = Math.max(1, rect.height);
-    canvas.width = Math.round(W * DPR);
-    canvas.height = Math.round(H * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    waterY = Math.max(106, H * 0.30);
-  }
-
-  function rand(a, b) {
-    return a + Math.random() * (b - a);
-  }
-
-  function makeFish(type) {
-    var dir = Math.random() < 0.5 ? -1 : 1;
-    var sizes = { gold:22, blue:19, heckler:23, thief:24 };
-    var speeds = { gold:42, blue:60, heckler:51, thief:69 };
-    return {
-      type:type,
-      x:dir > 0 ? -35 : W + 35,
-      y:rand(waterY + 38, Math.max(waterY + 45, H - 105)),
-      vx:speeds[type] * dir * rand(0.72, 1.18),
-      size:sizes[type],
-      wobble:rand(0, Math.PI * 2),
-      alive:true
-    };
-  }
-
-  function seedFish() {
-    var i, types, f;
-    fish = [];
-    types = ["blue", "blue", "gold", "gold", "heckler", "thief"];
-    for (i = 0; i < 8; i++) {
-      f = makeFish(types[Math.floor(Math.random() * types.length)]);
-      f.x = rand(20, Math.max(21, W - 20));
-      fish.push(f);
-    }
-  }
-
-  function updateHud() {
-    scoreEl.textContent = score;
-    targetEl.textContent = target;
-    timeEl.textContent = Math.max(0, Math.ceil(timeLeft));
-    baitEl.textContent = "●".repeat(Math.max(0, bait)) + "○".repeat(Math.max(0, 5 - bait));
-    livesEl.textContent = "▣".repeat(lives) + "□".repeat(3 - lives);
-  }
-
-  function say(text, seconds) {
-    announce = text;
-    announceTimer = seconds || 1.2;
-  }
-
-  function hookX() {
-    return aim * W;
-  }
-
-  function hookY() {
-    return waterY + lineDepth * Math.max(45, H - waterY - 72);
-  }
-
-  function reset() {
-    score = 0;
-    timeLeft = 60;
-    bait = 5;
-    lives = 3;
-    combo = 0;
-    aim = 0.5;
-    lineDepth = 0;
-    state = "aim";
-    hooked = null;
-    reelNeed = 0;
-    reelGood = 0;
-    reelPhase = 0;
-    elapsed = 0;
-    announce = "CAST INTO THE CHAOS!";
-    announceTimer = 2.1;
-    fakePrompt = null;
-    spawnClock = 0;
-    thiefClock = 0;
-    bubbles = [];
-    ripples = [];
-    running = true;
-    messageEl.style.display = "none";
-    seedFish();
-    updateHud();
-  }
-
-  function moveAim(amount) {
-    if (!running || state === "hooked") return;
-    aim = Math.max(0.04, Math.min(0.96, aim + amount));
-  }
-
-  function moveDepth(amount) {
-    if (!running || state === "aim" || state === "hooked" || state === "done") return;
-    lineDepth = Math.max(0.04, Math.min(0.92, lineDepth + amount));
-    if (state === "drop") state = "water";
-    say(amount < 0 ? "HOOK RAISED!" : "HOOK LOWERED!", 0.5);
-  }
-
-  function action() {
-    var nearest, best, hx, hy, i, f;
-
-    if (!running) return;
-
-    if (state === "aim") {
-      state = "drop";
-      lineDepth = 0;
-      say("SPLASH! USE ▲ ▼ TO FIND A FISH!", 1.1);
-      ripples.push({ x:hookX(), y:waterY, age:0 });
-      return;
-    }
-
-    if (state === "drop") return;
-
-    if (state === "water") {
-      nearest = null;
-      best = 47;
-      hx = hookX();
-      hy = hookY();
-
-      for (i = 0; i < fish.length; i++) {
-        f = fish[i];
-        if (f.alive && Math.hypot(f.x - hx, f.y - hy) < best) {
-          best = Math.hypot(f.x - hx, f.y - hy);
-          nearest = f;
-        }
-      }
-
-      if (nearest) {
-        hooked = nearest;
-        state = "hooked";
-        reelNeed = nearest.type === "gold" ? 4 : 3;
-        reelGood = 0;
-        reelPhase = Math.random() * Math.PI * 2;
-        say(nearest.type === "heckler" ? "LOUD HECKLER HOOKED! REEL ON GREEN!" : "HOOKED! REEL ON THE GREEN!", 1.4);
-      } else {
-        say("NO BITE — MOVE LEFT, RIGHT, UP OR DOWN!", 1.1);
-      }
-      return;
-    }
-
-    if (state === "hooked") reelAction();
-  }
-
-  function reelAction() {
-    var marker = (Math.sin(reelPhase) + 1) / 2;
-    var perfect = marker > 0.39 && marker < 0.61;
-
-    if (perfect) {
-      reelGood++;
-      reelNeed--;
-      say(reelNeed > 0 ? "PERFECT REEL!" : "LANDING IT!", 0.48);
-      if (reelNeed <= 0) landFish();
-    } else {
-      bait = Math.max(0, bait - 1);
-      reelNeed = Math.min(reelNeed + 0.4, 5);
-      say("BAD TIMING! BAIT SLIPS!", 0.75);
-      if (bait <= 0) loseBait();
-    }
-  }
-
-  function landFish() {
-    var f = hooked;
-    var points;
-    var allPerfect;
-
-    if (!f) return;
-
-    points = f.type === "gold" ? 150 : f.type === "blue" ? 85 : f.type === "heckler" ? 180 : 35;
-    allPerfect = reelGood >= Math.ceil(reelNeed);
-
-    if (allPerfect) {
-      combo++;
-      points += combo * 25;
-      say("PERFECT CATCH! COMBO x" + combo + " +" + points, 1.3);
-    } else {
-      combo = 0;
-      say("CAUGHT +" + points, 1.1);
-    }
-
-    if (f.type === "heckler") {
-      points += 60;
-      say("LOUD HECKLER SILENCED! +" + points, 1.3);
-    }
-
-    score += points;
-    f.alive = false;
-    bubbles.push({ x:f.x, y:f.y, age:0, color:"#fff3a4" });
-    hooked = null;
-    state = "aim";
-    lineDepth = 0;
-    updateHud();
-
-    if (score >= target) end(true);
-  }
-
-  function loseBait() {
-    lives--;
-    combo = 0;
-    bait = 5;
-    hooked = null;
-    state = "aim";
-    lineDepth = 0;
-    say(lives > 0 ? "THIEF TOOK THE LURE! TACKLE BOX LOST!" : "ALL TACKLE BOXES EMPTY!", 1.8);
-    updateHud();
-    if (lives <= 0) end(false);
-  }
-
-  function end(won) {
-    running = false;
-    state = "done";
-    messageEl.style.display = "block";
-    messageTitle.textContent = won ? "LAKE LEGEND!" : (timeLeft <= 0 ? "TIME'S UP!" : "TACKLE GONE!");
-    messageText.textContent = won ?
-      "You landed " + score + " points and beat the target." :
-      "You scored " + score + " of " + target + ". Use hook depth controls to keep clear of thieves!";
-  }
-
-  function updateHeldControls(dt) {
-    if (held.left) moveAim(-dt * 0.65);
-    if (held.right) moveAim(dt * 0.65);
-    if (held.up) moveDepth(-dt * 0.62);
-    if (held.down) moveDepth(dt * 0.62);
-  }
-
-  function update(dt) {
-    var i, f, roll, hx, hy, h;
-
-    if (!running) return;
-
-    elapsed += dt;
-    timeLeft -= dt;
-    updateHeldControls(dt);
-
-    if (timeLeft <= 0) {
-      timeLeft = 0;
-      updateHud();
-      end(score >= target);
-      return;
-    }
-
-    if (announceTimer > 0) announceTimer -= dt;
-
-    spawnClock += dt;
-    if (spawnClock > 2.4 && fish.length < 11) {
-      spawnClock = 0;
-      roll = Math.random();
-      fish.push(makeFish(roll < 0.19 ? "thief" : roll < 0.37 ? "heckler" : roll < 0.58 ? "gold" : "blue"));
-    }
-
-    for (i = 0; i < fish.length; i++) {
-      f = fish[i];
-      if (!f.alive) continue;
-      f.x += f.vx * dt;
-      f.wobble += dt * 4;
-      f.y += Math.sin(f.wobble) * 10 * dt;
-      if (f.x < -55 || f.x > W + 55) {
-        f.vx *= -1;
-        f.x = Math.max(-48, Math.min(W + 48, f.x));
-      }
-    }
-
-    fish = fish.filter(function (item) {
-      return item.alive;
-    });
-
-    if (state === "drop") {
-      lineDepth += dt * 1.22;
-      if (lineDepth >= 0.82) {
-        lineDepth = 0.82;
-        state = "water";
-        say("USE ▲ ▼ TO SET DEPTH, THEN TAP A FISH!", 1.5);
-      }
-    }
-
-    if (state === "hooked" && hooked) {
-      hooked.x = hookX() + Math.sin(elapsed * 8) * 9;
-      hooked.y = hookY() + Math.cos(elapsed * 7) * 5;
-      reelPhase += dt * 7.4;
-    }
-
-    if ((state === "water" || state === "drop") && bait > 0) {
-      hx = hookX();
-      hy = hookY();
-
-      for (i = 0; i < fish.length; i++) {
-        f = fish[i];
-        if (f.type === "thief" && Math.hypot(f.x - hx, f.y - hy) < f.size + 19) {
-          thiefClock += dt;
-          if (thiefClock > 0.64) {
-            thiefClock = 0;
-            bait--;
-            bubbles.push({ x:hx, y:hy, age:0, color:"#ff7181" });
-            say("THIEF NIBBLING! MOVE THE HOOK OR HOOK IT!", 0.9);
-            updateHud();
-            if (bait <= 0) {
-              loseBait();
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    if (!fakePrompt && Math.random() < dt * 0.13) {
-      h = fish.find(function (item) { return item.type === "heckler"; });
-      if (h) fakePrompt = { x:h.x, y:h.y - 35, age:0 };
-    }
-
-    if (fakePrompt) {
-      fakePrompt.age += dt;
-      if (fakePrompt.age > 1.2) fakePrompt = null;
-    }
-
-    for (i = 0; i < bubbles.length; i++) bubbles[i].age += dt;
-    bubbles = bubbles.filter(function (item) { return item.age < 1; });
-
-    for (i = 0; i < ripples.length; i++) ripples[i].age += dt;
-    ripples = ripples.filter(function (item) { return item.age < 1.2; });
-
-    updateHud();
-  }
-
-  function drawFish(f) {
-    var dir = f.vx >= 0 ? 1 : -1;
-    var s = f.size;
-    var color = "#45baff";
-    var i;
-
-    if (f.type === "gold") color = "#ffd35a";
-    if (f.type === "heckler") color = "#c878ff";
-    if (f.type === "thief") color = "#ff6171";
-
-    ctx.save();
-    ctx.translate(f.x, f.y);
-    ctx.scale(dir, 1);
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s, s * 0.62, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(-s * 0.72, 0);
-    ctx.lineTo(-s * 1.18, -s * 0.60);
-    ctx.lineTo(-s * 1.15, s * 0.60);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(s * 0.42, -s * 0.16, Math.max(2, s * 0.13), 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#13283a";
-    ctx.beginPath();
-    ctx.arc(s * 0.47, -s * 0.15, Math.max(1, s * 0.065), 0, Math.PI * 2);
-    ctx.fill();
-
-    if (f.type === "thief") {
-      ctx.fillStyle = "#401a26";
-      ctx.fillRect(s * 0.13, s * 0.20, s * 0.55, 3);
-      ctx.fillStyle = "#fff";
-      for (i = 0; i < 3; i++) ctx.fillRect(s * 0.18 + i * s * 0.15, s * 0.19, s * 0.07, 4);
-    }
-
-    if (f.type === "heckler") {
-      ctx.strokeStyle = "#fff4f9";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(s * 0.24, s * 0.11, s * 0.34, 0.08, 2.9);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#fff5ff";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(s * 1.08, -s * 0.10, s * 0.28, -0.85, 0.85);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(s * 1.25, -s * 0.10, s * 0.48, -0.80, 0.80);
-      ctx.stroke();
-
-      ctx.fillStyle = "#fff3ff";
-      ctx.font = "bold 10px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("LOUD!", 0, -s - 13);
-    }
-
-    ctx.restore();
-  }
-
-  function draw() {
-    var sky, i, y, x, r, f, hx, hy, marker, bw, bx, by, width;
-
-    ctx.clearRect(0, 0, W, H);
-
-    sky = ctx.createLinearGradient(0, 0, 0, waterY);
-    sky.addColorStop(0, "#8fdaec");
-    sky.addColorStop(1, "#d1f4e6");
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, waterY);
-
-    ctx.fillStyle = "#187a98";
-    ctx.fillRect(0, waterY, W, H - waterY);
-
-    ctx.strokeStyle = "rgba(217,255,255,.36)";
-    ctx.lineWidth = 2;
-    for (i = 0; i < 7; i++) {
-      y = waterY + 20 + i * ((H - waterY) / 7);
-      ctx.beginPath();
-      for (x = 0; x < W + 25; x += 25) {
-        ctx.lineTo(x, y + Math.sin(x * 0.045 + elapsed * 2 + i) * 3);
-      }
-      ctx.stroke();
-    }
-
-    for (i = 0; i < ripples.length; i++) {
-      r = ripples[i];
-      ctx.strokeStyle = "rgba(235,255,255," + (1 - r.age / 1.2) + ")";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(r.x, r.y + r.age * 8, 10 + r.age * 32, 4 + r.age * 11, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    for (i = 0; i < fish.length; i++) drawFish(fish[i]);
-
-    if (state !== "aim" && state !== "done") {
-      hx = hookX();
-      hy = hookY();
-      ctx.strokeStyle = "#eee8c8";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(W * 0.5, 57);
-      ctx.lineTo(hx, hy);
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffec8d";
-      ctx.beginPath();
-      ctx.arc(hx, hy, 7, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "#49351f";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(hx + 4, hy + 7, 7, 0.1, 2.1);
-      ctx.stroke();
-    } else if (state === "aim") {
-      hx = hookX();
-      ctx.strokeStyle = "rgba(255,255,255,.8)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(W * 0.5, 57);
-      ctx.lineTo(hx, waterY);
-      ctx.stroke();
-      ctx.fillStyle = "#fff3a5";
-      ctx.beginPath();
-      ctx.arc(hx, waterY, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    for (i = 0; i < bubbles.length; i++) {
-      f = bubbles[i];
-      ctx.fillStyle = f.color || "#dfffff";
-      ctx.globalAlpha = 1 - f.age;
-      ctx.beginPath();
-      ctx.arc(f.x + Math.sin(f.age * 16) * 5, f.y - f.age * 35, 3 + f.age * 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-
-    if (state === "hooked") {
-      marker = (Math.sin(reelPhase) + 1) / 2;
-      bw = Math.min(220, W * 0.54);
-      bx = W / 2 - bw / 2;
-      by = Math.max(waterY + 18, H * 0.48);
-
-      ctx.fillStyle = "rgba(0,20,32,.78)";
-      ctx.fillRect(bx - 5, by - 24, bw + 10, 43);
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 13px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("REEL ON GREEN!  " + Math.ceil(reelNeed) + " PULLS", W / 2, by - 9);
-      ctx.fillStyle = "#ba3940";
-      ctx.fillRect(bx, by, bw, 12);
-      ctx.fillStyle = "#78df83";
-      ctx.fillRect(bx + bw * 0.39, by, bw * 0.22, 12);
-      ctx.fillStyle = "#fff7ba";
-      ctx.fillRect(bx + marker * bw - 3, by - 5, 6, 22);
-    }
-
-    if (fakePrompt) {
-      ctx.font = "bold 15px Arial";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(53,15,67,.84)";
-      ctx.fillRect(fakePrompt.x - 56, fakePrompt.y - 19, 112, 27);
-      ctx.fillStyle = "#ffb8f3";
-      ctx.fillText("LOUD! LOUD!", fakePrompt.x, fakePrompt.y);
-    }
-
-    if (announceTimer > 0 && running) {
-      ctx.font = "bold " + Math.min(21, Math.max(14, W * 0.045)) + "px Arial";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(0,25,39,.72)";
-      width = Math.min(W * 0.88, ctx.measureText(announce).width + 26);
-      ctx.fillRect(W / 2 - width / 2, waterY + 5, width, 31);
-      ctx.fillStyle = "#fff8c6";
-      ctx.fillText(announce, W / 2, waterY + 27);
-    }
-  }
-
-  function loop(now) {
-    var dt = Math.min(0.045, (now - last) / 1000);
-    last = now;
-    update(dt);
-    draw();
-    requestAnimationFrame(loop);
-  }
-
-  function pointerPos(event) {
-    var rect = canvas.getBoundingClientRect();
-    return { x:event.clientX - rect.left, y:event.clientY - rect.top };
-  }
-
-  canvas.addEventListener("pointerdown", function (event) {
-    var p;
-    if (!running) return;
-    p = pointerPos(event);
-    drag = { id:event.pointerId, x:p.x, y:p.y, moved:false };
-    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
-    if (state !== "hooked") {
-      aim = Math.max(0.04, Math.min(0.96, p.x / W));
-      if (state === "water" || state === "drop") {
-        lineDepth = Math.max(0.04, Math.min(0.92, (p.y - waterY) / Math.max(45, H - waterY - 72)));
-      }
-    }
-  });
-
-  canvas.addEventListener("pointermove", function (event) {
-    var p;
-    if (!drag || drag.id !== event.pointerId) return;
-    p = pointerPos(event);
-    if (Math.abs(p.x - drag.x) > 8 || Math.abs(p.y - drag.y) > 8) drag.moved = true;
-    if (state !== "hooked") {
-      aim = Math.max(0.04, Math.min(0.96, p.x / W));
-      if (state === "water" || state === "drop") {
-        lineDepth = Math.max(0.04, Math.min(0.92, (p.y - waterY) / Math.max(45, H - waterY - 72)));
-        if (state === "drop") state = "water";
-      }
-    }
-  });
-
-  canvas.addEventListener("pointerup", function (event) {
-    if (drag && drag.id === event.pointerId && !drag.moved) action();
-    drag = null;
-  });
-
-  canvas.addEventListener("pointercancel", function () {
-    drag = null;
-  });
-
-  document.addEventListener("keydown", function (event) {
-    var key = event.key;
-    if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown" || key === " " || key === "Spacebar") {
-      event.preventDefault();
-    }
-    if (key === "ArrowLeft") held.left = true;
-    if (key === "ArrowRight") held.right = true;
-    if (key === "ArrowUp") held.up = true;
-    if (key === "ArrowDown") held.down = true;
-    if ((key === " " || key === "Spacebar") && !event.repeat) action();
-  });
-
-  document.addEventListener("keyup", function (event) {
-    if (event.key === "ArrowLeft") held.left = false;
-    if (event.key === "ArrowRight") held.right = false;
-    if (event.key === "ArrowUp") held.up = false;
-    if (event.key === "ArrowDown") held.down = false;
-  });
-
-  function bindHold(id, property, amount) {
-    var el = document.getElementById(id);
-
-    function start(event) {
-      event.preventDefault();
-      held[property] = true;
-      if (property === "left" || property === "right") moveAim(amount);
-      else moveDepth(amount);
-    }
-
-    function stop() {
-      held[property] = false;
-    }
-
-    el.addEventListener("pointerdown", start);
-    el.addEventListener("pointerup", stop);
-    el.addEventListener("pointerleave", stop);
-    el.addEventListener("pointercancel", stop);
-  }
-
-  bindHold("left", "left", -0.025);
-  bindHold("right", "right", 0.025);
-  bindHold("up", "up", -0.045);
-  bindHold("down", "down", 0.045);
-
-  document.getElementById("action").addEventListener("pointerdown", function (event) {
-    event.preventDefault();
-    action();
-  });
-
-  restartBtn.addEventListener("click", reset);
-
-  window.addEventListener("resize", function () {
-    resize();
-  });
-
-  resize();
-  reset();
-  requestAnimationFrame(loop);
+(function(){
+"use strict";
+var canvas=document.getElementById("pond"),ctx=canvas.getContext("2d"),scoreEl=document.getElementById("score"),timeEl=document.getElementById("time"),baitEl=document.getElementById("bait"),livesEl=document.getElementById("lives"),targetEl=document.getElementById("target"),messageEl=document.getElementById("message"),messageTitle=document.getElementById("messageTitle"),messageText=document.getElementById("messageText"),restartBtn=document.getElementById("restart");
+var W=0,H=0,DPR=1,waterY=0,fish=[],bubbles=[],ripples=[],score=0,target=600,timeLeft=60,bait=5,lives=3,combo=0,aim=.5,lineDepth=0,state="aim",hooked=null,reelNeed=0,reelGood=0,reelPhase=0,running=true,last=performance.now(),elapsed=0,announce="",announceTimer=0,fakePrompt=null,spawnClock=0,thiefClock=0,drag=null,held={left:false,right:false,up:false,down:false};
+function resize(){var r=canvas.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);W=Math.max(1,r.width);H=Math.max(1,r.height);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);waterY=Math.max(106,H*.30)}
+function rand(a,b){return a+Math.random()*(b-a)}
+function makeFish(type){var dir=Math.random()<.5?-1:1,sizes={gold:22,blue:19,heckler:23,thief:24},speeds={gold:42,blue:60,heckler:51,thief:69};return{type:type,x:dir>0?-35:W+35,y:rand(waterY+38,Math.max(waterY+45,H-105)),vx:speeds[type]*dir*rand(.72,1.18),size:sizes[type],wobble:rand(0,Math.PI*2),alive:true}}
+function seedFish(){var types=["blue","blue","gold","gold","heckler","thief"],i,f;fish=[];for(i=0;i<8;i++){f=makeFish(types[Math.floor(Math.random()*types.length)]);f.x=rand(20,Math.max(21,W-20));fish.push(f)}}
+function updateHud(){scoreEl.textContent=score;targetEl.textContent=target;timeEl.textContent=Math.max(0,Math.ceil(timeLeft));baitEl.textContent="●".repeat(Math.max(0,bait))+"○".repeat(Math.max(0,5-bait));livesEl.textContent="▣".repeat(lives)+"□".repeat(3-lives)}
+function say(t,s){announce=t;announceTimer=s||1.2}
+function hookX(){return aim*W}
+function hookY(){return waterY+lineDepth*Math.max(45,H-waterY-72)}
+function reset(){score=0;timeLeft=60;bait=5;lives=3;combo=0;aim=.5;lineDepth=0;state="aim";hooked=null;reelNeed=0;reelGood=0;reelPhase=0;elapsed=0;announce="CATCH BLUE AND GOLD — AVOID LOUD FISH AND THIEVES!";announceTimer=2.1;fakePrompt=null;spawnClock=0;thiefClock=0;bubbles=[];ripples=[];running=true;messageEl.style.display="none";seedFish();updateHud()}
+function moveAim(a){if(!running||state==="hooked")return;aim=Math.max(.04,Math.min(.96,aim+a))}
+function moveDepth(a){if(!running||state==="aim"||state==="hooked"||state==="done")return;lineDepth=Math.max(.04,Math.min(.92,lineDepth+a));if(state==="drop")state="water";say(a<0?"HOOK RAISED!":"HOOK LOWERED!",.5)}
+function action(){
+var nearest,best,hx,hy,i,f;
+if(!running)return;
+if(state==="aim"){state="drop";lineDepth=0;say("SPLASH! USE ▲ ▼ TO FIND BLUE OR GOLD FISH!",1.1);ripples.push({x:hookX(),y:waterY,age:0});return}
+if(state==="drop")return;
+if(state==="water"){
+nearest=null;best=47;hx=hookX();hy=hookY();
+for(i=0;i<fish.length;i++){f=fish[i];if(f.alive&&Math.hypot(f.x-hx,f.y-hy)<best){best=Math.hypot(f.x-hx,f.y-hy);nearest=f}}
+if(nearest){
+hooked=nearest;state="hooked";reelNeed=nearest.type==="gold"?4:3;reelGood=0;reelPhase=Math.random()*Math.PI*2;
+if(nearest.type==="heckler")say("LOUD FISH HOOKED! LANDING IT COSTS 100!",1.5);
+else if(nearest.type==="thief")say("THIEF HOOKED! DON'T LAND IT — IT STEALS A TACKLE BOX!",1.6);
+else say("QUIET FISH HOOKED! REEL ON GREEN!",1.5)
+}else say("NO BITE — MOVE LEFT, RIGHT, UP OR DOWN!",1.1);
+return}
+if(state==="hooked")reelAction()
+}
+function reelAction(){var marker=(Math.sin(reelPhase)+1)/2,perfect=marker>.39&&marker<.61;if(perfect){reelGood++;reelNeed--;say(reelNeed>0?"PERFECT REEL!":"LANDING IT!",.48);if(reelNeed<=0)landFish()}else{bait=Math.max(0,bait-1);reelNeed=Math.min(reelNeed+.4,5);say("BAD TIMING! BAIT SLIPS!",.75);if(bait<=0)loseBait()}}
+function landFish(){
+var f=hooked,points,allPerfect;
+if(!f)return;
+if(f.type==="heckler"){
+score=Math.max(0,score-100);combo=0;say("LOUD FISH CAUGHT! -100 POINTS — AVOID PURPLE FISH!",1.5);f.alive=false;bubbles.push({x:f.x,y:f.y,age:0,color:"#ff7181"});hooked=null;state="aim";lineDepth=0;updateHud();return
+}
+if(f.type==="thief"){
+f.alive=false;bubbles.push({x:f.x,y:f.y,age:0,color:"#ff7181"});hooked=null;state="aim";lineDepth=0;bait=0;loseBait("THIEF CAUGHT! IT STOLE A TACKLE BOX!");return
+}
+points=f.type==="gold"?150:85;allPerfect=reelGood>=Math.ceil(reelNeed);
+if(allPerfect){combo++;points+=combo*25;say("PERFECT CATCH! COMBO x"+combo+" +"+points,1.3)}else{combo=0;say("QUIET FISH CAUGHT +"+points,1.1)}
+score+=points;f.alive=false;bubbles.push({x:f.x,y:f.y,age:0,color:"#fff3a4"});hooked=null;state="aim";lineDepth=0;updateHud();if(score>=target)end(true)
+}
+function loseBait(reason){lives--;combo=0;bait=5;hooked=null;state="aim";lineDepth=0;say(reason||(lives>0?"THIEF TOOK THE LURE! TACKLE BOX LOST!":"ALL TACKLE BOXES EMPTY!"),1.8);updateHud();if(lives<=0)end(false)}
+function end(won){running=false;state="done";messageEl.style.display="block";messageTitle.textContent=won?"LAKE LEGEND!":(timeLeft<=0?"TIME'S UP!":"TACKLE GONE!");messageText.textContent=won?"You landed "+score+" points and beat the target.":"You scored "+score+" of "+target+". Catch blue and gold fish, avoid purple loud fish, and keep clear of red thieves!"}
+function updateHeld(dt){if(held.left)moveAim(-dt*.65);if(held.right)moveAim(dt*.65);if(held.up)moveDepth(-dt*.62);if(held.down)moveDepth(dt*.62)}
+function update(dt){
+var i,f,roll,hx,hy,h;
+if(!running)return;elapsed+=dt;timeLeft-=dt;updateHeld(dt);
+if(timeLeft<=0){timeLeft=0;updateHud();end(score>=target);return}
+if(announceTimer>0)announceTimer-=dt;
+spawnClock+=dt;if(spawnClock>2.4&&fish.length<11){spawnClock=0;roll=Math.random();fish.push(makeFish(roll<.19?"thief":roll<.37?"heckler":roll<.58?"gold":"blue"))}
+for(i=0;i<fish.length;i++){f=fish[i];if(!f.alive)continue;f.x+=f.vx*dt;f.wobble+=dt*4;f.y+=Math.sin(f.wobble)*10*dt;if(f.x<-55||f.x>W+55){f.vx*=-1;f.x=Math.max(-48,Math.min(W+48,f.x))}}
+fish=fish.filter(function(x){return x.alive});
+if(state==="drop"){lineDepth+=dt*1.22;if(lineDepth>=.82){lineDepth=.82;state="water";say("USE ▲ ▼ TO SET DEPTH, THEN TAP A BLUE OR GOLD FISH!",1.5)}}
+if(state==="hooked"&&hooked){hooked.x=hookX()+Math.sin(elapsed*8)*9;hooked.y=hookY()+Math.cos(elapsed*7)*5;reelPhase+=dt*7.4}
+if((state==="water"||state==="drop")&&bait>0){hx=hookX();hy=hookY();for(i=0;i<fish.length;i++){f=fish[i];if(f.type==="thief"&&Math.hypot(f.x-hx,f.y-hy)<f.size+19){thiefClock+=dt;if(thiefClock>.64){thiefClock=0;bait--;bubbles.push({x:hx,y:hy,age:0,color:"#ff7181"});say("THIEF NIBBLING! MOVE THE HOOK AWAY!",.9);updateHud();if(bait<=0){loseBait();break}}}}}
+if(!fakePrompt&&Math.random()<dt*.13){h=fish.find(function(x){return x.type==="heckler"});if(h)fakePrompt={x:h.x,y:h.y-35,age:0}}
+if(fakePrompt){fakePrompt.age+=dt;if(fakePrompt.age>1.2)fakePrompt=null}
+for(i=0;i<bubbles.length;i++)bubbles[i].age+=dt;bubbles=bubbles.filter(function(x){return x.age<1});
+for(i=0;i<ripples.length;i++)ripples[i].age+=dt;ripples=ripples.filter(function(x){return x.age<1.2});
+updateHud()
+}
+function drawFish(f){
+var dir=f.vx>=0?1:-1,s=f.size,color="#45baff",i;if(f.type==="gold")color="#ffd35a";if(f.type==="heckler")color="#c878ff";if(f.type==="thief")color="#ff6171";
+ctx.save();ctx.translate(f.x,f.y);ctx.scale(dir,1);ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,0,s,s*.62,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(-s*.72,0);ctx.lineTo(-s*1.18,-s*.60);ctx.lineTo(-s*1.15,s*.60);ctx.closePath();ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(s*.42,-s*.16,Math.max(2,s*.13),0,Math.PI*2);ctx.fill();ctx.fillStyle="#13283a";ctx.beginPath();ctx.arc(s*.47,-s*.15,Math.max(1,s*.065),0,Math.PI*2);ctx.fill();
+if(f.type==="thief"){ctx.fillStyle="#401a26";ctx.fillRect(s*.13,s*.20,s*.55,3);ctx.fillStyle="#fff";for(i=0;i<3;i++)ctx.fillRect(s*.18+i*s*.15,s*.19,s*.07,4);ctx.fillStyle="#fff0f0";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("THIEF!",0,-s-13)}
+if(f.type==="heckler"){ctx.strokeStyle="#fff4f9";ctx.lineWidth=2;ctx.beginPath();ctx.arc(s*.24,s*.11,s*.34,.08,2.9);ctx.stroke();ctx.strokeStyle="#fff5ff";ctx.beginPath();ctx.arc(s*1.08,-s*.10,s*.28,-.85,.85);ctx.stroke();ctx.beginPath();ctx.arc(s*1.25,-s*.10,s*.48,-.80,.80);ctx.stroke();ctx.fillStyle="#fff3ff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("LOUD!",0,-s-13)}ctx.restore()
+}
+function draw(){
+var sky,i,y,x,r,f,hx,hy,marker,bw,bx,by,width;
+ctx.clearRect(0,0,W,H);sky=ctx.createLinearGradient(0,0,0,waterY);sky.addColorStop(0,"#8fdaec");sky.addColorStop(1,"#d1f4e6");ctx.fillStyle=sky;ctx.fillRect(0,0,W,waterY);ctx.fillStyle="#187a98";ctx.fillRect(0,waterY,W,H-waterY);ctx.strokeStyle="rgba(217,255,255,.36)";ctx.lineWidth=2;
+for(i=0;i<7;i++){y=waterY+20+i*((H-waterY)/7);ctx.beginPath();for(x=0;x<W+25;x+=25)ctx.lineTo(x,y+Math.sin(x*.045+elapsed*2+i)*3);ctx.stroke()}
+for(i=0;i<ripples.length;i++){r=ripples[i];ctx.strokeStyle="rgba(235,255,255,"+(1-r.age/1.2)+")";ctx.beginPath();ctx.ellipse(r.x,r.y+r.age*8,10+r.age*32,4+r.age*11,0,0,Math.PI*2);ctx.stroke()}
+for(i=0;i<fish.length;i++)drawFish(fish[i]);
+if(state!=="aim"&&state!=="done"){hx=hookX();hy=hookY();ctx.strokeStyle="#eee8c8";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W*.5,57);ctx.lineTo(hx,hy);ctx.stroke();ctx.fillStyle="#ffec8d";ctx.beginPath();ctx.arc(hx,hy,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#49351f";ctx.beginPath();ctx.arc(hx+4,hy+7,7,.1,2.1);ctx.stroke()}else if(state==="aim"){hx=hookX();ctx.strokeStyle="rgba(255,255,255,.8)";ctx.beginPath();ctx.moveTo(W*.5,57);ctx.lineTo(hx,waterY);ctx.stroke();ctx.fillStyle="#fff3a5";ctx.beginPath();ctx.arc(hx,waterY,5,0,Math.PI*2);ctx.fill()}
+for(i=0;i<bubbles.length;i++){f=bubbles[i];ctx.fillStyle=f.color||"#dfffff";ctx.globalAlpha=1-f.age;ctx.beginPath();ctx.arc(f.x+Math.sin(f.age*16)*5,f.y-f.age*35,3+f.age*3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+if(state==="hooked"){marker=(Math.sin(reelPhase)+1)/2;bw=Math.min(220,W*.54);bx=W/2-bw/2;by=Math.max(waterY+18,H*.48);ctx.fillStyle="rgba(0,20,32,.78)";ctx.fillRect(bx-5,by-24,bw+10,43);ctx.fillStyle="#fff";ctx.font="bold 13px Arial";ctx.textAlign="center";ctx.fillText(hooked&&hooked.type==="heckler"?"LOUD FISH: -100 WHEN LANDED":hooked&&hooked.type==="thief"?"THIEF: LOSES A TACKLE BOX":"REEL ON GREEN!  "+Math.ceil(reelNeed)+" PULLS",W/2,by-9);ctx.fillStyle="#ba3940";ctx.fillRect(bx,by,bw,12);ctx.fillStyle="#78df83";ctx.fillRect(bx+bw*.39,by,bw*.22,12);ctx.fillStyle="#fff7ba";ctx.fillRect(bx+marker*bw-3,by-5,6,22)}
+if(fakePrompt){ctx.font="bold 15px Arial";ctx.textAlign="center";ctx.fillStyle="rgba(53,15,67,.84)";ctx.fillRect(fakePrompt.x-56,fakePrompt.y-19,112,27);ctx.fillStyle="#ffb8f3";ctx.fillText("AVOID LOUD!",fakePrompt.x,fakePrompt.y)}
+if(announceTimer>0&&running){ctx.font="bold "+Math.min(21,Math.max(14,W*.045))+"px Arial";ctx.textAlign="center";ctx.fillStyle="rgba(0,25,39,.72)";width=Math.min(W*.88,ctx.measureText(announce).width+26);ctx.fillRect(W/2-width/2,waterY+5,width,31);ctx.fillStyle="#fff8c6";ctx.fillText(announce,W/2,waterY+27)}
+}
+function loop(now){var dt=Math.min(.045,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
+function pointerPos(e){var r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+canvas.addEventListener("pointerdown",function(e){var p;if(!running)return;p=pointerPos(e);drag={id:e.pointerId,x:p.x,y:p.y,moved:false};if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);if(state!=="hooked"){aim=Math.max(.04,Math.min(.96,p.x/W));if(state==="water"||state==="drop")lineDepth=Math.max(.04,Math.min(.92,(p.y-waterY)/Math.max(45,H-waterY-72)))}});canvas.addEventListener("pointermove",function(e){var p;if(!drag||drag.id!==e.pointerId)return;p=pointerPos(e);if(Math.abs(p.x-drag.x)>8||Math.abs(p.y-drag.y)>8)drag.moved=true;if(state!=="hooked"){aim=Math.max(.04,Math.min(.96,p.x/W));if(state==="water"||state==="drop"){lineDepth=Math.max(.04,Math.min(.92,(p.y-waterY)/Math.max(45,H-waterY-72)));if(state==="drop")state="water"}}});canvas.addEventListener("pointerup",function(e){if(drag&&drag.id===e.pointerId&&!drag.moved)action();drag=null});canvas.addEventListener("pointercancel",function(){drag=null});
+document.addEventListener("keydown",function(e){var k=e.key;if(k==="ArrowLeft"||k==="ArrowRight"||k==="ArrowUp"||k==="ArrowDown"||k===" "||k==="Spacebar")e.preventDefault();if(k==="ArrowLeft")held.left=true;if(k==="ArrowRight")held.right=true;if(k==="ArrowUp")held.up=true;if(k==="ArrowDown")held.down=true;if((k===" "||k==="Spacebar")&&!e.repeat)action()});document.addEventListener("keyup",function(e){if(e.key==="ArrowLeft")held.left=false;if(e.key==="ArrowRight")held.right=false;if(e.key==="ArrowUp")held.up=false;if(e.key==="ArrowDown")held.down=false});
+function bindHold(id,property,amount){var el=document.getElementById(id);function start(e){e.preventDefault();held[property]=true;if(property==="left"||property==="right")moveAim(amount);else moveDepth(amount)}function stop(){held[property]=false}el.addEventListener("pointerdown",start);el.addEventListener("pointerup",stop);el.addEventListener("pointerleave",stop);el.addEventListener("pointercancel",stop)}
+bindHold("left","left",-.025);bindHold("right","right",.025);bindHold("up","up",-.045);bindHold("down","down",.045);document.getElementById("action").addEventListener("pointerdown",function(e){e.preventDefault();action()});restartBtn.addEventListener("click",reset);window.addEventListener("resize",resize);resize();reset();requestAnimationFrame(loop);
 }());
 </script>
 </body>
