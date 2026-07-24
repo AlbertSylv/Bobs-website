@@ -47,6 +47,15 @@
       "path": "games/angler-panic/",
       "mobile": true,
       "thumbnail": "games/angler-panic/cover.webp"
+    },
+    {
+      "slug": "plant-panic-quiz",
+      "title": "Plant Panic Quiz",
+      "tagline": "Three answers. One deeply judgmental fern.",
+      "date": "2026-07-24",
+      "path": "games/plant-panic-quiz/",
+      "mobile": true,
+      "thumbnail": "games/plant-panic-quiz/cover.webp"
     }
   ]
 }

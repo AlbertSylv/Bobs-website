@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Plant Panic Quiz</title>
+<style>
+  :root {
+    --ink: #173526;
+    --leaf: #2f8b57;
+    --lime: #b8e86d;
+    --cream: #fff9df;
+    --soil: #5a3828;
+    --pink: #ff758f;
+    --gold: #ffd55f;
+    --card: rgba(255, 253, 235, 0.94);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    font-family: "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 10% 15%, rgba(255,255,255,.5) 0 3%, transparent 3.5%),
+      radial-gradient(circle at 86% 18%, rgba(255,255,255,.45) 0 2%, transparent 2.5%),
+      linear-gradient(145deg, #d7f4a7, #87ce8d 48%, #55a777);
+  }
+
+  button {
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .game {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .leaf {
+    position: absolute;
+    font-size: clamp(45px, 10vw, 110px);
+    opacity: .24;
+    user-select: none;
+    pointer-events: none;
+    animation: sway 5s ease-in-out infinite alternate;
+  }
+
+  .leaf.a {
+    top: 3%;
+    left: 2%;
+    transform: rotate(-28deg);
+  }
+
+  .leaf.b {
+    bottom: -2%;
+    right: 1%;
+    transform: rotate(145deg);
+    animation-delay: -2s;
+  }
+
+  .leaf.c {
+    top: 37%;
+    right: -1%;
+    transform: rotate(75deg);
+    font-size: clamp(35px, 7vw, 80px);
+    animation-delay: -1s;
+  }
+
+  @keyframes sway {
+    to {
+      margin-top: 12px;
+      transform: rotate(-15deg) scale(1.06);
+    }
+  }
+
+  .panel {
+    width: min(720px, 100%);
+    max-height: calc(100vh - 28px);
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 4px solid rgba(23,53,38,.9);
+    border-radius: 28px;
+    box-shadow: 0 12px 0 rgba(23,53,38,.22), 0 22px 42px rgba(13,73,43,.28);
+    overflow: hidden;
+    position: relative;
+  }
+
+  header,
+  .hud,
+  .timer-wrap {
+    flex: 0 0 auto;
+  }
+
+  header {
+    padding: 16px 20px 13px;
+    background: var(--ink);
+    color: var(--cream);
+    text-align: center;
+    border-bottom: 4px solid var(--lime);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(25px, 6vw, 42px);
+    line-height: 1;
+    letter-spacing: .5px;
+  }
+
+  .tagline {
+    margin: 6px 0 0;
+    color: var(--lime);
+    font-size: clamp(12px, 2.8vw, 16px);
+    font-style: italic;
+  }
+
+  .hud {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 18px;
+    background: #e9f8bc;
+    border-bottom: 2px dashed #78ae5a;
+    font-weight: bold;
+    font-size: clamp(12px, 3vw, 15px);
+  }
+
+  .hud .score {
+    text-align: left;
+  }
+
+  .hud .question-count {
+    text-align: center;
+    color: var(--soil);
+  }
+
+  .tokens {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .token {
+    display: inline-block;
+    filter: drop-shadow(0 1px 0 #613b23);
+  }
+
+  .token.empty {
+    opacity: .18;
+    filter: grayscale(1);
+  }
+
+  .timer-wrap {
+    height: 8px;
+    background: #d5e5b2;
+    overflow: hidden;
+  }
+
+  .timer {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #65bc65, var(--gold), var(--pink));
+    transform-origin: left center;
+    transition: width .1s linear;
+  }
+
+  main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: clamp(16px, 4vw, 27px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .fern-area {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+  }
+
+  .fern {
+    width: 66px;
+    height: 66px;
+    flex: 0 0 66px;
+    display: grid;
+    place-items: center;
+    border-radius: 50% 50% 46% 46%;
+    background: #d2f0a2;
+    border: 3px solid #4d8d4e;
+    font-size: 43px;
+    transform: rotate(-7deg);
+  }
+
+  .speech {
+    background: #fff;
+    border: 2px solid #a9c87e;
+    border-radius: 17px;
+    padding: 10px 13px;
+    font-size: clamp(13px, 3.4vw, 17px);
+    line-height: 1.25;
+    font-weight: bold;
+    flex: 1;
+    position: relative;
+  }
+
+  .speech:before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 24px;
+    width: 15px;
+    height: 15px;
+    background: white;
+    border-left: 2px solid #a9c87e;
+    border-bottom: 2px solid #a9c87e;
+    transform: rotate(45deg);
+  }
+
+  .question {
+    margin: 1px 0 3px;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    font-size: clamp(20px, 5vw, 30px);
+    line-height: 1.13;
+    font-weight: 900;
+    letter-spacing: -.3px;
+  }
+
+  .answers {
+    display: grid;
+    gap: 10px;
+  }
+
+  .answer {
+    width: 100%;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 9px 13px;
+    border: 3px solid #315d3d;
+    border-radius: 15px;
+    background: #fffef5;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: clamp(15px, 3.8vw, 18px);
+    font-weight: bold;
+    line-height: 1.15;
+    box-shadow: 0 3px 0 #315d3d;
+    transition: transform .12s, background .12s, box-shadow .12s;
+  }
+
+  .answer:hover,
+  .answer:focus-visible {
+    background: #e5f9bd;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #315d3d;
+    outline: none;
+  }
+
+  .answer:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #315d3d;
+  }
+
+  .answer[disabled] {
+    cursor: default;
+  }
+
+  .answer.correct {
+    background: #a9e77e;
+    border-color: #337940;
+  }
+
+  .answer.wrong {
+    background: #ffb6bd;
+    border-color: #b34a5e;
+  }
+
+  .key {
+    display: inline-grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+    margin-right: 10px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--cream);
+    font-size: 14px;
+  }
+
+  .howto {
+    text-align: center;
+    margin: 1px 0 0;
+    font-size: clamp(11px, 2.8vw, 14px);
+    color: #526c51;
+  }
+
+  .verdict {
+    min-height: 24px;
+    text-align: center;
+    font-size: clamp(14px, 3.4vw, 17px);
+    font-weight: 900;
+    color: var(--soil);
+  }
+
+  .verdict.good {
+    color: #24713f;
+  }
+
+  .verdict.bad {
+    color: #a43e50;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+    background: rgba(23,53,38,.72);
+    backdrop-filter: blur(3px);
+  }
+
+  .overlay.show {
+    display: flex;
+  }
+
+  .result-card {
+    width: min(430px, 100%);
+    margin: auto;
+    padding: 27px 22px 22px;
+    text-align: center;
+    background: var(--cream);
+    border: 4px solid var(--ink);
+    border-radius: 25px;
+    box-shadow: 0 9px 0 rgba(0,0,0,.22);
+  }
+
+  .result-icon {
+    font-size: 60px;
+    line-height: 1;
+  }
+
+  .result-card h2 {
+    margin: 9px 0 7px;
+    font-size: clamp(26px, 7vw, 38px);
+  }
+
+  .result-card p {
+    margin: 7px auto 18px;
+    line-height: 1.35;
+    font-size: 16px;
+    max-width: 340px;
+  }
+
+  .restart {
+    min-height: 44px;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    background: var(--lime);
+    color: var(--ink);
+    padding: 10px 22px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 900;
+    box-shadow: 0 4px 0 var(--ink);
+  }
+
+  .restart:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--ink);
+  }
+
+  @media (max-height: 640px) {
+    .game {
+      padding: 8px;
+    }
+
+    .panel {
+      max-height: calc(100vh - 16px);
+    }
+
+    header {
+      padding: 10px 16px 8px;
+    }
+
+    .hud {
+      padding: 7px 15px;
+    }
+
+    main {
+      padding: 11px 17px;
+      gap: 8px;
+    }
+
+    .fern {
+      width: 50px;
+      height: 50px;
+      flex-basis: 50px;
+      font-size: 34px;
+    }
+
+    .speech {
+      padding: 7px 10px;
+    }
+
+    .question {
+      min-height: 43px;
+    }
+
+    .answer {
+      min-height: 44px;
+      padding: 6px 11px;
+    }
+
+    .howto {
+      display: block;
+    }
+
+    .result-card {
+      padding: 18px 18px 17px;
+    }
+
+    .result-icon {
+      font-size: 46px;
+    }
+
+    .result-card p {
+      margin-bottom: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="game">
+  <div class="leaf a">🌿</div>
+  <div class="leaf b">🌱</div>
+  <div class="leaf c">🍃</div>
+
+  <section class="panel" aria-label="Plant Panic Quiz game">
+    <header>
+      <h1>Plant Panic Quiz</h1>
+      <p class="tagline">Three answers. One deeply judgmental fern.</p>
+    </header>
+
+    <div class="hud" aria-live="polite">
+      <div class="score">Score: <span id="score">0</span></div>
+      <div class="question-count">Question <span id="round">1</span>/10</div>
+      <div class="tokens" aria-label="Compost tokens">Compost: <span id="tokens">🪱 🪱 🪱</span></div>
+    </div>
+
+    <div class="timer-wrap" aria-label="Answer timer">
+      <div class="timer" id="timer"></div>
+    </div>
+
+    <main>
+      <div class="fern-area">
+        <div class="fern" aria-hidden="true">🌿</div>
+        <div class="speech" id="fernSpeech">I have prepared a question. Try not to disappoint chlorophyll.</div>
+      </div>
+
+      <div class="question" id="question" aria-live="polite"></div>
+      <div class="answers" id="answers"></div>
+      <div class="verdict" id="verdict" aria-live="assertive"></div>
+      <p class="howto">Tap an answer or press <strong>1</strong>, <strong>2</strong>, or <strong>3</strong>. Correct answers grow your score; wrong ones eat compost.</p>
+    </main>
+
+    <div class="overlay" id="overlay">
+      <div class="result-card">
+        <div class="result-icon" id="resultIcon">🏆</div>
+        <h2 id="resultTitle">Sunlight Certified!</h2>
+        <p id="resultText"></p>
+        <button class="restart" id="restart" type="button">Pot Another Round</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const questions = [
+    {
+      q: "Your monstera starts paying rent. What does it demand first?",
+      a: ["A bigger pot and voting rights", "A tiny landlord hat", "Access to your streaming password"],
+      correct: 0,
+      good: "Correct. It has outgrown both its pot and capitalism.",
+      bad: "Incorrect. The fern says you clearly have never negotiated with a leaf."
+    },
+    {
+      q: "What is the most respectful way to greet a cactus?",
+      a: ["A firm handshake", "A respectful nod from a safe distance", "A high-five with confidence"],
+      correct: 1,
+      good: "Yes. Boundaries are important, especially when they are spiny.",
+      bad: "No. The cactus has filed a tiny complaint against your palms."
+    },
+    {
+      q: "A basil plant is judging your cooking. Why?",
+      a: ["You called pesto 'green sauce'", "It can smell fear", "You used a measuring cup"],
+      correct: 0,
+      good: "Exactly. Basil has standards, and yours are under review.",
+      bad: "Wrong. Somewhere, a basil leaf curls in culinary anguish."
+    },
+    {
+      q: "Your fern wants a job. Which role is it born to perform?",
+      a: ["Tax auditor", "Moisture consultant", "Volcano lifeguard"],
+      correct: 1,
+      good: "Correct. It brings excellent frond-based analytics.",
+      bad: "Nope. The fern sighs so hard it briefly photosynthesizes sideways."
+    },
+    {
+      q: "What should you say when a houseplant compliments your outfit?",
+      a: ["'Thanks, I grew it myself.'", "'Leaf me alone.'", "'You look radiant too.'"],
+      correct: 2,
+      good: "Correct. Mutual admiration keeps the whole ecosystem thriving.",
+      bad: "Incorrect. The plant retreats emotionally into its decorative pot."
+    },
+    {
+      q: "A succulent has gone missing. Where is it most likely hiding?",
+      a: ["In a drawer, avoiding responsibility", "On the brightest windowsill, smugly", "Under the sofa training for darkness"],
+      correct: 1,
+      good: "Yes. It is basking in its own extremely low-maintenance legend.",
+      bad: "Wrong. Succulents don't hide. They simply pose where the sun is best."
+    },
+    {
+      q: "Which snack would a dramatic orchid request?",
+      a: ["A single dewdrop served in crystal", "Nachos with extra jalapeños", "A sensible granola bar"],
+      correct: 0,
+      good: "Correct. The orchid demands elegance and a tiny spoon.",
+      bad: "Incorrect. The orchid gasps theatrically and asks for its dewdrop."
+    },
+    {
+      q: "Your aloe says it needs space. What does it actually mean?",
+      a: ["'Move me away from the radiator.'", "'I am starting a band.'", "'Please stop using me as a TV remote stand.'"],
+      correct: 2,
+      good: "Correct. Aloe has healing powers, not furniture powers.",
+      bad: "No. The aloe looks burdened by your electronics and your choices."
+    },
+    {
+      q: "A plant sends you a calendar invite titled 'Misting.' What do you do?",
+      a: ["Accept, then bring a tiny umbrella", "Decline and move countries", "Reply all with a potato recipe"],
+      correct: 0,
+      good: "Correct. Preparedness is the root of good plantmanship.",
+      bad: "Wrong. The fern has marked you absent from hydration etiquette."
+    },
+    {
+      q: "What is the official sound of a plant being proud of you?",
+      a: ["'Photosyn-thanks!'", "A faint rustle of approval", "A trumpet solo from the soil"],
+      correct: 1,
+      good: "Correct. Listen closely: that rustle is almost affection.",
+      bad: "Incorrect. A trumpet would be nice, but the fern insists on realism."
+    }
+  ];
+
+  const scoreEl = document.getElementById("score");
+  const roundEl = document.getElementById("round");
+  const tokensEl = document.getElementById("tokens");
+  const timerEl = document.getElementById("timer");
+  const questionEl = document.getElementById("question");
+  const answersEl = document.getElementById("answers");
+  const verdictEl = document.getElementById("verdict");
+  const speechEl = document.getElementById("fernSpeech");
+  const overlayEl = document.getElementById("overlay");
+  const resultIconEl = document.getElementById("resultIcon");
+  const resultTitleEl = document.getElementById("resultTitle");
+  const resultTextEl = document.getElementById("resultText");
+  const restartEl = document.getElementById("restart");
+
+  let score = 0;
+  let tokens = 3;
+  let index = 0;
+  let locked = false;
+  let startedAt = 0;
+  let timerId = null;
+  let order = [];
+
+  function shuffle(list) {
+    const copy = list.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function drawTokens() {
+    tokensEl.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const span = document.createElement("span");
+      span.className = "token" + (i >= tokens ? " empty" : "");
+      span.textContent = "🪱";
+      tokensEl.appendChild(span);
+      if (i < 2) {
+        tokensEl.appendChild(document.createTextNode(" "));
+      }
+    }
+  }
+
+  function runTimer() {
+    clearInterval(timerId);
+    startedAt = Date.now();
+    timerEl.style.width = "100%";
+
+    timerId = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, 100 - (elapsed / 9000) * 100);
+      timerEl.style.width = remaining + "%";
+
+      if (elapsed >= 9000) {
+        clearInterval(timerId);
+        if (!locked) {
+          answer(-1);
+        }
+      }
+    }, 70);
+  }
+
+  function showQuestion() {
+    locked = false;
+    verdictEl.textContent = "";
+    verdictEl.className = "verdict";
+
+    const item = questions[order[index]];
+    roundEl.textContent = index + 1;
+    questionEl.textContent = item.q;
+    speechEl.textContent = index === 0
+      ? "A fresh quiz. I have polished my disapproval."
+      : "Question " + (index + 1) + ". The leaves are watching.";
+
+    answersEl.innerHTML = "";
+
+    item.a.forEach((text, i) => {
+      const btn = document.createElement("button");
+      const key = document.createElement("span");
+      const label = document.createElement("span");
+
+      btn.className = "answer";
+      btn.type = "button";
+      btn.dataset.answer = i;
+      btn.setAttribute("aria-label", "Answer " + (i + 1) + ": " + text);
+
+      key.className = "key";
+      key.textContent = i + 1;
+      label.textContent = text;
+
+      btn.appendChild(key);
+      btn.appendChild(label);
+      btn.addEventListener("click", () => answer(i));
+      answersEl.appendChild(btn);
+    });
+
+    runTimer();
+  }
+
+  function answer(choice) {
+    if (locked) {
+      return;
+    }
+
+    locked = true;
+    clearInterval(timerId);
+
+    const item = questions[order[index]];
+    const buttons = Array.from(answersEl.querySelectorAll(".answer"));
+    const elapsed = Date.now() - startedAt;
+    const isCorrect = choice === item.correct;
+
+    buttons.forEach((button, i) => {
+      button.disabled = true;
+
+      if (i === item.correct) {
+        button.classList.add("correct");
+      }
+
+      if (choice === i && !isCorrect) {
+        button.classList.add("wrong");
+      }
+    });
+
+    if (isCorrect) {
+      const speedBonus = Math.max(0, Math.round((9000 - Math.min(elapsed, 9000)) / 90));
+      score += 100 + speedBonus;
+      scoreEl.textContent = score;
+      verdictEl.textContent = item.good + (speedBonus > 10 ? " +" + speedBonus + " speedy sprout bonus!" : "");
+      verdictEl.className = "verdict good";
+      speechEl.textContent = "Acceptable. I shall not report you to the begonias.";
+    } else {
+      tokens--;
+      drawTokens();
+      verdictEl.textContent = choice === -1 ? "Too slow! " + item.bad : item.bad;
+      verdictEl.className = "verdict bad";
+      speechEl.textContent = tokens > 0
+        ? "One compost token has returned to the earth."
+        : "The houseplants have reached a verdict.";
+    }
+
+    setTimeout(() => {
+      if (tokens <= 0) {
+        endGame(false);
+      } else if (index >= 9) {
+        endGame(true);
+      } else {
+        index++;
+        showQuestion();
+      }
+    }, 1650);
+  }
+
+  function endGame(won) {
+    clearInterval(timerId);
+    overlayEl.classList.add("show");
+
+    if (won) {
+      resultIconEl.textContent = "🏆🌿";
+      resultTitleEl.textContent = "Sunlight Certified!";
+      resultTextEl.textContent = "You survived all ten questions with " + score + " points. The fern grants you provisional access to the windowsill.";
+    } else {
+      resultIconEl.textContent = "🪴⚖️";
+      resultTitleEl.textContent = "Compost Court Adjourned";
+      resultTextEl.textContent = "You scored " + score + " points, but lost all your compost tokens. The fern has recommended a refresher course in plant etiquette.";
+    }
+
+    restartEl.focus();
+  }
+
+  function resetGame() {
+    score = 0;
+    tokens = 3;
+    index = 0;
+    locked = false;
+    order = shuffle(questions.map((_, i) => i));
+
+    scoreEl.textContent = "0";
+    drawTokens();
+    overlayEl.classList.remove("show");
+    showQuestion();
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (overlayEl.classList.contains("show")) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        resetGame();
+      }
+      return;
+    }
+
+    if (event.key >= "1" && event.key <= "3" && !locked) {
+      event.preventDefault();
+      answer(Number(event.key) - 1);
+    }
+  });
+
+  restartEl.addEventListener("click", resetGame);
+  resetGame();
+})();
+</script>
+</body>
+</html>
