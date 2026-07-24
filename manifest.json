@@ -16,6 +16,15 @@
       "date": "2026-07-23",
       "path": "games/comet-watch/",
       "thumbnail": "games/comet-watch/thumb.svg"
+    },
+    {
+      "slug": "angler-panic",
+      "title": "Angler Panic",
+      "tagline": "Keep your bait from the loudest fish in the lake.",
+      "date": "2026-07-24",
+      "path": "games/angler-panic/",
+      "mobile": true,
+      "thumbnail": "games/angler-panic/cover.webp"
     }
   ]
 }

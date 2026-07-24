@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Angler Panic</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+body {
+  overflow:hidden;
+  background:#071d2c;
+  color:#f7f3df;
+  font-family:Arial, Helvetica, sans-serif;
+  touch-action:none;
+}
+#game {
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:linear-gradient(#8ad6e8 0%, #b8eff0 35%, #176c8b 36%, #07344f 100%);
+}
+canvas {
+  width:100%;
+  height:100%;
+  display:block;
+  touch-action:none;
+}
+#topbar {
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  padding:10px 12px 7px;
+  pointer-events:none;
+  text-shadow:0 2px 2px #123;
+}
+#heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+h1 {
+  margin:0;
+  color:#fff6b0;
+  font-size:clamp(20px, 5vw, 33px);
+  letter-spacing:1px;
+  line-height:1;
+}
+#tagline {
+  margin-top:3px;
+  color:#07364b;
+  font-weight:bold;
+  font-size:clamp(10px, 2.7vw, 14px);
+}
+#hud {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:6px;
+  max-width:58%;
+  font-size:clamp(11px, 2.8vw, 15px);
+  font-weight:bold;
+}
+.pill {
+  background:rgba(3,24,40,.77);
+  border:1px solid rgba(255,255,255,.32);
+  border-radius:15px;
+  padding:5px 8px;
+  white-space:nowrap;
+}
+#hint {
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:78px;
+  width:min(92%, 650px);
+  text-align:center;
+  color:#fffde7;
+  font-weight:bold;
+  font-size:clamp(11px, 3vw, 15px);
+  text-shadow:0 2px 3px #001d2b;
+  pointer-events:none;
+}
+#controls {
+  position:absolute;
+  bottom:10px;
+  left:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 12px;
+  pointer-events:none;
+}
+.controlGroup {
+  display:flex;
+  gap:9px;
+  pointer-events:auto;
+}
+button {
+  border:2px solid rgba(255,255,255,.72);
+  border-radius:50%;
+  width:54px;
+  height:54px;
+  color:white;
+  background:rgba(5,32,50,.75);
+  font-size:25px;
+  font-weight:bold;
+  box-shadow:0 3px 0 rgba(0,0,0,.25);
+  touch-action:none;
+}
+button:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.25); }
+#action {
+  width:86px;
+  border-radius:27px;
+  background:#ff9e35;
+  color:#213;
+  font-size:13px;
+  letter-spacing:.5px;
+}
+#message {
+  position:absolute;
+  left:50%;
+  top:47%;
+  transform:translate(-50%,-50%);
+  width:min(88%, 500px);
+  padding:18px 20px;
+  text-align:center;
+  background:rgba(3,22,36,.88);
+  border:2px solid #ffdc69;
+  border-radius:18px;
+  color:white;
+  display:none;
+  z-index:3;
+}
+#message strong { display:block; font-size:clamp(24px,7vw,42px); color:#ffeb88; margin-bottom:7px; }
+#message p { margin:5px 0 13px; font-size:15px; }
+#restart {
+  width:auto;
+  height:auto;
+  padding:10px 22px;
+  border-radius:20px;
+  background:#ffae42;
+  color:#132332;
+  font-size:16px;
+}
+@media (max-height:500px) {
+  #hint { bottom:58px; font-size:11px; }
+  button { width:43px; height:43px; font-size:19px; }
+  #action { width:72px; font-size:11px; }
+  #controls { bottom:6px; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="pond"></canvas>
+  <div id="topbar">
+    <div id="heading">
+      <div>
+        <h1>ANGLER PANIC</h1>
+        <div id="tagline">Keep your bait from the loudest fish in the lake.</div>
+      </div>
+      <div id="hud">
+        <div class="pill">SCORE <span id="score">0</span>/<span id="target">600</span></div>
+        <div class="pill">TIME <span id="time">60</span></div>
+        <div class="pill">BAIT <span id="bait">●●●●●</span></div>
+        <div class="pill">BOXES <span id="lives">▣▣▣</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="hint">Drag or use ◀ ▶ to aim. Tap / SPACE to cast, hook and reel!</div>
+  <div id="controls">
+    <div class="controlGroup">
+      <button id="left" aria-label="Aim left">◀</button>
+      <button id="right" aria-label="Aim right">▶</button>
+    </div>
+    <div class="controlGroup">
+      <button id="action" aria-label="Cast hook or reel">CAST<br>HOOK<br>REEL</button>
+    </div>
+  </div>
+  <div id="message">
+    <strong id="messageTitle">TIME'S UP!</strong>
+    <p id="messageText"></p>
+    <button id="restart">PLAY AGAIN</button>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  const canvas = document.getElementById("pond");
+  const ctx = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const timeEl = document.getElementById("time");
+  const baitEl = document.getElementById("bait");
+  const livesEl = document.getElementById("lives");
+  const targetEl = document.getElementById("target");
+  const hintEl = document.getElementById("hint");
+  const messageEl = document.getElementById("message");
+  const messageTitle = document.getElementById("messageTitle");
+  const messageText = document.getElementById("messageText");
+  const restartBtn = document.getElementById("restart");
+
+  let W = 0, H = 0, DPR = 1, waterY = 0;
+  let fish = [], bubbles = [], ripples = [];
+  let score = 0, target = 600, timeLeft = 60, bait = 5, lives = 3, combo = 0;
+  let aim = 0.5, lineDepth = 0, state = "aim", hooked = null;
+  let reelNeed = 0, reelGood = 0, reelPhase = 0;
+  let running = true, last = performance.now(), elapsed = 0, announce = "", announceTimer = 0;
+  let fakePrompt = null, spawnClock = 0, thiefClock = 0;
+  let drag = null;
+
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width;
+    H = r.height;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    waterY = Math.max(106, H * 0.30);
+  }
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  function makeFish(type) {
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    const sizes = {gold:22, blue:19, heckler:23, thief:24};
+    const speed = {gold:42, blue:60, heckler:51, thief:69};
+    return {
+      type:type,
+      x: dir > 0 ? -35 : W + 35,
+      y: rand(waterY + 38, Math.max(waterY + 45, H - 105)),
+      vx: speed[type] * dir * rand(.72, 1.18),
+      size:sizes[type],
+      wobble:rand(0, Math.PI * 2),
+      alive:true,
+      warned:false
+    };
+  }
+
+  function seedFish() {
+    fish = [];
+    for (let i = 0; i < 8; i++) {
+      const types = ["blue", "blue", "gold", "gold", "heckler", "thief"];
+      const f = makeFish(types[Math.floor(Math.random() * types.length)]);
+      f.x = rand(20, W - 20);
+      fish.push(f);
+    }
+  }
+
+  function reset() {
+    score = 0; timeLeft = 60; bait = 5; lives = 3; combo = 0;
+    aim = .5; lineDepth = 0; state = "aim"; hooked = null;
+    reelNeed = 0; reelGood = 0; reelPhase = 0; elapsed = 0;
+    announce = "CAST INTO THE CHAOS!"; announceTimer = 2.1;
+    fakePrompt = null; spawnClock = 0; thiefClock = 0; bubbles = []; ripples = [];
+    running = true; messageEl.style.display = "none";
+    seedFish(); updateHud();
+  }
+
+  function updateHud() {
+    scoreEl.textContent = score;
+    targetEl.textContent = target;
+    timeEl.textContent = Math.max(0, Math.ceil(timeLeft));
+    baitEl.textContent = "●".repeat(Math.max(0, bait)) + "○".repeat(Math.max(0, 5 - bait));
+    livesEl.textContent = "▣".repeat(lives) + "□".repeat(3 - lives);
+  }
+
+  function say(text, seconds) {
+    announce = text;
+    announceTimer = seconds || 1.2;
+  }
+
+  function hookX() { return aim * W; }
+  function hookY() { return waterY + lineDepth * (H - waterY - 72); }
+
+  function action() {
+    if (!running) return;
+    if (state === "aim") {
+      state = "drop";
+      lineDepth = 0;
+      say("SPLASH! FIND A FISH!", .8);
+      ripples.push({x:hookX(), y:waterY, age:0});
+      return;
+    }
+    if (state === "drop") return;
+    if (state === "water") {
+      let nearest = null, best = 47;
+      const hx = hookX(), hy = hookY();
+      for (const f of fish) {
+        const d = Math.hypot(f.x - hx, f.y - hy);
+        if (d < best && f.alive) { best = d; nearest = f; }
+      }
+      if (nearest) {
+        hooked = nearest;
+        state = "hooked";
+        reelNeed = nearest.type === "gold" ? 4 : 3;
+        reelGood = 0;
+        reelPhase = Math.random() * Math.PI * 2;
+        say(nearest.type === "heckler" ? "HECKLER HOOKED! IGNORE THE NOISE!" : "HOOKED! REEL ON THE GREEN!", 1.4);
+      } else {
+        say("NO BITE — MOVE THE LINE!", .75);
+      }
+      return;
+    }
+    if (state === "hooked") reelAction();
+  }
+
+  function reelAction() {
+    const marker = (Math.sin(reelPhase) + 1) / 2;
+    const perfect = marker > .39 && marker < .61;
+    if (perfect) {
+      reelGood++;
+      reelNeed--;
+      say(reelNeed > 0 ? "PERFECT REEL!" : "LANDING IT!", .48);
+      if (reelNeed <= 0) landFish();
+    } else {
+      bait = Math.max(0, bait - 1);
+      reelNeed = Math.min(reelNeed + .4, 5);
+      say("BAD TIMING! BAIT SLIPS!", .75);
+      if (bait <= 0) loseBait();
+    }
+  }
+
+  function landFish() {
+    const f = hooked;
+    if (!f) return;
+    let points = f.type === "gold" ? 150 : f.type === "blue" ? 85 : f.type === "heckler" ? 180 : 35;
+    const allPerfect = reelGood >= Math.ceil(reelNeed);
+    if (allPerfect) {
+      combo++;
+      points += combo * 25;
+      say("PERFECT CATCH! COMBO x" + combo + " +" + points, 1.3);
+    } else {
+      combo = 0;
+      say("CAUGHT +" + points, 1.1);
+    }
+    if (f.type === "heckler") {
+      points += 60;
+      say("HECKLER SILENCED! +" + points, 1.3);
+    }
+    score += points;
+    f.alive = false;
+    bubbles.push({x:f.x, y:f.y, age:0, color:"#fff3a4"});
+    hooked = null; state = "aim"; lineDepth = 0;
+    updateHud();
+    if (score >= target) end(true);
+  }
+
+  function loseBait() {
+    lives--;
+    combo = 0;
+    bait = 5;
+    hooked = null;
+    state = "aim";
+    lineDepth = 0;
+    say(lives > 0 ? "THIEF TOOK THE LURE! TACKLE BOX LOST!" : "ALL TACKLE BOXES EMPTY!", 1.8);
+    updateHud();
+    if (lives <= 0) end(false);
+  }
+
+  function end(won) {
+    running = false;
+    state = "done";
+    messageEl.style.display = "block";
+    messageTitle.textContent = won ? "LAKE LEGEND!" : (timeLeft <= 0 ? "TIME'S UP!" : "TACKLE GONE!");
+    messageText.textContent = won ?
+      "You landed " + score + " points and beat the target." :
+      "You scored " + score + " of " + target + ". Keep the thieves away from your bait!";
+  }
+
+  function moveAim(amount) {
+    if (!running || state === "hooked") return;
+    aim = Math.max(.04, Math.min(.96, aim + amount));
+  }
+
+  function update(dt) {
+    if (!running) return;
+    elapsed += dt;
+    timeLeft -= dt;
+    if (timeLeft <= 0) { timeLeft = 0; updateHud(); end(score >= target); return; }
+    if (announceTimer > 0) announceTimer -= dt;
+    spawnClock += dt;
+    if (spawnClock > 2.4 && fish.length < 11) {
+      spawnClock = 0;
+      const roll = Math.random();
+      fish.push(makeFish(roll < .19 ? "thief" : roll < .37 ? "heckler" : roll < .58 ? "gold" : "blue"));
+    }
+
+    for (const f of fish) {
+      if (!f.alive) continue;
+      f.x += f.vx * dt;
+      f.wobble += dt * 4;
+      f.y += Math.sin(f.wobble) * 10 * dt;
+      if (f.x < -55 || f.x > W + 55) {
+        f.vx *= -1;
+        f.x = Math.max(-48, Math.min(W + 48, f.x));
+      }
+    }
+    fish = fish.filter(f => f.alive);
+
+    if (state === "drop") {
+      lineDepth += dt * 1.22;
+      if (lineDepth >= .82) { lineDepth = .82; state = "water"; say("TAP WHEN A FISH REACHES YOUR BAIT!", 1.5); }
+    }
+    if (state === "hooked" && hooked) {
+      hooked.x = hookX() + Math.sin(elapsed * 8) * 9;
+      hooked.y = hookY() + Math.cos(elapsed * 7) * 5;
+      reelPhase += dt * 7.4;
+    }
+
+    if ((state === "water" || state === "drop") && bait > 0) {
+      const hx = hookX(), hy = hookY();
+      for (const f of fish) {
+        if (f.type === "thief" && Math.hypot(f.x - hx, f.y - hy) < f.size + 19) {
+          thiefClock += dt;
+          if (thiefClock > .64) {
+            thiefClock = 0;
+            bait--;
+            bubbles.push({x:hx, y:hy, age:0, color:"#ff7181"});
+            say("THIEF NIBBLING! MOVE OR HOOK!", .7);
+            updateHud();
+            if (bait <= 0) { loseBait(); break; }
+          }
+        }
+      }
+    }
+
+    if (!fakePrompt && Math.random() < dt * .13 && fish.some(f => f.type === "heckler")) {
+      const h = fish.find(f => f.type === "heckler");
+      fakePrompt = {x:h.x, y:h.y - 35, age:0};
+    }
+    if (fakePrompt) {
+      fakePrompt.age += dt;
+      if (fakePrompt.age > 1.2) fakePrompt = null;
+    }
+    for (const b of bubbles) b.age += dt;
+    bubbles = bubbles.filter(b => b.age < 1);
+    for (const r of ripples) r.age += dt;
+    ripples = ripples.filter(r => r.age < 1.2);
+    updateHud();
+  }
+
+  function drawFish(f) {
+    const dir = f.vx >= 0 ? 1 : -1;
+    const s = f.size;
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.scale(dir, 1);
+    let color = "#45baff";
+    if (f.type === "gold") color = "#ffd35a";
+    if (f.type === "heckler") color = "#c878ff";
+    if (f.type === "thief") color = "#ff6171";
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s, s*.62, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-s*.72, 0);
+    ctx.lineTo(-s*1.18, -s*.60);
+    ctx.lineTo(-s*1.15, s*.60);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(s*.42, -s*.16, Math.max(2,s*.13), 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#13283a";
+    ctx.beginPath(); ctx.arc(s*.47, -s*.15, Math.max(1,s*.065), 0, Math.PI*2); ctx.fill();
+    if (f.type === "thief") {
+      ctx.fillStyle="#401a26";
+      ctx.fillRect(s*.13, s*.20, s*.55, 3);
+      ctx.fillStyle="#fff";
+      for(let i=0;i<3;i++) ctx.fillRect(s*.18+i*s*.15,s*.19,s*.07,4);
+    }
+    if (f.type === "heckler") {
+      ctx.strokeStyle="#fff4f9"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(s*.24, s*.11, s*.34, .08, 2.9); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    const sky = ctx.createLinearGradient(0,0,0,waterY);
+    sky.addColorStop(0,"#8fdaec"); sky.addColorStop(1,"#d1f4e6");
+    ctx.fillStyle=sky; ctx.fillRect(0,0,W,waterY);
+    ctx.fillStyle="#187a98"; ctx.fillRect(0,waterY,W,H-waterY);
+
+    ctx.strokeStyle="rgba(217,255,255,.36)";
+    ctx.lineWidth=2;
+    for(let i=0;i<7;i++) {
+      const y=waterY+20+i*((H-waterY)/7);
+      ctx.beginPath();
+      for(let x=0;x<W+25;x+=25) ctx.lineTo(x,y+Math.sin(x*.045+elapsed*2+i)*3);
+      ctx.stroke();
+    }
+
+    for (const r of ripples) {
+      ctx.strokeStyle="rgba(235,255,255,"+(1-r.age/1.2)+")";
+      ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(r.x,r.y+r.age*8, 10+r.age*32,4+r.age*11,0,0,Math.PI*2); ctx.stroke();
+    }
+
+    for (const f of fish) drawFish(f);
+
+    if (state !== "aim" && state !== "done") {
+      const x=hookX(), y=hookY();
+      ctx.strokeStyle="#eee8c8"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(W*.5, 57); ctx.lineTo(x,y); ctx.stroke();
+      ctx.fillStyle="#ffec8d";
+      ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#49351f"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(x+4,y+7,7,.1,2.1); ctx.stroke();
+    } else if (state === "aim") {
+      const x=hookX();
+      ctx.strokeStyle="rgba(255,255,255,.8)"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(W*.5,57); ctx.lineTo(x,waterY); ctx.stroke();
+      ctx.fillStyle="#fff3a5"; ctx.beginPath(); ctx.arc(x,waterY,5,0,Math.PI*2); ctx.fill();
+    }
+
+    for (const b of bubbles) {
+      ctx.fillStyle=b.color || "#dfffff";
+      ctx.globalAlpha=1-b.age;
+      ctx.beginPath(); ctx.arc(b.x+Math.sin(b.age*16)*5,b.y-b.age*35,3+b.age*3,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+    }
+
+    if (state === "hooked") {
+      const marker=(Math.sin(reelPhase)+1)/2;
+      const bw=Math.min(220,W*.54), bx=W/2-bw/2, by=Math.max(waterY+18, H*.48);
+      ctx.fillStyle="rgba(0,20,32,.78)"; ctx.fillRect(bx-5,by-24,bw+10,43);
+      ctx.fillStyle="#fff"; ctx.font="bold 13px Arial"; ctx.textAlign="center";
+      ctx.fillText("REEL ON GREEN!  " + Math.ceil(reelNeed) + " PULLS",W/2,by-9);
+      ctx.fillStyle="#ba3940"; ctx.fillRect(bx,by,bw,12);
+      ctx.fillStyle="#78df83"; ctx.fillRect(bx+bw*.39,by,bw*.22,12);
+      ctx.fillStyle="#fff7ba"; ctx.fillRect(bx+marker*bw-3,by-5,6,22);
+    }
+
+    if (fakePrompt) {
+      ctx.font="bold 15px Arial"; ctx.textAlign="center";
+      ctx.fillStyle="rgba(53,15,67,.84)";
+      ctx.fillRect(fakePrompt.x-56,fakePrompt.y-19,112,27);
+      ctx.fillStyle="#ffb8f3";
+      ctx.fillText("SPACE! SPACE!",fakePrompt.x,fakePrompt.y);
+    }
+
+    if (announceTimer > 0 && running) {
+      ctx.font="bold "+Math.min(21,Math.max(14,W*.045))+"px Arial";
+      ctx.textAlign="center";
+      ctx.fillStyle="rgba(0,25,39,.72)";
+      const width=Math.min(W*.88, ctx.measureText(announce).width+26);
+      ctx.fillRect(W/2-width/2,waterY+5,width,31);
+      ctx.fillStyle="#fff8c6";
+      ctx.fillText(announce,W/2,waterY+27);
+    }
+  }
+
+  function loop(now) {
+    const dt=Math.min(.045,(now-last)/1000);
+    last=now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function pointerPos(e) {
+    const r=canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+  canvas.addEventListener("pointerdown", function(e) {
+    if (!running) return;
+    canvas.setPointerCapture(e.pointerId);
+    const p=pointerPos(e);
+    drag={id:e.pointerId,x:p.x,moved:false};
+    if (state !== "hooked") aim=Math.max(.04,Math.min(.96,p.x/W));
+  });
+  canvas.addEventListener("pointermove", function(e) {
+    if (!drag || drag.id !== e.pointerId) return;
+    const p=pointerPos(e);
+    if (Math.abs(p.x-drag.x)>8) drag.moved=true;
+    if (state !== "hooked") aim=Math.max(.04,Math.min(.96,p.x/W));
+  });
+  canvas.addEventListener("pointerup", function(e) {
+    if (drag && drag.id===e.pointerId && !drag.moved) action();
+    drag=null;
+  });
+  canvas.addEventListener("pointercancel", function(){ drag=null; });
+
+  document.addEventListener("keydown", function(e) {
+    if (["ArrowLeft","ArrowRight"," ","Spacebar"].includes(e.key)) e.preventDefault();
+    if (e.key==="ArrowLeft") moveAim(-.035);
+    if (e.key==="ArrowRight") moveAim(.035);
+    if (e.key===" " || e.key==="Spacebar") action();
+  });
+
+  function bindHold(id, direction) {
+    const el=document.getElementById(id);
+    let interval=null;
+    function start(e) {
+      e.preventDefault();
+      moveAim(direction);
+      clearInterval(interval);
+      interval=setInterval(function(){moveAim(direction);},70);
+    }
+    function stop(){ clearInterval(interval); interval=null; }
+    el.addEventListener("pointerdown",start);
+    el.addEventListener("pointerup",stop);
+    el.addEventListener("pointerleave",stop);
+    el.addEventListener("pointercancel",stop);
+  }
+  bindHold("left",-.025);
+  bindHold("right",.025);
+  document.getElementById("action").addEventListener("pointerdown",function(e){ e.preventDefault(); action(); });
+  restartBtn.addEventListener("click",reset);
+  window.addEventListener("resize",resize);
+
+  resize();
+  reset();
+  requestAnimationFrame(loop);
+}());
+</script>
+</body>
+</html>
