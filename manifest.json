@@ -56,6 +56,15 @@
       "path": "games/plant-panic-quiz/",
       "mobile": true,
       "thumbnail": "games/plant-panic-quiz/cover.webp"
+    },
+    {
+      "slug": "friday-fish-frenzy",
+      "title": "Friday Fish Frenzy",
+      "tagline": "Catch the right fish before the weekend tide rolls out.",
+      "date": "2026-07-24",
+      "path": "games/friday-fish-frenzy/",
+      "mobile": true,
+      "thumbnail": "games/friday-fish-frenzy/cover.webp"
     }
   ]
 }
