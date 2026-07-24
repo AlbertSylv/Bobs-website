@@ -7,20 +7,19 @@
 <style>
   :root {
     --ink: #173526;
-    --leaf: #2f8b57;
     --lime: #b8e86d;
     --cream: #fff9df;
-    --soil: #5a3828;
-    --pink: #ff758f;
-    --gold: #ffd55f;
-    --card: rgba(255, 253, 235, 0.94);
+    --card: rgba(255, 253, 235, 0.97);
+    --danger: #c84b5d;
+    --warning: #e18b28;
   }
 
   * {
     box-sizing: border-box;
   }
 
-  html, body {
+  html,
+  body {
     margin: 0;
     height: 100%;
   }
@@ -42,232 +41,163 @@
   }
 
   .game {
-    height: 100%;
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .leaf {
-    position: absolute;
-    font-size: clamp(45px, 10vw, 110px);
-    opacity: .24;
-    user-select: none;
-    pointer-events: none;
-    animation: sway 5s ease-in-out infinite alternate;
-  }
-
-  .leaf.a {
-    top: 3%;
-    left: 2%;
-    transform: rotate(-28deg);
-  }
-
-  .leaf.b {
-    bottom: -2%;
-    right: 1%;
-    transform: rotate(145deg);
-    animation-delay: -2s;
-  }
-
-  .leaf.c {
-    top: 37%;
-    right: -1%;
-    transform: rotate(75deg);
-    font-size: clamp(35px, 7vw, 80px);
-    animation-delay: -1s;
-  }
-
-  @keyframes sway {
-    to {
-      margin-top: 12px;
-      transform: rotate(-15deg) scale(1.06);
-    }
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: clamp(10px, 2.5vw, 28px);
   }
 
   .panel {
-    width: min(720px, 100%);
-    max-height: calc(100vh - 28px);
-    display: flex;
-    flex-direction: column;
+    width: min(760px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    padding: clamp(16px, 4.5vw, 42px);
     background: var(--card);
-    border: 4px solid rgba(23,53,38,.9);
+    border: 4px solid rgba(23, 53, 38, .9);
     border-radius: 28px;
-    box-shadow: 0 12px 0 rgba(23,53,38,.22), 0 22px 42px rgba(13,73,43,.28);
-    overflow: hidden;
-    position: relative;
+    box-shadow: 0 12px 0 rgba(23, 53, 38, .22), 0 22px 42px rgba(13, 73, 43, .28);
   }
 
-  header,
-  .hud,
-  .timer-wrap {
-    flex: 0 0 auto;
-  }
-
-  header {
-    padding: 16px 20px 13px;
-    background: var(--ink);
-    color: var(--cream);
+  .game-title {
+    margin: 0 0 12px;
     text-align: center;
-    border-bottom: 4px solid var(--lime);
-  }
-
-  h1 {
-    margin: 0;
-    font-size: clamp(25px, 6vw, 42px);
+    font-size: clamp(20px, 4vw, 29px);
     line-height: 1;
-    letter-spacing: .5px;
-  }
-
-  .tagline {
-    margin: 6px 0 0;
-    color: var(--lime);
-    font-size: clamp(12px, 2.8vw, 16px);
-    font-style: italic;
+    font-weight: 900;
   }
 
   .hud {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 9px;
-    padding: 11px 18px;
-    background: #e9f8bc;
-    border-bottom: 2px dashed #78ae5a;
-    font-weight: bold;
-    font-size: clamp(12px, 3vw, 15px);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 13px;
   }
 
-  .hud .score {
-    text-align: left;
-  }
-
-  .hud .question-count {
+  .hud-item {
+    min-width: 0;
+    padding: 9px 7px;
+    border: 2px solid #315d3d;
+    border-radius: 13px;
+    background: #edf9cc;
     text-align: center;
-    color: var(--soil);
   }
 
-  .tokens {
-    text-align: right;
-    white-space: nowrap;
+  .hud-label {
+    display: block;
+    font-size: clamp(10px, 2.3vw, 12px);
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
   }
 
-  .token {
-    display: inline-block;
-    filter: drop-shadow(0 1px 0 #613b23);
+  .hud-value {
+    display: block;
+    margin-top: 2px;
+    font-size: clamp(18px, 4vw, 25px);
+    font-weight: 900;
+    line-height: 1;
   }
 
-  .token.empty {
-    opacity: .18;
-    filter: grayscale(1);
+  .timer-area {
+    margin-bottom: clamp(13px, 2.5vw, 20px);
+    padding: 10px 12px;
+    border: 2px solid #315d3d;
+    border-radius: 14px;
+    background: #fffef5;
   }
 
-  .timer-wrap {
-    height: 8px;
-    background: #d5e5b2;
-    overflow: hidden;
-  }
-
-  .timer {
-    height: 100%;
-    width: 100%;
-    background: linear-gradient(90deg, #65bc65, var(--gold), var(--pink));
-    transform-origin: left center;
-    transition: width .1s linear;
-  }
-
-  main {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    padding: clamp(16px, 4vw, 27px);
+  .timer-heading {
     display: flex;
-    flex-direction: column;
+    align-items: baseline;
+    justify-content: space-between;
     gap: 12px;
+    font-size: 14px;
+    font-weight: 900;
   }
 
-  .fern-area {
-    display: flex;
-    align-items: center;
-    gap: 13px;
+  .timer-heading strong {
+    font-size: 19px;
   }
 
-  .fern {
-    width: 66px;
-    height: 66px;
-    flex: 0 0 66px;
-    display: grid;
-    place-items: center;
-    border-radius: 50% 50% 46% 46%;
-    background: #d2f0a2;
-    border: 3px solid #4d8d4e;
-    font-size: 43px;
-    transform: rotate(-7deg);
+  .timer-bar {
+    height: 12px;
+    margin-top: 7px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #d8e7c5;
   }
 
-  .speech {
-    background: #fff;
-    border: 2px solid #a9c87e;
-    border-radius: 17px;
-    padding: 10px 13px;
-    font-size: clamp(13px, 3.4vw, 17px);
-    line-height: 1.25;
+  .timer-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #65b957, #b8e86d);
+    transition: width .1s linear, background .15s;
+  }
+
+  .timer-area.warning {
+    border-color: var(--warning);
+    background: #fff4d6;
+  }
+
+  .timer-area.warning .timer-fill {
+    background: linear-gradient(90deg, #f2bd3d, #e58a27);
+  }
+
+  .timer-area.danger {
+    border-color: var(--danger);
+    background: #ffe3e5;
+    animation: pulse .65s infinite alternate;
+  }
+
+  .timer-area.danger .timer-fill {
+    background: linear-gradient(90deg, #ef7c67, #c84b5d);
+  }
+
+  @keyframes pulse {
+    from { box-shadow: 0 0 0 rgba(200, 75, 93, 0); }
+    to { box-shadow: 0 0 0 4px rgba(200, 75, 93, .18); }
+  }
+
+  .how-to-play {
+    margin: 0 0 clamp(14px, 3vw, 22px);
+    text-align: center;
+    font-size: clamp(13px, 2.8vw, 16px);
     font-weight: bold;
-    flex: 1;
-    position: relative;
-  }
-
-  .speech:before {
-    content: "";
-    position: absolute;
-    left: -10px;
-    top: 24px;
-    width: 15px;
-    height: 15px;
-    background: white;
-    border-left: 2px solid #a9c87e;
-    border-bottom: 2px solid #a9c87e;
-    transform: rotate(45deg);
+    line-height: 1.3;
   }
 
   .question {
-    margin: 1px 0 3px;
-    min-height: 58px;
-    display: flex;
-    align-items: center;
-    font-size: clamp(20px, 5vw, 30px);
-    line-height: 1.13;
+    margin: 0 0 clamp(16px, 3vw, 25px);
+    font-size: clamp(23px, 5.2vw, 40px);
+    line-height: 1.14;
     font-weight: 900;
-    letter-spacing: -.3px;
+    letter-spacing: -.5px;
+    text-align: center;
   }
 
   .answers {
     display: grid;
-    gap: 10px;
+    gap: clamp(9px, 2vw, 15px);
   }
 
   .answer {
     width: 100%;
-    min-height: 50px;
+    min-height: clamp(52px, 10vw, 68px);
     display: flex;
     align-items: center;
     text-align: left;
-    padding: 9px 13px;
+    padding: 10px 14px;
     border: 3px solid #315d3d;
-    border-radius: 15px;
+    border-radius: 16px;
     background: #fffef5;
     color: var(--ink);
     cursor: pointer;
-    font-size: clamp(15px, 3.8vw, 18px);
+    font-size: clamp(15px, 3.7vw, 20px);
     font-weight: bold;
-    line-height: 1.15;
-    box-shadow: 0 3px 0 #315d3d;
+    line-height: 1.18;
+    box-shadow: 0 4px 0 #315d3d;
     transition: transform .12s, background .12s, box-shadow .12s;
   }
 
@@ -275,12 +205,12 @@
   .answer:focus-visible {
     background: #e5f9bd;
     transform: translateY(-2px);
-    box-shadow: 0 5px 0 #315d3d;
+    box-shadow: 0 6px 0 #315d3d;
     outline: none;
   }
 
   .answer:active {
-    transform: translateY(2px);
+    transform: translateY(3px);
     box-shadow: 0 1px 0 #315d3d;
   }
 
@@ -301,50 +231,34 @@
   .key {
     display: inline-grid;
     place-items: center;
-    width: 27px;
-    height: 27px;
-    flex: 0 0 27px;
-    margin-right: 10px;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    margin-right: 12px;
     border-radius: 8px;
     background: var(--ink);
     color: var(--cream);
+    font-size: 15px;
+  }
+
+  .feedback {
+    min-height: 20px;
+    margin: 12px 0 0;
+    text-align: center;
+    color: #315d3d;
     font-size: 14px;
-  }
-
-  .howto {
-    text-align: center;
-    margin: 1px 0 0;
-    font-size: clamp(11px, 2.8vw, 14px);
-    color: #526c51;
-  }
-
-  .verdict {
-    min-height: 24px;
-    text-align: center;
-    font-size: clamp(14px, 3.4vw, 17px);
     font-weight: 900;
-    color: var(--soil);
-  }
-
-  .verdict.good {
-    color: #24713f;
-  }
-
-  .verdict.bad {
-    color: #a43e50;
   }
 
   .overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: 5;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    overflow-y: auto;
-    background: rgba(23,53,38,.72);
-    backdrop-filter: blur(3px);
+    background: rgba(23, 53, 38, .72);
   }
 
   .overlay.show {
@@ -353,34 +267,27 @@
 
   .result-card {
     width: min(430px, 100%);
-    margin: auto;
-    padding: 27px 22px 22px;
+    padding: 28px 22px 23px;
     text-align: center;
     background: var(--cream);
     border: 4px solid var(--ink);
     border-radius: 25px;
-    box-shadow: 0 9px 0 rgba(0,0,0,.22);
-  }
-
-  .result-icon {
-    font-size: 60px;
-    line-height: 1;
+    box-shadow: 0 9px 0 rgba(0, 0, 0, .22);
   }
 
   .result-card h2 {
-    margin: 9px 0 7px;
-    font-size: clamp(26px, 7vw, 38px);
+    margin: 0 0 10px;
+    font-size: clamp(27px, 7vw, 39px);
   }
 
   .result-card p {
-    margin: 7px auto 18px;
+    margin: 0 0 20px;
     line-height: 1.35;
     font-size: 16px;
-    max-width: 340px;
   }
 
   .restart {
-    min-height: 44px;
+    min-height: 46px;
     border: 3px solid var(--ink);
     border-radius: 14px;
     background: var(--lime);
@@ -397,206 +304,162 @@
     box-shadow: 0 1px 0 var(--ink);
   }
 
-  @media (max-height: 640px) {
-    .game {
-      padding: 8px;
-    }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
+  @media (max-height: 560px) {
     .panel {
-      max-height: calc(100vh - 16px);
+      padding: 14px 18px;
+      border-radius: 20px;
     }
 
-    header {
-      padding: 10px 16px 8px;
+    .game-title {
+      margin-bottom: 8px;
     }
 
     .hud {
-      padding: 7px 15px;
+      margin-bottom: 8px;
     }
 
-    main {
-      padding: 11px 17px;
-      gap: 8px;
+    .hud-item {
+      padding: 6px;
     }
 
-    .fern {
-      width: 50px;
-      height: 50px;
-      flex-basis: 50px;
-      font-size: 34px;
-    }
-
-    .speech {
+    .timer-area {
       padding: 7px 10px;
+      margin-bottom: 8px;
+    }
+
+    .timer-bar {
+      height: 8px;
+      margin-top: 4px;
+    }
+
+    .how-to-play {
+      margin-bottom: 9px;
     }
 
     .question {
-      min-height: 43px;
+      margin-bottom: 10px;
+      font-size: clamp(20px, 4.8vw, 30px);
+    }
+
+    .answers {
+      gap: 8px;
     }
 
     .answer {
-      min-height: 44px;
-      padding: 6px 11px;
+      min-height: 43px;
+      padding: 6px 10px;
     }
 
-    .howto {
-      display: block;
+    .key {
+      width: 25px;
+      height: 25px;
+      flex-basis: 25px;
+      margin-right: 9px;
+      border-radius: 6px;
+      font-size: 13px;
     }
 
-    .result-card {
-      padding: 18px 18px 17px;
-    }
-
-    .result-icon {
-      font-size: 46px;
-    }
-
-    .result-card p {
-      margin-bottom: 12px;
+    .feedback {
+      margin-top: 7px;
     }
   }
 </style>
 </head>
 <body>
 <div class="game">
-  <div class="leaf a">🌿</div>
-  <div class="leaf b">🌱</div>
-  <div class="leaf c">🍃</div>
-
   <section class="panel" aria-label="Plant Panic Quiz game">
-    <header>
-      <h1>Plant Panic Quiz</h1>
-      <p class="tagline">Three answers. One deeply judgmental fern.</p>
-    </header>
+    <h1 class="game-title">Plant Panic Quiz</h1>
 
-    <div class="hud" aria-live="polite">
-      <div class="score">Score: <span id="score">0</span></div>
-      <div class="question-count">Question <span id="round">1</span>/10</div>
-      <div class="tokens" aria-label="Compost tokens">Compost: <span id="tokens">🪱 🪱 🪱</span></div>
-    </div>
-
-    <div class="timer-wrap" aria-label="Answer timer">
-      <div class="timer" id="timer"></div>
-    </div>
-
-    <main>
-      <div class="fern-area">
-        <div class="fern" aria-hidden="true">🌿</div>
-        <div class="speech" id="fernSpeech">I have prepared a question. Try not to disappoint chlorophyll.</div>
+    <div class="hud" aria-label="Game status">
+      <div class="hud-item">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="score">0</span>
       </div>
-
-      <div class="question" id="question" aria-live="polite"></div>
-      <div class="answers" id="answers"></div>
-      <div class="verdict" id="verdict" aria-live="assertive"></div>
-      <p class="howto">Tap an answer or press <strong>1</strong>, <strong>2</strong>, or <strong>3</strong>. Correct answers grow your score; wrong ones eat compost.</p>
-    </main>
-
-    <div class="overlay" id="overlay">
-      <div class="result-card">
-        <div class="result-icon" id="resultIcon">🏆</div>
-        <h2 id="resultTitle">Sunlight Certified!</h2>
-        <p id="resultText"></p>
-        <button class="restart" id="restart" type="button">Pot Another Round</button>
+      <div class="hud-item">
+        <span class="hud-label">Round</span>
+        <span class="hud-value"><span id="round">1</span>/10</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Compost tokens</span>
+        <span class="hud-value" id="tokens">3</span>
       </div>
     </div>
+
+    <div class="timer-area" id="timerArea" aria-label="Answer timer">
+      <div class="timer-heading">
+        <span>Answer before time runs out!</span>
+        <strong><span id="timerText">9.0</span>s</strong>
+      </div>
+      <div class="timer-bar" aria-hidden="true">
+        <div class="timer-fill" id="timerFill"></div>
+      </div>
+    </div>
+
+    <p class="how-to-play">How to play: tap an answer or press 1, 2, or 3. You have 9 seconds per question; a wrong or timed-out answer costs one compost token.</p>
+
+    <div class="question" id="question" aria-live="polite"></div>
+    <div class="answers" id="answers"></div>
+    <p class="feedback" id="feedback" aria-live="polite"></p>
   </section>
+</div>
+
+<div class="overlay" id="overlay" aria-live="assertive" aria-modal="true" role="dialog" aria-labelledby="resultTitle">
+  <div class="result-card">
+    <h2 id="resultTitle">Sunlight Certified!</h2>
+    <p id="resultText"></p>
+    <button class="restart" id="restart" type="button">Pot Another Round</button>
+  </div>
 </div>
 
 <script>
 (() => {
   const questions = [
-    {
-      q: "Your monstera starts paying rent. What does it demand first?",
-      a: ["A bigger pot and voting rights", "A tiny landlord hat", "Access to your streaming password"],
-      correct: 0,
-      good: "Correct. It has outgrown both its pot and capitalism.",
-      bad: "Incorrect. The fern says you clearly have never negotiated with a leaf."
-    },
-    {
-      q: "What is the most respectful way to greet a cactus?",
-      a: ["A firm handshake", "A respectful nod from a safe distance", "A high-five with confidence"],
-      correct: 1,
-      good: "Yes. Boundaries are important, especially when they are spiny.",
-      bad: "No. The cactus has filed a tiny complaint against your palms."
-    },
-    {
-      q: "A basil plant is judging your cooking. Why?",
-      a: ["You called pesto 'green sauce'", "It can smell fear", "You used a measuring cup"],
-      correct: 0,
-      good: "Exactly. Basil has standards, and yours are under review.",
-      bad: "Wrong. Somewhere, a basil leaf curls in culinary anguish."
-    },
-    {
-      q: "Your fern wants a job. Which role is it born to perform?",
-      a: ["Tax auditor", "Moisture consultant", "Volcano lifeguard"],
-      correct: 1,
-      good: "Correct. It brings excellent frond-based analytics.",
-      bad: "Nope. The fern sighs so hard it briefly photosynthesizes sideways."
-    },
-    {
-      q: "What should you say when a houseplant compliments your outfit?",
-      a: ["'Thanks, I grew it myself.'", "'Leaf me alone.'", "'You look radiant too.'"],
-      correct: 2,
-      good: "Correct. Mutual admiration keeps the whole ecosystem thriving.",
-      bad: "Incorrect. The plant retreats emotionally into its decorative pot."
-    },
-    {
-      q: "A succulent has gone missing. Where is it most likely hiding?",
-      a: ["In a drawer, avoiding responsibility", "On the brightest windowsill, smugly", "Under the sofa training for darkness"],
-      correct: 1,
-      good: "Yes. It is basking in its own extremely low-maintenance legend.",
-      bad: "Wrong. Succulents don't hide. They simply pose where the sun is best."
-    },
-    {
-      q: "Which snack would a dramatic orchid request?",
-      a: ["A single dewdrop served in crystal", "Nachos with extra jalapeños", "A sensible granola bar"],
-      correct: 0,
-      good: "Correct. The orchid demands elegance and a tiny spoon.",
-      bad: "Incorrect. The orchid gasps theatrically and asks for its dewdrop."
-    },
-    {
-      q: "Your aloe says it needs space. What does it actually mean?",
-      a: ["'Move me away from the radiator.'", "'I am starting a band.'", "'Please stop using me as a TV remote stand.'"],
-      correct: 2,
-      good: "Correct. Aloe has healing powers, not furniture powers.",
-      bad: "No. The aloe looks burdened by your electronics and your choices."
-    },
-    {
-      q: "A plant sends you a calendar invite titled 'Misting.' What do you do?",
-      a: ["Accept, then bring a tiny umbrella", "Decline and move countries", "Reply all with a potato recipe"],
-      correct: 0,
-      good: "Correct. Preparedness is the root of good plantmanship.",
-      bad: "Wrong. The fern has marked you absent from hydration etiquette."
-    },
-    {
-      q: "What is the official sound of a plant being proud of you?",
-      a: ["'Photosyn-thanks!'", "A faint rustle of approval", "A trumpet solo from the soil"],
-      correct: 1,
-      good: "Correct. Listen closely: that rustle is almost affection.",
-      bad: "Incorrect. A trumpet would be nice, but the fern insists on realism."
-    }
+    { q: "Your monstera starts paying rent. What does it demand first?", a: ["A bigger pot and voting rights", "A tiny landlord hat", "Access to your streaming password"], correct: 0 },
+    { q: "What is the most respectful way to greet a cactus?", a: ["A firm handshake", "A respectful nod from a safe distance", "A high-five with confidence"], correct: 1 },
+    { q: "A basil plant is judging your cooking. Why?", a: ["You called pesto 'green sauce'", "It can smell fear", "You used a measuring cup"], correct: 0 },
+    { q: "Your fern wants a job. Which role is it born to perform?", a: ["Tax auditor", "Moisture consultant", "Volcano lifeguard"], correct: 1 },
+    { q: "What should you say when a houseplant compliments your outfit?", a: ["'Thanks, I grew it myself.'", "'Leaf me alone.'", "'You look radiant too.'"], correct: 2 },
+    { q: "A succulent has gone missing. Where is it most likely hiding?", a: ["In a drawer, avoiding responsibility", "On the brightest windowsill, smugly", "Under the sofa training for darkness"], correct: 1 },
+    { q: "Which snack would a dramatic orchid request?", a: ["A single dewdrop served in crystal", "Nachos with extra jalapeños", "A sensible granola bar"], correct: 0 },
+    { q: "Your aloe says it needs space. What does it actually mean?", a: ["'Move me away from the radiator.'", "'I am starting a band.'", "'Please stop using me as a TV remote stand.'"], correct: 2 },
+    { q: "A plant sends you a calendar invite titled 'Misting.' What do you do?", a: ["Accept, then bring a tiny umbrella", "Decline and move countries", "Reply all with a potato recipe"], correct: 0 },
+    { q: "What is the official sound of a plant being proud of you?", a: ["'Photosyn-thanks!'", "A faint rustle of approval", "A trumpet solo from the soil"], correct: 1 }
   ];
 
   const scoreEl = document.getElementById("score");
   const roundEl = document.getElementById("round");
   const tokensEl = document.getElementById("tokens");
-  const timerEl = document.getElementById("timer");
   const questionEl = document.getElementById("question");
   const answersEl = document.getElementById("answers");
-  const verdictEl = document.getElementById("verdict");
-  const speechEl = document.getElementById("fernSpeech");
+  const feedbackEl = document.getElementById("feedback");
+  const timerAreaEl = document.getElementById("timerArea");
+  const timerTextEl = document.getElementById("timerText");
+  const timerFillEl = document.getElementById("timerFill");
   const overlayEl = document.getElementById("overlay");
-  const resultIconEl = document.getElementById("resultIcon");
   const resultTitleEl = document.getElementById("resultTitle");
   const resultTextEl = document.getElementById("resultText");
   const restartEl = document.getElementById("restart");
 
+  const timeLimit = 9000;
   let score = 0;
   let tokens = 3;
   let index = 0;
   let locked = false;
   let startedAt = 0;
   let timerId = null;
+  let timerDisplayId = null;
   let order = [];
 
   function shuffle(list) {
@@ -608,147 +471,134 @@
     return copy;
   }
 
-  function drawTokens() {
-    tokensEl.innerHTML = "";
-    for (let i = 0; i < 3; i++) {
-      const span = document.createElement("span");
-      span.className = "token" + (i >= tokens ? " empty" : "");
-      span.textContent = "🪱";
-      tokensEl.appendChild(span);
-      if (i < 2) {
-        tokensEl.appendChild(document.createTextNode(" "));
-      }
-    }
+  function clearTimer() {
+    clearTimeout(timerId);
+    clearInterval(timerDisplayId);
+    timerId = null;
+    timerDisplayId = null;
+  }
+
+  function updateTimerDisplay() {
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, timeLimit - elapsed);
+    const percentage = (remaining / timeLimit) * 100;
+
+    timerTextEl.textContent = (remaining / 1000).toFixed(1);
+    timerFillEl.style.width = percentage + "%";
+    timerAreaEl.classList.toggle("warning", remaining <= 5000 && remaining > 2500);
+    timerAreaEl.classList.toggle("danger", remaining <= 2500);
   }
 
   function runTimer() {
-    clearInterval(timerId);
+    clearTimer();
     startedAt = Date.now();
-    timerEl.style.width = "100%";
+    updateTimerDisplay();
 
-    timerId = setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const remaining = Math.max(0, 100 - (elapsed / 9000) * 100);
-      timerEl.style.width = remaining + "%";
-
-      if (elapsed >= 9000) {
-        clearInterval(timerId);
-        if (!locked) {
-          answer(-1);
-        }
+    timerDisplayId = setInterval(updateTimerDisplay, 100);
+    timerId = setTimeout(() => {
+      if (!locked) {
+        updateTimerDisplay();
+        answer(-1, true);
       }
-    }, 70);
+    }, timeLimit);
   }
 
   function showQuestion() {
     locked = false;
-    verdictEl.textContent = "";
-    verdictEl.className = "verdict";
-
     const item = questions[order[index]];
+
     roundEl.textContent = index + 1;
     questionEl.textContent = item.q;
-    speechEl.textContent = index === 0
-      ? "A fresh quiz. I have polished my disapproval."
-      : "Question " + (index + 1) + ". The leaves are watching.";
-
+    feedbackEl.textContent = "";
     answersEl.innerHTML = "";
 
     item.a.forEach((text, i) => {
-      const btn = document.createElement("button");
+      const button = document.createElement("button");
       const key = document.createElement("span");
       const label = document.createElement("span");
 
-      btn.className = "answer";
-      btn.type = "button";
-      btn.dataset.answer = i;
-      btn.setAttribute("aria-label", "Answer " + (i + 1) + ": " + text);
+      button.className = "answer";
+      button.type = "button";
+      button.setAttribute("aria-label", "Answer " + (i + 1) + ": " + text);
 
       key.className = "key";
       key.textContent = i + 1;
       label.textContent = text;
 
-      btn.appendChild(key);
-      btn.appendChild(label);
-      btn.addEventListener("click", () => answer(i));
-      answersEl.appendChild(btn);
+      button.appendChild(key);
+      button.appendChild(label);
+      button.addEventListener("click", () => answer(i, false));
+      answersEl.appendChild(button);
     });
 
     runTimer();
   }
 
-  function answer(choice) {
+  function answer(choice, timedOut) {
     if (locked) {
       return;
     }
 
     locked = true;
-    clearInterval(timerId);
+    const elapsed = Date.now() - startedAt;
+    clearTimer();
 
     const item = questions[order[index]];
     const buttons = Array.from(answersEl.querySelectorAll(".answer"));
-    const elapsed = Date.now() - startedAt;
     const isCorrect = choice === item.correct;
 
     buttons.forEach((button, i) => {
       button.disabled = true;
-
       if (i === item.correct) {
         button.classList.add("correct");
       }
-
       if (choice === i && !isCorrect) {
         button.classList.add("wrong");
       }
     });
 
     if (isCorrect) {
-      const speedBonus = Math.max(0, Math.round((9000 - Math.min(elapsed, 9000)) / 90));
+      const speedBonus = Math.max(0, Math.round((timeLimit - Math.min(elapsed, timeLimit)) / 90));
       score += 100 + speedBonus;
       scoreEl.textContent = score;
-      verdictEl.textContent = item.good + (speedBonus > 10 ? " +" + speedBonus + " speedy sprout bonus!" : "");
-      verdictEl.className = "verdict good";
-      speechEl.textContent = "Acceptable. I shall not report you to the begonias.";
+      feedbackEl.textContent = "Correct! Your plant approves.";
     } else {
       tokens--;
-      drawTokens();
-      verdictEl.textContent = choice === -1 ? "Too slow! " + item.bad : item.bad;
-      verdictEl.className = "verdict bad";
-      speechEl.textContent = tokens > 0
-        ? "One compost token has returned to the earth."
-        : "The houseplants have reached a verdict.";
+      tokensEl.textContent = tokens;
+      feedbackEl.textContent = timedOut
+        ? "Time ran out! One compost token was used."
+        : "Not quite! One compost token was used.";
     }
 
     setTimeout(() => {
       if (tokens <= 0) {
         endGame(false);
-      } else if (index >= 9) {
+      } else if (index >= questions.length - 1) {
         endGame(true);
       } else {
         index++;
         showQuestion();
       }
-    }, 1650);
+    }, 900);
   }
 
   function endGame(won) {
-    clearInterval(timerId);
+    clearTimer();
     overlayEl.classList.add("show");
 
     if (won) {
-      resultIconEl.textContent = "🏆🌿";
       resultTitleEl.textContent = "Sunlight Certified!";
-      resultTextEl.textContent = "You survived all ten questions with " + score + " points. The fern grants you provisional access to the windowsill.";
+      resultTextEl.textContent = "You finished all 10 rounds with " + score + " points and " + tokens + " compost token" + (tokens === 1 ? "" : "s") + " left.";
     } else {
-      resultIconEl.textContent = "🪴⚖️";
       resultTitleEl.textContent = "Compost Court Adjourned";
-      resultTextEl.textContent = "You scored " + score + " points, but lost all your compost tokens. The fern has recommended a refresher course in plant etiquette.";
+      resultTextEl.textContent = "Your compost tokens are gone. Final score: " + score + " points.";
     }
 
     restartEl.focus();
   }
 
   function resetGame() {
+    clearTimer();
     score = 0;
     tokens = 3;
     index = 0;
@@ -756,7 +606,9 @@
     order = shuffle(questions.map((_, i) => i));
 
     scoreEl.textContent = "0";
-    drawTokens();
+    tokensEl.textContent = "3";
+    roundEl.textContent = "1";
+    timerAreaEl.classList.remove("warning", "danger");
     overlayEl.classList.remove("show");
     showQuestion();
   }
@@ -772,7 +624,7 @@
 
     if (event.key >= "1" && event.key <= "3" && !locked) {
       event.preventDefault();
-      answer(Number(event.key) - 1);
+      answer(Number(event.key) - 1, false);
     }
   });
 
