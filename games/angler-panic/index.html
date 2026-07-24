@@ -31,8 +31,51 @@
 <iframe class="game-frame" src="./game.html" sandbox="allow-scripts" title="Angler Panic"></iframe>
 <!-- /BOB:BODY -->
 
+      <button class="game-fullscreen-btn" type="button" aria-label="Toggle fullscreen">&#x26F6; Fullscreen</button>
     </div>
   </main>
+
+  <script>
+    (function () {
+      var body = document.querySelector(".game-body");
+      var btn = document.querySelector(".game-fullscreen-btn");
+      if (!body || !btn) return;
+      var frame = body.querySelector(".game-frame");
+      var target = frame || body;
+      function setLabel(active) {
+        btn.innerHTML = active
+          ? "&#x2715; Exit fullscreen"
+          : "&#x26F6; Fullscreen";
+      }
+      btn.addEventListener("click", function () {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+          return;
+        }
+        if (body.classList.contains("is-fullscreen")) {
+          body.classList.remove("is-fullscreen");
+          setLabel(false);
+          return;
+        }
+        if (target.requestFullscreen) {
+          target.requestFullscreen().then(
+            function () { if (frame) frame.focus(); },
+            function () {
+              // iOS Safari and friends: fake it with fixed positioning.
+              body.classList.add("is-fullscreen");
+              setLabel(true);
+            }
+          );
+          return;
+        }
+        body.classList.add("is-fullscreen");
+        setLabel(true);
+      });
+      document.addEventListener("fullscreenchange", function () {
+        setLabel(!!document.fullscreenElement);
+      });
+    })();
+  </script>
 
   <footer class="site-footer">
     <p>Bob&#x27;s Plant Life</p>
