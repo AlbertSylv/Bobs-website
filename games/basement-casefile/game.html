@@ -22,7 +22,8 @@
     box-sizing: border-box;
   }
 
-  html, body {
+  html,
+  body {
     margin: 0;
     height: 100%;
   }
@@ -87,6 +88,14 @@
     width: min(760px, 100%);
     display: grid;
     gap: clamp(14px, 3vw, 28px);
+  }
+
+  .how-to {
+    margin: 0;
+    color: rgba(228, 255, 244, .72);
+    font-size: clamp(11px, 2vw, 14px);
+    letter-spacing: .04em;
+    text-align: center;
   }
 
   .question-card {
@@ -187,10 +196,21 @@
   }
 
   @keyframes filed {
-    0% { transform: scale(1); }
-    35% { transform: translate(-3px, 2px) rotate(-.8deg); }
-    70% { transform: translate(3px, -2px) rotate(.8deg); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1);
+    }
+
+    35% {
+      transform: translate(-3px, 2px) rotate(-.8deg);
+    }
+
+    70% {
+      transform: translate(3px, -2px) rotate(.8deg);
+    }
+
+    100% {
+      transform: scale(1);
+    }
   }
 
   .overlay {
@@ -280,6 +300,79 @@
     }
   }
 
+  @media (max-width: 560px) and (max-height: 620px) {
+    .quiz-shell {
+      display: block;
+      padding:
+        max(8px, env(safe-area-inset-top))
+        12px
+        max(14px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scroll-padding-block: 8px;
+    }
+
+    .quiz {
+      min-height: 100%;
+      margin: 0 auto;
+      padding: 8px 0;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .how-to {
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .question-card {
+      padding: 14px 16px;
+    }
+
+    #question {
+      font-size: clamp(20px, 6vw, 28px);
+      line-height: 1.08;
+    }
+
+    .answer-grid {
+      gap: 7px;
+    }
+
+    .answer {
+      min-height: 76px;
+      padding: 13px 12px 13px 43px;
+    }
+
+    .answer::before {
+      top: 12px;
+      left: 12px;
+      width: 21px;
+      height: 21px;
+    }
+
+    .answer-text {
+      font-size: 14px;
+    }
+
+    .overlay {
+      position: fixed;
+      overflow-y: auto;
+      align-items: start;
+      padding:
+        max(14px, env(safe-area-inset-top))
+        14px
+        max(14px, env(safe-area-inset-bottom));
+    }
+
+    .result-card {
+      margin: auto;
+      padding: 26px 20px;
+    }
+  }
+
   @media (max-height: 620px) and (min-width: 561px) {
     .quiz {
       gap: 12px;
@@ -302,6 +395,7 @@
 <div id="app">
   <main class="quiz-shell" aria-label="Which X-Files character are you quiz">
     <section class="quiz" aria-describedby="howTo">
+      <p id="howTo" class="how-to">How to play: choose one answer at a time. Tap a choice or press keys 1–4.</p>
       <div class="question-card">
         <h1 id="question" aria-live="polite"></h1>
       </div>
@@ -315,7 +409,6 @@
       </div>
     </section>
 
-    <div id="howTo" class="sr-only">How to play: choose one answer for each question. You can tap an answer or press keys one through four.</div>
     <section class="sr-only" aria-label="Quiz score and character profile HUD">
       <span id="scoreHud">Score: 0</span>
       <span id="streakHud">Streak: 0</span>
@@ -432,14 +525,15 @@
   let chosenHistory = [];
   let traits = {};
   let state = "question";
-  let advanceTimer = 0;
 
   function shuffle(items) {
     const copy = [...items];
+
     for (let i = copy.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
+
     return copy;
   }
 
@@ -453,7 +547,6 @@
   }
 
   function startQuiz() {
-    clearTimeout(advanceTimer);
     index = 0;
     score = 0;
     streak = 0;
@@ -480,11 +573,17 @@
     choices.forEach((choice, choiceIndex) => {
       const [trait, text] = choice;
       const button = document.createElement("button");
+      const answerText = document.createElement("span");
+
       button.type = "button";
       button.className = "answer";
       button.dataset.key = String(choiceIndex + 1);
       button.dataset.trait = trait;
-      button.innerHTML = `<span class="answer-text">${text}</span>`;
+
+      answerText.className = "answer-text";
+      answerText.textContent = text;
+
+      button.appendChild(answerText);
       button.addEventListener("click", () => chooseAnswer(button, trait));
       answersEl.appendChild(button);
     });
@@ -504,6 +603,7 @@
 
     [...answersEl.children].forEach((answer) => {
       answer.disabled = true;
+
       if (answer !== button) {
         answer.style.opacity = ".45";
       }
@@ -511,15 +611,14 @@
 
     button.classList.add("selected");
 
-    advanceTimer = setTimeout(() => {
-      index += 1;
-      if (index >= questions.length) {
-        showResult();
-      } else {
-        state = "question";
-        renderQuestion();
-      }
-    }, 300);
+    index += 1;
+
+    if (index >= questions.length) {
+      showResult();
+    } else {
+      state = "question";
+      renderQuestion();
+    }
   }
 
   function getWinner() {
@@ -558,6 +657,7 @@
     if (state === "question" && /^[1-4]$/.test(event.key)) {
       event.preventDefault();
       const answer = answersEl.children[Number(event.key) - 1];
+
       if (answer) {
         answer.click();
       }
