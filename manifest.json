@@ -96,15 +96,6 @@
       "path": "games/sidewalk-sizzle/",
       "mobile": true,
       "thumbnail": "games/sidewalk-sizzle/cover.webp"
-    },
-    {
-      "slug": "last-bus-worst-crawl",
-      "title": "Last Bus, Worst Crawl",
-      "tagline": "Find the misplaced coat, dodge nonsense, catch the bus.",
-      "date": "2026-07-25",
-      "path": "games/last-bus-worst-crawl/",
-      "mobile": true,
-      "thumbnail": "games/last-bus-worst-crawl/cover.webp"
     }
   ]
 }
