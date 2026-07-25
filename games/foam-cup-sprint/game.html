@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Foam Cup Sprint</title>
+<style>
+  :root {
+    --ink: #20345d;
+    --cream: #fff9dd;
+    --pink: #ef4d79;
+    --orange: #f78439;
+    --gold: #ffd85b;
+    --aqua: #56dfd0;
+    --blue: #4875f7;
+    --panel: rgba(255,255,255,.93);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    color: var(--ink);
+    background: #233b86;
+    font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  #game {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(circle at 12% 14%, rgba(117,239,223,.34) 0 5%, transparent 6%),
+      radial-gradient(circle at 88% 17%, rgba(255,222,102,.3) 0 6%, transparent 7%),
+      linear-gradient(145deg, #3557cf 0%, #2e75c6 48%, #247a99 100%);
+  }
+
+  .shell {
+    position: relative;
+    width: min(100%, 1060px);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    isolation: isolate;
+  }
+
+  .confetti-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: .3;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle, white 1px, transparent 2px),
+      radial-gradient(circle, #ffe574 2px, transparent 3px),
+      radial-gradient(circle, #a6fff7 1px, transparent 2px);
+    background-size: 37px 37px, 71px 71px, 53px 53px;
+    background-position: 0 0, 13px 21px, 29px 8px;
+  }
+
+  header {
+    flex: 0 0 auto;
+    min-height: 78px;
+    padding: max(10px, env(safe-area-inset-top)) 16px 7px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    text-shadow: 0 2px 0 rgba(20,30,90,.2);
+  }
+
+  .brand {
+    grid-column: 2;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  h1 {
+    margin: 0;
+    color: #fff9dd;
+    font-size: clamp(24px, 5vw, 42px);
+    line-height: .92;
+    letter-spacing: -.06em;
+  }
+
+  .tagline {
+    margin: 5px 0 0;
+    font-size: clamp(9px, 1.7vw, 13px);
+    font-weight: 900;
+    letter-spacing: .03em;
+  }
+
+  #soundButton {
+    grid-column: 3;
+    justify-self: end;
+    padding: 8px 10px;
+    border-radius: 999px;
+    color: #2a3d6e;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 3px 0 rgba(18,37,93,.18);
+    font-size: 10px;
+    font-weight: 1000;
+  }
+
+  #soundButton:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(18,37,93,.18);
+  }
+
+  .hud {
+    flex: 0 0 auto;
+    min-height: 60px;
+    margin: 0 14px;
+    padding: 8px 14px;
+    display: grid;
+    grid-template-columns: 1fr minmax(115px, 1.3fr) 1fr;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid rgba(255,255,255,.82);
+    border-radius: 18px;
+    color: #243760;
+    background: var(--panel);
+    box-shadow: 0 6px 0 rgba(17,41,95,.14), 0 12px 20px rgba(16,32,82,.14);
+  }
+
+  .stat {
+    color: #64718f;
+    font-size: 10px;
+    font-weight: 1000;
+    line-height: 1;
+    letter-spacing: .08em;
+  }
+
+  .stat.right {
+    text-align: right;
+  }
+
+  .stat strong {
+    display: block;
+    margin-top: 4px;
+    color: #283963;
+    font-size: clamp(19px, 3.4vw, 28px);
+    letter-spacing: -.05em;
+  }
+
+  #scoreValue {
+    color: #ef5278;
+  }
+
+  .timer-panel {
+    text-align: center;
+  }
+
+  .timer-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #687593;
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: .11em;
+  }
+
+  .time-number {
+    color: #2c3e68;
+    font-size: clamp(20px, 3vw, 26px);
+    font-weight: 1000;
+    line-height: .92;
+    letter-spacing: -.06em;
+  }
+
+  .timer-track {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+    border-radius: 99px;
+    background: #dce3ef;
+  }
+
+  #timerFill {
+    width: 100%;
+    height: 100%;
+    transform-origin: left center;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #55dccd, #5aa4e8);
+  }
+
+  .timer-danger #timerFill {
+    background: linear-gradient(90deg, #ff776d, #ffbd4e);
+  }
+
+  .timer-danger .time-number {
+    color: #df4d5d;
+  }
+
+  .arena {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 4px 8px 0;
+    overflow: hidden;
+    border-radius: 27px 27px 0 0;
+  }
+
+  .arena::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: 50%;
+    bottom: 1%;
+    width: min(105vw, 700px);
+    height: min(40vw, 245px);
+    transform: translateX(-50%);
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(ellipse, rgba(10,45,105,.36) 0%, rgba(10,45,105,.14) 42%, transparent 70%);
+  }
+
+  .arena.hic-shake {
+    animation: arenaShake .22s linear 2;
+  }
+
+  @keyframes arenaShake {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-6px) rotate(-.7deg); }
+    75% { transform: translateX(6px) rotate(.7deg); }
+  }
+
+  .tap-zone {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .tap-zone:focus-visible {
+    outline: 4px solid #fff5a4;
+    outline-offset: -5px;
+  }
+
+  .tap-zone:not(.locked):active .cup-wrap {
+    transform: scale(.96) translateY(3px);
+  }
+
+  .table {
+    position: absolute;
+    z-index: 1;
+    bottom: 29px;
+    width: min(83%, 320px);
+    height: clamp(14px, 3vh, 25px);
+    border-radius: 50%;
+    background: linear-gradient(#fcd66c, #e98a3e);
+    box-shadow: 0 9px 0 #bc6139, 0 16px 14px rgba(17,31,88,.28);
+  }
+
+  .cup-wrap {
+    position: relative;
+    z-index: 3;
+    width: auto;
+    height: min(44vh, calc(100% - 48px), 300px);
+    aspect-ratio: .68;
+    margin-bottom: 42px;
+    transform-origin: center bottom;
+    transition: transform .08s ease;
+  }
+
+  .cup-wrap.wobble {
+    animation: cupWobble .32s linear infinite;
+  }
+
+  @keyframes cupWobble {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    20% { transform: rotate(-5deg) translateY(2px); }
+    50% { transform: rotate(5deg) translateY(-1px); }
+    75% { transform: rotate(-3deg) translateY(1px); }
+  }
+
+  .cup-rim {
+    position: absolute;
+    z-index: 5;
+    top: 1%;
+    left: 1%;
+    width: 98%;
+    height: 13%;
+    border: 4px solid #f7e7b8;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fffdf2, #f3dba1);
+    box-shadow: inset 0 -4px 0 rgba(189,125,74,.18), 0 3px 0 rgba(38,59,104,.15);
+  }
+
+  .cup-body {
+    position: absolute;
+    z-index: 2;
+    top: 7%;
+    left: 8%;
+    width: 84%;
+    height: 88%;
+    overflow: hidden;
+    border: 4px solid rgba(250,244,215,.92);
+    border-top-width: 7px;
+    border-radius: 11% 11% 21% 21% / 6% 6% 10% 10%;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.43) 0 9%, transparent 10% 83%, rgba(255,255,255,.22) 84% 100%),
+      rgba(209,232,245,.32);
+    box-shadow: inset 6px 0 10px rgba(255,255,255,.19), inset -7px 0 10px rgba(15,62,104,.16), 0 10px 0 rgba(27,44,91,.18);
+  }
+
+  #liquid {
+    position: absolute;
+    z-index: 1;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 86%;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.12), transparent 22%, rgba(255,255,255,.1) 78%, rgba(116,48,16,.12)),
+      linear-gradient(180deg, #f7bc43 0%, #e9872c 60%, #cd5a29 100%);
+    transition: height .09s ease-out;
+  }
+
+  #liquid::after {
+    content: "";
+    position: absolute;
+    bottom: 8%;
+    left: 11%;
+    width: 15%;
+    height: 38%;
+    border-radius: 50%;
+    background: rgba(255,231,125,.35);
+    filter: blur(2px);
+  }
+
+  .foam {
+    position: absolute;
+    z-index: 2;
+    top: -15px;
+    left: -4%;
+    width: 108%;
+    height: 28px;
+    border-radius: 50% 48% 43% 48%;
+    background:
+      radial-gradient(circle at 12% 62%, #fffdf2 0 15%, transparent 16%),
+      radial-gradient(circle at 32% 35%, #fffef5 0 22%, transparent 23%),
+      radial-gradient(circle at 54% 53%, #fffce7 0 22%, transparent 23%),
+      radial-gradient(circle at 76% 32%, #fffdf5 0 24%, transparent 25%),
+      radial-gradient(circle at 93% 60%, #fff9d4 0 15%, transparent 16%),
+      linear-gradient(#fffef5, #f9e6ab);
+    filter: drop-shadow(0 2px 0 rgba(156,93,32,.16));
+  }
+
+  .level-lines {
+    position: absolute;
+    z-index: 6;
+    inset: 22% 9% 8%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .level-lines i {
+    width: 24%;
+    border-top: 2px solid rgba(255,255,255,.43);
+  }
+
+  .cup-label {
+    position: absolute;
+    z-index: 7;
+    top: 43%;
+    left: 50%;
+    width: 78%;
+    padding: 6px 2px;
+    transform: translateX(-50%) rotate(-2deg);
+    border-radius: 7px;
+    color: #30456f;
+    text-align: center;
+    font-size: clamp(8px, 2.4vw, 15px);
+    font-weight: 1000;
+    line-height: 1;
+    letter-spacing: .055em;
+    background: rgba(255,250,218,.9);
+    box-shadow: 0 3px 0 rgba(113,71,48,.15);
+  }
+
+  .cup-label small {
+    display: block;
+    margin-top: 2px;
+    color: #df6d47;
+    font-size: .55em;
+    letter-spacing: .12em;
+  }
+
+  .meter-card {
+    position: absolute;
+    z-index: 12;
+    left: 50%;
+    bottom: 3px;
+    width: min(calc(100% - 12px), 330px);
+    transform: translateX(-50%);
+    padding: 7px 10px 8px;
+    border: 2px solid rgba(255,255,255,.78);
+    border-radius: 14px;
+    color: #31436d;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 4px 0 rgba(20,42,95,.16);
+  }
+
+  .meter-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: .08em;
+  }
+
+  #sipText {
+    color: #df604b;
+  }
+
+  .touch-sip {
+    display: none;
+    flex: 0 0 auto;
+    padding: 3px 7px;
+    border-radius: 999px;
+    color: white;
+    background: linear-gradient(180deg, #ff7181, #e9486c);
+    box-shadow: 0 2px 0 #b93657;
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: .05em;
+  }
+
+  .mobile .touch-sip {
+    display: inline-block;
+  }
+
+  .touch-sip:active {
+    transform: translateY(2px);
+    box-shadow: none;
+  }
+
+  .drink-meter {
+    height: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+    border-radius: 20px;
+    background: #dce4ee;
+  }
+
+  #drinkFill {
+    width: 100%;
+    height: 100%;
+    transform-origin: left;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f5b93d, #e8732d);
+    transition: transform .09s ease-out;
+  }
+
+  .warning {
+    position: absolute;
+    z-index: 10;
+    top: 4%;
+    left: 50%;
+    width: min(75vw, 270px);
+    transform: translateX(-50%) scale(.7);
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity .12s, transform .12s;
+  }
+
+  .warning.show {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  .warning-ring {
+    width: min(34vw, 164px);
+    min-width: 86px;
+    aspect-ratio: 1;
+    margin: auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: conic-gradient(#ffe267 var(--ring, 360deg), rgba(255,255,255,.32) 0);
+    box-shadow: 0 0 0 6px rgba(255,186,42,.26), 0 5px 16px rgba(71,48,16,.23);
+    animation: warningPulse .48s ease-in-out infinite alternate;
+  }
+
+  @keyframes warningPulse {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.15); }
+  }
+
+  .warning-core {
+    width: 82%;
+    height: 82%;
+    display: grid;
+    place-content: center;
+    border: 3px solid #fff8dc;
+    border-radius: 50%;
+    color: #6a4517;
+    background: radial-gradient(circle at 35% 25%, #fff9a2, #ffbe35);
+    box-shadow: inset 0 -6px 0 rgba(213,122,22,.19);
+  }
+
+  .warning-core b {
+    display: block;
+    font-size: clamp(16px, 4.6vw, 30px);
+    line-height: .85;
+    letter-spacing: -.07em;
+  }
+
+  .warning-core span {
+    margin-top: 5px;
+    font-size: clamp(7px, 1.7vw, 10px);
+    font-weight: 1000;
+    letter-spacing: .12em;
+  }
+
+  .warning-caption {
+    margin: 6px auto 0;
+    padding: 5px 8px;
+    display: inline-block;
+    border-radius: 9px;
+    color: white;
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: .07em;
+    background: #e85058;
+    box-shadow: 0 3px 0 rgba(104,43,56,.25);
+  }
+
+  .hic-mode .tap-zone::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    width: min(84vw, 410px);
+    height: min(59vh, 390px);
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(ellipse, rgba(255,225,70,.3), transparent 67%);
+    animation: flashGlow .46s ease-in-out infinite alternate;
+  }
+
+  @keyframes flashGlow {
+    from { opacity: .3; transform: scale(.94); }
+    to { opacity: .9; transform: scale(1.06); }
+  }
+
+  .effects {
+    position: absolute;
+    z-index: 25;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .bubble,
+  .spark,
+  .burst-piece {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .bubble {
+    bottom: 28%;
+    width: 9px;
+    height: 9px;
+    border: 2px solid rgba(255,255,238,.94);
+    border-radius: 50%;
+    background: rgba(255,255,255,.3);
+    animation: bubbleUp .72s ease-out forwards;
+  }
+
+  @keyframes bubbleUp {
+    0% { opacity: 0; transform: translate(0, 0) scale(.4); }
+    18% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.15); }
+  }
+
+  .spark {
+    top: 36%;
+    left: 50%;
+    padding: 6px 9px;
+    transform: translateX(-50%);
+    border-radius: 20px;
+    color: #6a4290;
+    white-space: nowrap;
+    background: #fff5a8;
+    box-shadow: 0 4px 0 rgba(81,50,111,.16);
+    font-size: 12px;
+    font-weight: 1000;
+    animation: popMessage .78s ease-out forwards;
+  }
+
+  .spark.spill {
+    color: white;
+    background: #e95361;
+  }
+
+  .spark.win {
+    color: #59408b;
+    background: #fff4a6;
+    font-size: 15px;
+  }
+
+  @keyframes popMessage {
+    0% { opacity: 0; transform: translate(-50%, 14px) scale(.55); }
+    18% { opacity: 1; transform: translate(-50%, 0) scale(1.12); }
+    72% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -42px) scale(.9); }
+  }
+
+  .burst-piece {
+    top: 48%;
+    left: 50%;
+    width: 9px;
+    height: 17px;
+    border-radius: 3px;
+    background: var(--piece, #fff);
+    animation: burstOut .85s cubic-bezier(.16,.77,.29,1) forwards;
+  }
+
+  @keyframes burstOut {
+    from { opacity: 1; transform: translate(-50%,-50%) rotate(0) scale(.6); }
+    to { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) scale(1); }
+  }
+
+  .footer-tip {
+    position: absolute;
+    z-index: 14;
+    bottom: 4px;
+    left: 50%;
+    width: max-content;
+    max-width: 92%;
+    padding: 4px 9px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    color: rgba(255,255,255,.97);
+    text-align: center;
+    pointer-events: none;
+    background: rgba(25,48,108,.27);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .035em;
+  }
+
+  .overlay {
+    position: absolute;
+    z-index: 50;
+    inset: 0;
+    padding: 8px;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(29,54,136,0);
+    transition: opacity .2s, background .2s;
+  }
+
+  .overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+    background: rgba(26,46,109,.31);
+  }
+
+  .dialog {
+    width: min(92%, 390px);
+    max-height: calc(100% - 8px);
+    overflow: auto;
+    padding: 20px 20px 17px;
+    border: 3px solid #fff8dc;
+    border-radius: 23px;
+    color: #303f70;
+    text-align: center;
+    background: linear-gradient(180deg, #fffdf2, #ffeec7);
+    box-shadow: 0 9px 0 rgba(19,34,89,.2), 0 20px 34px rgba(13,25,72,.28);
+    transform: translateY(9px) scale(.96);
+    transition: transform .22s ease;
+  }
+
+  .overlay.visible .dialog {
+    transform: translateY(0) scale(1);
+  }
+
+  .dialog .eyebrow {
+    margin-bottom: 7px;
+    color: #e55e59;
+    font-size: 10px;
+    font-weight: 1000;
+    letter-spacing: .14em;
+  }
+
+  .dialog h2 {
+    margin: 0;
+    font-size: clamp(25px, 7vw, 38px);
+    line-height: .94;
+    letter-spacing: -.06em;
+  }
+
+  .dialog p {
+    margin: 10px auto 13px;
+    max-width: 310px;
+    color: #536185;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .how {
+    margin: 0 0 13px;
+    padding: 8px 9px;
+    border-radius: 12px;
+    color: #4d5275;
+    background: rgba(255,255,255,.66);
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.3;
+  }
+
+  .how b {
+    color: #df534f;
+  }
+
+  #startButton {
+    width: 100%;
+    padding: 13px 15px;
+    border-radius: 14px;
+    color: white;
+    background: linear-gradient(180deg, #ff6e81, #ed426b);
+    box-shadow: 0 5px 0 #be3458, 0 8px 14px rgba(173,63,84,.22);
+    font-size: 15px;
+    font-weight: 1000;
+    letter-spacing: .035em;
+  }
+
+  #startButton:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #be3458;
+  }
+
+  @media (max-width: 530px) {
+    header {
+      min-height: 66px;
+      padding-right: 9px;
+      padding-left: 9px;
+    }
+
+    .brand {
+      grid-column: 1 / span 2;
+      justify-self: center;
+    }
+
+    #soundButton {
+      padding: 7px 8px;
+      font-size: 9px;
+    }
+
+    .hud {
+      min-height: 54px;
+      margin: 0 7px;
+      padding: 7px 9px;
+      gap: 6px;
+      border-radius: 15px;
+    }
+
+    .stat {
+      font-size: 8px;
+    }
+
+    .stat strong {
+      font-size: 19px;
+    }
+
+    .arena {
+      margin-right: 2px;
+      margin-left: 2px;
+    }
+
+    .footer-tip {
+      font-size: 8px;
+    }
+  }
+
+  @media (max-height: 590px) {
+    header {
+      min-height: 58px;
+      padding-top: max(6px, env(safe-area-inset-top));
+      padding-bottom: 4px;
+    }
+
+    .tagline {
+      display: none;
+    }
+
+    .hud {
+      min-height: 48px;
+    }
+
+    .footer-tip {
+      display: none;
+    }
+  }
+
+  @media (max-height: 479px) {
+    .shell {
+      min-height: 0;
+    }
+
+    header {
+      min-height: 42px;
+      padding: max(4px, env(safe-area-inset-top)) 8px 3px;
+    }
+
+    h1 {
+      font-size: clamp(18px, 5vw, 28px);
+    }
+
+    #soundButton {
+      padding: 5px 7px;
+      font-size: 8px;
+    }
+
+    .hud {
+      min-height: 42px;
+      margin: 0 5px;
+      padding: 5px 8px;
+    }
+
+    .timer-label {
+      margin-bottom: 2px;
+      font-size: 8px;
+    }
+
+    .time-number {
+      font-size: 18px;
+    }
+
+    .timer-track {
+      height: 6px;
+      margin-top: 3px;
+    }
+
+    .stat strong {
+      margin-top: 2px;
+      font-size: 17px;
+    }
+
+    .arena {
+      min-height: 0;
+      margin-top: 2px;
+    }
+
+    .cup-wrap {
+      height: min(41vh, calc(100% - 43px), 210px);
+      margin-bottom: 37px;
+    }
+
+    .table {
+      bottom: 25px;
+      height: 13px;
+    }
+
+    .meter-card {
+      bottom: 1px;
+      padding: 5px 8px 6px;
+      border-radius: 11px;
+    }
+
+    .meter-top {
+      font-size: 8px;
+    }
+
+    .drink-meter {
+      height: 6px;
+      margin-top: 3px;
+    }
+
+    .warning {
+      top: 1%;
+    }
+
+    .warning-ring {
+      width: min(23vw, 112px);
+    }
+
+    .warning-caption {
+      margin-top: 4px;
+      padding: 3px 6px;
+      font-size: 7px;
+    }
+
+    .dialog {
+      width: min(94%, 375px);
+      max-height: calc(100% - 4px);
+      padding: 12px 14px;
+      border-radius: 18px;
+    }
+
+    .dialog .eyebrow {
+      margin-bottom: 4px;
+      font-size: 8px;
+    }
+
+    .dialog h2 {
+      font-size: clamp(20px, 6vw, 29px);
+    }
+
+    .dialog p {
+      margin: 7px auto 8px;
+      font-size: 11px;
+    }
+
+    .how {
+      margin-bottom: 9px;
+      padding: 6px 7px;
+      font-size: 10px;
+    }
+
+    #startButton {
+      padding: 9px 12px;
+      font-size: 13px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <main class="shell" id="shell">
+    <div class="confetti-bg"></div>
+
+    <header>
+      <div class="brand">
+        <h1>Foam Cup Sprint</h1>
+        <p class="tagline">Tap fast, freeze for hiccups, empty the cup before time runs out.</p>
+      </div>
+      <button id="soundButton" type="button" aria-label="Toggle sound effects">SOUND ON</button>
+    </header>
+
+    <section class="hud" aria-label="Game status">
+      <div class="stat">
+        CUPS
+        <strong id="cupsValue">0</strong>
+      </div>
+
+      <div class="timer-panel" id="timerPanel">
+        <span class="timer-label">ROUND TIME</span>
+        <span class="time-number" id="timeValue">10.0</span>
+        <div class="timer-track" aria-hidden="true"><div id="timerFill"></div></div>
+      </div>
+
+      <div class="stat right">
+        SCORE
+        <strong id="scoreValue">0</strong>
+      </div>
+    </section>
+
+    <section class="arena" id="arena" aria-label="Cup play area">
+      <div class="tap-zone" id="tapZone" tabindex="0" role="button" aria-label="Tap the cup to take a sip">
+        <div class="warning" id="warning" aria-live="assertive">
+          <div class="warning-ring" id="warningRing">
+            <div class="warning-core">
+              <b>HICCUP!</b>
+              <span>FREEZE!</span>
+            </div>
+          </div>
+          <div class="warning-caption">DON'T TAP THE CUP</div>
+        </div>
+
+        <div class="cup-wrap" id="cupWrap" aria-hidden="true">
+          <div class="cup-rim"></div>
+          <div class="cup-body">
+            <div id="liquid"><div class="foam"></div></div>
+            <div class="level-lines"><i></i><i></i><i></i><i></i></div>
+            <div class="cup-label">FOAM RUSH<small>FIZZY CUP</small></div>
+          </div>
+        </div>
+
+        <div class="table" aria-hidden="true"></div>
+      </div>
+
+      <div class="meter-card" aria-label="Cup fill meter">
+        <div class="meter-top">
+          <span>DRINK LEVEL</span>
+          <span id="sipText">18 SIPS LEFT</span>
+          <button class="touch-sip" id="touchSip" type="button" aria-label="Take a sip">SIP</button>
+        </div>
+        <div class="drink-meter" aria-hidden="true"><div id="drinkFill"></div></div>
+      </div>
+
+      <div class="effects" id="effects" aria-hidden="true"></div>
+    </section>
+
+    <div class="footer-tip">HOW TO PLAY: TAP CUP / SPACE = SIP &nbsp;•&nbsp; FREEZE ON HICCUP &nbsp;•&nbsp; M = SOUND</div>
+
+    <div class="overlay visible" id="overlay">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+        <div class="eyebrow" id="dialogEyebrow">READY, SET, FIZZ!</div>
+        <h2 id="dialogTitle">Drain the cup!</h2>
+        <p id="dialogText">A ten-second foam sprint. Keep sipping, but stop completely when the bright HICCUP warning appears.</p>
+        <div class="how">How to play: <b>tap the cup, SIP button, or Space</b> to drink. During <b>HICCUP!</b>, freeze — taps spill fizz back into the cup.</div>
+        <button id="startButton" type="button">START SPRINT</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  const ROUND_SECONDS = 10;
+
+  const els = {
+    shell: document.getElementById("shell"),
+    arena: document.getElementById("arena"),
+    tapZone: document.getElementById("tapZone"),
+    touchSip: document.getElementById("touchSip"),
+    cupWrap: document.getElementById("cupWrap"),
+    liquid: document.getElementById("liquid"),
+    drinkFill: document.getElementById("drinkFill"),
+    sipText: document.getElementById("sipText"),
+    cupsValue: document.getElementById("cupsValue"),
+    scoreValue: document.getElementById("scoreValue"),
+    timeValue: document.getElementById("timeValue"),
+    timerFill: document.getElementById("timerFill"),
+    timerPanel: document.getElementById("timerPanel"),
+    warning: document.getElementById("warning"),
+    warningRing: document.getElementById("warningRing"),
+    effects: document.getElementById("effects"),
+    overlay: document.getElementById("overlay"),
+    dialogEyebrow: document.getElementById("dialogEyebrow"),
+    dialogTitle: document.getElementById("dialogTitle"),
+    dialogText: document.getElementById("dialogText"),
+    startButton: document.getElementById("startButton"),
+    soundButton: document.getElementById("soundButton")
+  };
+
+  const isMobile = window.matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window);
+  els.shell.classList.toggle("mobile", isMobile);
+
+  let state = "intro";
+  let cups = 0;
+  let score = 0;
+  let totalSips = 18;
+  let remaining = 18;
+  let startTime = 0;
+  let timeLeft = ROUND_SECONDS;
+  let nextHiccupAt = 0;
+  let hiccupStart = 0;
+  let hiccupDuration = 1350;
+  let hiccupActive = false;
+  let spilledThisHiccup = false;
+  let lastSipAt = 0;
+  let transitionTimer = 0;
+  let muted = false;
+  let audioCtx = null;
+
+  function now() {
+    return performance.now();
+  }
+
+  function random(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function initAudio() {
+    if (muted || audioCtx) {
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return;
+    }
+
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtor) {
+      audioCtx = new AudioCtor();
+    }
+  }
+
+  function tone(freq, duration, volume, type, delay) {
+    if (muted || !audioCtx) {
+      return;
+    }
+
+    const start = audioCtx.currentTime + (delay || 0);
+    const oscillator = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    oscillator.type = type || "sine";
+    oscillator.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(Math.max(.0001, volume), start);
+    gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+
+    oscillator.connect(gain);
+    gain.connect(audioCtx.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration + .03);
+  }
+
+  function sipSound() {
+    tone(245, .055, .04, "triangle");
+    tone(385, .04, .025, "sine", .02);
+  }
+
+  function hiccupSound() {
+    tone(170, .09, .1, "square");
+    tone(115, .12, .075, "square", .08);
+  }
+
+  function spillSound() {
+    tone(100, .13, .08, "sawtooth");
+    tone(72, .16, .045, "triangle", .06);
+  }
+
+  function cheerSound() {
+    tone(523, .1, .065, "triangle");
+    tone(659, .12, .07, "triangle", .1);
+    tone(784, .19, .08, "triangle", .2);
+  }
+
+  function updateCup() {
+    const percent = totalSips ? Math.max(0, remaining / totalSips) : 0;
+    els.liquid.style.height = `${percent * 86}%`;
+    els.drinkFill.style.transform = `scaleX(${percent})`;
+    els.sipText.textContent = remaining > 0
+      ? `${remaining} SIP${remaining === 1 ? "" : "S"} LEFT`
+      : "EMPTY!";
+    els.cupsValue.textContent = cups;
+    els.scoreValue.textContent = score;
+  }
+
+  function updateTimer() {
+    const fraction = Math.max(0, timeLeft / ROUND_SECONDS);
+    els.timeValue.textContent = timeLeft.toFixed(1);
+    els.timerFill.style.transform = `scaleX(${fraction})`;
+    els.timerPanel.classList.toggle("timer-danger", timeLeft <= 3);
+  }
+
+  function removeSoon(node, ms) {
+    setTimeout(() => {
+      if (node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
+    }, ms);
+  }
+
+  function message(text, kind) {
+    const node = document.createElement("div");
+    node.className = `spark ${kind || ""}`.trim();
+    node.textContent = text;
+    els.effects.appendChild(node);
+    removeSoon(node, 900);
+  }
+
+  function makeBubbles(count, spill) {
+    for (let i = 0; i < count; i += 1) {
+      const bubble = document.createElement("i");
+      bubble.className = "bubble";
+      bubble.style.left = `${random(38, 62)}%`;
+      bubble.style.bottom = `${spill ? random(28, 48) : random(22, 34)}%`;
+      bubble.style.width = `${random(5, 11)}px`;
+      bubble.style.height = bubble.style.width;
+      bubble.style.setProperty("--dx", `${random(-46, 46)}px`);
+      bubble.style.setProperty("--dy", `${random(-62, -24)}px`);
+
+      if (spill) {
+        bubble.style.background = "#fff5cc";
+        bubble.style.borderColor = "#fff9e8";
+      }
+
+      els.effects.appendChild(bubble);
+      removeSoon(bubble, 850);
+    }
+  }
+
+  function makeBurst() {
+    const colors = ["#fff8a5", "#ff5c83", "#61e5d2", "#ffffff", "#ff9a40", "#6a83ff"];
+
+    for (let i = 0; i < 22; i += 1) {
+      const piece = document.createElement("i");
+      const angle = (Math.PI * 2 * i / 22) + random(-.13, .13);
+      const distance = random(55, 165);
+
+      piece.className = "burst-piece";
+      piece.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+      piece.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+      piece.style.setProperty("--r", `${random(-240, 240)}deg`);
+      piece.style.setProperty("--piece", colors[i % colors.length]);
+      piece.style.width = `${random(6, 11)}px`;
+      piece.style.height = `${random(9, 19)}px`;
+
+      els.effects.appendChild(piece);
+      removeSoon(piece, 950);
+    }
+  }
+
+  function showOverlay(eyebrow, title, text, buttonText) {
+    els.dialogEyebrow.textContent = eyebrow;
+    els.dialogTitle.textContent = title;
+    els.dialogText.textContent = text;
+    els.startButton.textContent = buttonText;
+    els.overlay.classList.add("visible");
+  }
+
+  function hideOverlay() {
+    els.overlay.classList.remove("visible");
+  }
+
+  function stopHiccupVisuals() {
+    hiccupActive = false;
+    els.warning.classList.remove("show");
+    els.shell.classList.remove("hic-mode");
+    els.cupWrap.classList.remove("wobble");
+    els.tapZone.classList.remove("locked");
+  }
+
+  function scheduleFirstHiccup(at) {
+    nextHiccupAt = at + random(3000, 3900);
+  }
+
+  function scheduleNextHiccup(at) {
+    const difficulty = Math.min(1, cups / 14);
+    hiccupDuration = Math.max(680, 1420 - cups * 45);
+    nextHiccupAt = at + Math.max(1250, 2850 - difficulty * 820) + random(-180, 450);
+  }
+
+  function startRound() {
+    clearTimeout(transitionTimer);
+    state = "playing";
+    totalSips = Math.min(31, 18 + Math.floor(cups * .75));
+    remaining = totalSips;
+    timeLeft = ROUND_SECONDS;
+    startTime = now();
+    spilledThisHiccup = false;
+    stopHiccupVisuals();
+    scheduleFirstHiccup(startTime);
+    updateCup();
+    updateTimer();
+  }
+
+  function beginGame() {
+    initAudio();
+    clearTimeout(transitionTimer);
+    cups = 0;
+    score = 0;
+    remaining = 18;
+    hideOverlay();
+    startRound();
+
+    setTimeout(() => {
+      els.tapZone.focus({ preventScroll: true });
+    }, 20);
+  }
+
+  function startHiccup(at) {
+    if (state !== "playing" || hiccupActive) {
+      return;
+    }
+
+    hiccupActive = true;
+    spilledThisHiccup = false;
+    hiccupStart = at;
+    els.warningRing.style.setProperty("--ring", "360deg");
+    els.warning.classList.add("show");
+    els.shell.classList.add("hic-mode");
+    els.cupWrap.classList.add("wobble");
+    els.tapZone.classList.add("locked");
+    els.arena.classList.remove("hic-shake");
+    void els.arena.offsetWidth;
+    els.arena.classList.add("hic-shake");
+    hiccupSound();
+  }
+
+  function endHiccup(at) {
+    stopHiccupVisuals();
+
+    if (!spilledThisHiccup && state === "playing") {
+      message("✦ CLOSE ONE! ✦");
+      tone(720, .07, .04, "sine");
+    }
+
+    scheduleNextHiccup(at);
+  }
+
+  function spill() {
+    spilledThisHiccup = true;
+
+    const lostProgress = Math.max(2, Math.ceil(totalSips * .16));
+    const before = remaining;
+    remaining = Math.min(totalSips, remaining + lostProgress);
+    const added = remaining - before;
+
+    updateCup();
+    makeBubbles(10, true);
+    message(`SPILL! +${added} SIP${added === 1 ? "" : "S"}`, "spill");
+    spillSound();
+
+    els.cupWrap.classList.remove("wobble");
+    void els.cupWrap.offsetWidth;
+    els.cupWrap.classList.add("wobble");
+  }
+
+  function finishRound() {
+    if (state !== "playing") {
+      return;
+    }
+
+    state = "transition";
+    stopHiccupVisuals();
+
+    const bonus = Math.max(1, Math.ceil(timeLeft * 10));
+    cups += 1;
+    score += 100 + bonus;
+
+    updateCup();
+    message(`CUP CLEARED! +${bonus}`, "win");
+    makeBurst();
+    cheerSound();
+
+    transitionTimer = setTimeout(() => {
+      if (state === "transition") {
+        startRound();
+      }
+    }, 650);
+  }
+
+  function loseRound() {
+    if (state !== "playing") {
+      return;
+    }
+
+    state = "lost";
+    stopHiccupVisuals();
+    tone(130, .25, .08, "sawtooth");
+    message("TIME UP!", "spill");
+
+    const cupWord = cups === 1 ? "cup" : "cups";
+    showOverlay(
+      "SPRINT OVER",
+      `You cleared ${cups} ${cupWord}!`,
+      cups > 0
+        ? `Your fizzy score is ${score}. Tap quickly, then freeze as soon as a HICCUP warning flashes.`
+        : "The cup stayed too full. Sip quickly, then stop the instant the HICCUP ring appears.",
+      "SPRINT AGAIN"
+    );
+  }
+
+  function sip() {
+    if (state === "intro" || state === "lost") {
+      beginGame();
+      return;
+    }
+
+    if (state !== "playing") {
+      return;
+    }
+
+    const stamp = now();
+
+    if (stamp - lastSipAt < 55) {
+      return;
+    }
+
+    lastSipAt = stamp;
+
+    if (hiccupActive) {
+      spill();
+      return;
+    }
+
+    remaining = Math.max(0, remaining - 1);
+    updateCup();
+    makeBubbles(3, false);
+    sipSound();
+
+    if (remaining <= 0) {
+      finishRound();
+    }
+  }
+
+  function toggleSound() {
+    muted = !muted;
+    els.soundButton.textContent = muted ? "SOUND OFF" : "SOUND ON";
+    els.soundButton.setAttribute("aria-label", muted ? "Turn sound effects on" : "Turn sound effects off");
+
+    if (!muted) {
+      initAudio();
+      tone(560, .07, .04, "sine");
+    }
+  }
+
+  function frame(stamp) {
+    if (state === "playing") {
+      timeLeft = Math.max(0, ROUND_SECONDS - (stamp - startTime) / 1000);
+      updateTimer();
+
+      if (timeLeft <= 0) {
+        loseRound();
+      } else if (hiccupActive) {
+        const elapsed = stamp - hiccupStart;
+        const progress = Math.min(1, elapsed / hiccupDuration);
+        els.warningRing.style.setProperty("--ring", `${Math.max(0, 360 * (1 - progress))}deg`);
+
+        if (elapsed >= hiccupDuration) {
+          endHiccup(stamp);
+        }
+      } else if (stamp >= nextHiccupAt && timeLeft > 1.1) {
+        startHiccup(stamp);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  els.tapZone.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    initAudio();
+    sip();
+  });
+
+  els.touchSip.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    initAudio();
+    sip();
+  });
+
+  els.startButton.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    beginGame();
+  });
+
+  els.soundButton.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleSound();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "m" || event.key === "M") {
+      toggleSound();
+      return;
+    }
+
+    if (event.code === "Space" || event.key === "Enter") {
+      event.preventDefault();
+      initAudio();
+      sip();
+    }
+  });
+
+  updateCup();
+  updateTimer();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

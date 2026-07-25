@@ -96,6 +96,15 @@
       "path": "games/sidewalk-sizzle/",
       "mobile": true,
       "thumbnail": "games/sidewalk-sizzle/cover.webp"
+    },
+    {
+      "slug": "foam-cup-sprint",
+      "title": "Foam Cup Sprint",
+      "tagline": "Tap fast, freeze for hiccups, empty the cup before time runs out.",
+      "date": "2026-07-25",
+      "path": "games/foam-cup-sprint/",
+      "mobile": true,
+      "thumbnail": "games/foam-cup-sprint/cover.webp"
     }
   ]
 }
