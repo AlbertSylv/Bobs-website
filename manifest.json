@@ -72,6 +72,15 @@
       "path": "games/basement-casefile/",
       "mobile": true,
       "thumbnail": "games/basement-casefile/cover.webp"
+    },
+    {
+      "slug": "sidewalk-sizzle",
+      "title": "Sidewalk Sizzle",
+      "tagline": "Deliver frozen treats before the sun wins.",
+      "date": "2026-07-25",
+      "path": "games/sidewalk-sizzle/",
+      "mobile": true,
+      "thumbnail": "games/sidewalk-sizzle/cover.webp"
     }
   ]
 }
