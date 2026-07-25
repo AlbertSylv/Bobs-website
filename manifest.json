@@ -63,6 +63,15 @@
       "path": "games/plant-panic-quiz/",
       "mobile": true,
       "thumbnail": "games/plant-panic-quiz/cover.webp"
+    },
+    {
+      "slug": "basement-casefile",
+      "title": "Basement Casefile",
+      "tagline": "Answer absurdly. Become suspiciously yourself.",
+      "date": "2026-07-25",
+      "path": "games/basement-casefile/",
+      "mobile": true,
+      "thumbnail": "games/basement-casefile/cover.webp"
     }
   ]
 }
