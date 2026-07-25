@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Which X-Files Character Are You?</title>
+<title>Basement Casefile</title>
 <style>
   :root {
     --ink: #e4fff4;
@@ -90,12 +90,30 @@
     gap: clamp(14px, 3vw, 28px);
   }
 
-  .how-to {
+  .quiz-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .how-to,
+  .progress {
     margin: 0;
     color: rgba(228, 255, 244, .72);
     font-size: clamp(11px, 2vw, 14px);
     letter-spacing: .04em;
-    text-align: center;
+  }
+
+  .how-to {
+    text-align: left;
+  }
+
+  .progress {
+    flex: 0 0 auto;
+    color: var(--acid);
+    font-weight: bold;
+    white-space: nowrap;
   }
 
   .question-card {
@@ -232,7 +250,8 @@
     pointer-events: auto;
   }
 
-  .result-card {
+  .result-card,
+  .start-card {
     width: min(620px, 100%);
     padding: clamp(27px, 7vw, 60px);
     border: 2px solid var(--acid);
@@ -241,6 +260,37 @@
       #102321;
     box-shadow: 10px 10px 0 #020807, 0 0 38px rgba(217,255,87,.13);
     text-align: center;
+  }
+
+  .case-label {
+    margin: 0 0 12px;
+    color: var(--cyan);
+    font-size: clamp(11px, 2vw, 14px);
+    font-weight: bold;
+    letter-spacing: .16em;
+  }
+
+  .start-card h1 {
+    margin: 0 0 20px;
+    color: #f4fff9;
+    font-size: clamp(35px, 9vw, 65px);
+    line-height: .9;
+    letter-spacing: -.08em;
+    text-transform: uppercase;
+  }
+
+  .start-card p {
+    margin: 0 auto 16px;
+    max-width: 470px;
+    color: rgba(228, 255, 244, .84);
+    font-size: clamp(14px, 2.7vw, 18px);
+    line-height: 1.45;
+  }
+
+  .start-controls {
+    color: var(--acid) !important;
+    font-size: clamp(12px, 2.2vw, 15px) !important;
+    letter-spacing: .04em;
   }
 
   #result {
@@ -252,6 +302,7 @@
     text-transform: uppercase;
   }
 
+  #startBtn,
   #restartBtn {
     min-height: 54px;
     padding: 12px 23px;
@@ -262,6 +313,8 @@
     letter-spacing: .1em;
   }
 
+  #startBtn:hover,
+  #startBtn:focus-visible,
   #restartBtn:hover,
   #restartBtn:focus-visible {
     outline: 2px solid #fff;
@@ -284,6 +337,19 @@
   @media (max-width: 560px) {
     .quiz-shell {
       padding: 12px;
+    }
+
+    .quiz-meta {
+      display: grid;
+      gap: 5px;
+    }
+
+    .how-to {
+      text-align: left;
+    }
+
+    .progress {
+      justify-self: start;
     }
 
     .answer-grid {
@@ -323,7 +389,8 @@
       align-content: start;
     }
 
-    .how-to {
+    .how-to,
+    .progress {
       font-size: 10px;
       line-height: 1.25;
     }
@@ -367,7 +434,8 @@
         max(14px, env(safe-area-inset-bottom));
     }
 
-    .result-card {
+    .result-card,
+    .start-card {
       margin: auto;
       padding: 26px 20px;
     }
@@ -393,16 +461,31 @@
 </head>
 <body>
 <div id="app">
-  <main class="quiz-shell" aria-label="Which X-Files character are you quiz">
+  <main class="quiz-shell" aria-label="Basement Casefile personality quiz">
     <section class="quiz" aria-describedby="howTo">
-      <p id="howTo" class="how-to">How to play: choose one answer at a time. Tap a choice or press keys 1–4.</p>
+      <div class="quiz-meta">
+        <p id="howTo" class="how-to">How to play: choose one answer at a time. Tap a choice or press keys 1–4.</p>
+        <p id="progress" class="progress" aria-live="polite">QUESTION 1 / 8</p>
+      </div>
+
       <div class="question-card">
         <h1 id="question" aria-live="polite"></h1>
       </div>
+
       <div id="answers" class="answer-grid" aria-label="Answer choices"></div>
     </section>
 
-    <section id="overlay" class="overlay" aria-live="assertive" aria-label="Quiz result">
+    <section id="startOverlay" class="overlay visible" aria-label="Start Basement Casefile">
+      <div class="start-card">
+        <p class="case-label">CASEFILE: PERSONALITY ASSESSMENT</p>
+        <h1>Basement Casefile</h1>
+        <p>Follow the clues, trust your instincts, and answer eight unexplained-case scenarios to discover which X-Files character matches your investigative style.</p>
+        <p class="start-controls">Choose one of four answers for each question. Use the buttons or press 1–4.</p>
+        <button id="startBtn" type="button">OPEN CASEFILE</button>
+      </div>
+    </section>
+
+    <section id="resultOverlay" class="overlay" aria-live="assertive" aria-label="Quiz result">
       <div class="result-card">
         <h2 id="result"></h2>
         <button id="restartBtn" type="button">RESTART QUIZ</button>
@@ -506,8 +589,11 @@
 
   const questionEl = document.getElementById("question");
   const answersEl = document.getElementById("answers");
-  const overlay = document.getElementById("overlay");
+  const progressEl = document.getElementById("progress");
+  const startOverlay = document.getElementById("startOverlay");
+  const resultOverlay = document.getElementById("resultOverlay");
   const resultEl = document.getElementById("result");
+  const startBtn = document.getElementById("startBtn");
   const restartBtn = document.getElementById("restartBtn");
 
   const hud = {
@@ -524,7 +610,7 @@
   let streak = 0;
   let chosenHistory = [];
   let traits = {};
-  let state = "question";
+  let state = "start";
 
   function shuffle(items) {
     const copy = [...items];
@@ -546,6 +632,11 @@
     hud.Gunmen.textContent = `Lone Gunmen: ${traits.Gunmen}`;
   }
 
+  function updateProgress() {
+    const currentQuestion = Math.min(index + 1, questions.length);
+    progressEl.textContent = `QUESTION ${currentQuestion} / ${questions.length}`;
+  }
+
   function startQuiz() {
     index = 0;
     score = 0;
@@ -558,7 +649,8 @@
       Gunmen: 0
     };
     state = "question";
-    overlay.classList.remove("visible");
+    startOverlay.classList.remove("visible");
+    resultOverlay.classList.remove("visible");
     updateHud();
     renderQuestion();
   }
@@ -567,6 +659,7 @@
     const current = questions[index];
     const choices = shuffle(current.answers);
 
+    updateProgress();
     questionEl.textContent = current.text;
     answersEl.innerHTML = "";
 
@@ -579,6 +672,7 @@
       button.className = "answer";
       button.dataset.key = String(choiceIndex + 1);
       button.dataset.trait = trait;
+      button.setAttribute("aria-label", `Answer ${choiceIndex + 1}: ${text}`);
 
       answerText.className = "answer-text";
       answerText.textContent = text;
@@ -614,6 +708,7 @@
     index += 1;
 
     if (index >= questions.length) {
+      updateProgress();
       showResult();
     } else {
       state = "question";
@@ -637,14 +732,21 @@
   function showResult() {
     state = "result";
     resultEl.textContent = profiles[getWinner()];
-    overlay.classList.add("visible");
+    resultOverlay.classList.add("visible");
     restartBtn.focus({ preventScroll: true });
   }
 
+  startBtn.addEventListener("click", startQuiz);
   restartBtn.addEventListener("click", startQuiz);
 
   document.addEventListener("keydown", (event) => {
     if (event.repeat) {
+      return;
+    }
+
+    if (state === "start" && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      startQuiz();
       return;
     }
 
@@ -664,7 +766,7 @@
     }
   });
 
-  startQuiz();
+  updateProgress();
 })();
 </script>
 </body>
