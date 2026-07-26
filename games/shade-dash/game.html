@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Shade Dash</title>
+<style>
+  :root {
+    --ink: #243039;
+    --cream: #fff4cf;
+    --shade: #6edcff;
+    --sun: #ff8b37;
+    --panel: rgba(24, 42, 49, 0.84);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    overflow: hidden;
+    background: #edac52;
+    color: var(--cream);
+    font-family: Arial, Helvetica, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #game {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #edac52;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .hud {
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 12px clamp(10px, 2.5vw, 26px);
+    pointer-events: none;
+  }
+
+  .hudRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .brand {
+    max-width: 42%;
+    text-shadow: 0 2px 0 rgba(54, 49, 22, 0.3);
+  }
+
+  .brand strong {
+    display: block;
+    color: #fff7dc;
+    font-size: clamp(18px, 4vw, 30px);
+    letter-spacing: 0.05em;
+    line-height: 0.92;
+  }
+
+  .brand span {
+    display: block;
+    margin-top: 4px;
+    color: #71452a;
+    font-size: clamp(9px, 1.8vw, 13px);
+    font-weight: bold;
+    letter-spacing: 0.04em;
+  }
+
+  .stats {
+    display: flex;
+    gap: 7px;
+    justify-content: flex-end;
+  }
+
+  .stat {
+    min-width: 74px;
+    padding: 7px 9px 6px;
+    border: 2px solid rgba(255, 245, 203, 0.45);
+    border-radius: 11px;
+    background: rgba(37, 50, 50, 0.66);
+    text-align: center;
+    box-shadow: 0 3px 0 rgba(44, 42, 27, 0.16);
+  }
+
+  .statLabel {
+    display: block;
+    color: #c8e6dd;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 0.13em;
+  }
+
+  .statValue {
+    display: block;
+    margin-top: 1px;
+    color: #fff4cf;
+    font-size: clamp(15px, 3.5vw, 22px);
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .meltWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(330px, 88vw);
+    margin: 10px auto 0;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(31, 42, 47, 0.72);
+    border: 2px solid rgba(255, 243, 199, 0.42);
+    box-shadow: 0 3px 0 rgba(44, 42, 27, 0.15);
+  }
+
+  .meltLabel {
+    color: #fff2c7;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.13em;
+  }
+
+  .meter {
+    position: relative;
+    height: 13px;
+    flex: 1;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.55);
+    border-radius: 999px;
+    background: #334a50;
+  }
+
+  #meltFill {
+    width: 20%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #4edcff, #2795e8);
+    box-shadow: 0 0 10px #5de5ff;
+    transition: width 0.12s linear, background 0.15s ease;
+  }
+
+  .meltHot #meltFill {
+    background: linear-gradient(90deg, #ffc349, #ff693d);
+    box-shadow: 0 0 12px #ff813a;
+  }
+
+  #status {
+    min-width: 56px;
+    color: #8eeaff;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  .tip {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    bottom: 79px;
+    width: min(620px, calc(100% - 150px));
+    transform: translateX(-50%);
+    color: #614528;
+    font-size: clamp(10px, 2vw, 13px);
+    font-weight: 800;
+    line-height: 1.25;
+    text-align: center;
+    text-shadow: 0 1px rgba(255, 235, 176, 0.6);
+    pointer-events: none;
+  }
+
+  .touchControls {
+    position: absolute;
+    z-index: 7;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .touchBtn, #soundBtn {
+    appearance: none;
+    -webkit-appearance: none;
+    color: #fff7d9;
+    font-family: inherit;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .touchBtn {
+    width: 58px;
+    height: 54px;
+    border: 2px solid rgba(255,255,255,0.58);
+    border-radius: 16px;
+    background: rgba(37, 61, 65, 0.84);
+    box-shadow: 0 4px 0 rgba(44, 42, 27, 0.2);
+    font-size: 27px;
+    line-height: 1;
+  }
+
+  .touchBtn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(44, 42, 27, 0.2);
+    background: #306e78;
+  }
+
+  #soundBtn {
+    position: absolute;
+    z-index: 8;
+    left: 13px;
+    bottom: 15px;
+    padding: 9px 11px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 999px;
+    background: rgba(37, 61, 65, 0.78);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .overlay {
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(49, 43, 28, 0.18);
+    transition: opacity 0.22s ease;
+  }
+
+  .overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .card {
+    width: min(455px, 94vw);
+    padding: clamp(22px, 5vw, 36px);
+    border: 3px solid rgba(255, 246, 207, 0.8);
+    border-radius: 25px;
+    background: linear-gradient(145deg, rgba(31, 73, 83, 0.95), rgba(27, 46, 51, 0.95));
+    box-shadow: 0 13px 0 rgba(92, 63, 28, 0.2), 0 20px 50px rgba(38, 28, 18, 0.36);
+    text-align: center;
+  }
+
+  .eyebrow {
+    color: #8eeaff;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+  }
+
+  .card h1 {
+    margin: 6px 0 5px;
+    color: #fff4c9;
+    font-size: clamp(38px, 10vw, 62px);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+  }
+
+  .tagline {
+    margin: 0 0 18px;
+    color: #aeefff;
+    font-size: clamp(15px, 3.6vw, 20px);
+    font-weight: bold;
+  }
+
+  .how {
+    margin: 16px auto 20px;
+    max-width: 350px;
+    color: #d8f0e8;
+    font-size: clamp(13px, 3vw, 15px);
+    line-height: 1.48;
+  }
+
+  .how b { color: #fff1a9; }
+
+  #startBtn {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 14px 18px;
+    border: 0;
+    border-bottom: 5px solid #b44c25;
+    border-radius: 15px;
+    background: linear-gradient(#ff9a46, #f37038);
+    color: #fff9df;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px rgba(140, 65, 31, 0.45);
+    touch-action: manipulation;
+  }
+
+  #startBtn:active {
+    transform: translateY(3px);
+    border-bottom-width: 2px;
+  }
+
+  #finalText {
+    display: none;
+    margin: 9px 0 18px;
+    color: #e2f7f3;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .card.ended #finalText { display: block; }
+  .card.ended .how { display: none; }
+
+  @media (max-width: 440px) {
+    .hud { padding-top: 8px; }
+    .stat { min-width: 61px; padding: 5px 6px; }
+    .tip { bottom: 73px; width: calc(100% - 132px); }
+    .touchBtn { width: 50px; height: 48px; }
+  }
+
+  @media (max-height: 540px) {
+    .tip { display: none; }
+    .brand span { display: none; }
+    .meltWrap { margin-top: 5px; }
+    .card { padding: 18px 25px; }
+    .how { margin: 10px auto 13px; }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Shade Dash game canvas"></canvas>
+
+  <div class="hud">
+    <div class="hudRow">
+      <div class="brand">
+        <strong>SHADE DASH</strong>
+        <span>STAY COOL • CHASE SHADE</span>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="statLabel">SCORE</span>
+          <span class="statValue" id="score">0</span>
+        </div>
+        <div class="stat">
+          <span class="statLabel">DISTANCE</span>
+          <span class="statValue" id="distance">0m</span>
+        </div>
+      </div>
+    </div>
+    <div class="meltWrap" id="meltWrap">
+      <span class="meltLabel">MELT</span>
+      <div class="meter"><div id="meltFill"></div></div>
+      <span id="status">SHADE</span>
+    </div>
+  </div>
+
+  <div class="tip">HOW TO PLAY: Steer with <b>← →</b> / <b>A D</b>, drag, or use arrows. Stay in shadow and grab coolers.</div>
+
+  <button id="soundBtn" type="button" aria-label="Toggle sound">SOUND: ON</button>
+  <div class="touchControls" aria-label="Touch steering controls">
+    <button class="touchBtn" id="leftBtn" type="button" aria-label="Steer left">◀</button>
+    <button class="touchBtn" id="rightBtn" type="button" aria-label="Steer right">▶</button>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="card" id="card">
+      <div class="eyebrow" id="eyebrow">A SUNNY SIDEWALK SPRINT</div>
+      <h1 id="overlayTitle">Shade Dash</h1>
+      <p class="tagline" id="overlayTag">Stay cool, chase shade, beat the heat.</p>
+      <p class="how">Your ice pop runs forward automatically. <b>Weave into tree shadows</b> to cool down, and collect blue <b>coolers</b> when the risk is worth it.</p>
+      <p id="finalText"></p>
+      <button id="startBtn" type="button">START RUN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const overlay = document.getElementById("overlay");
+  const card = document.getElementById("card");
+  const startBtn = document.getElementById("startBtn");
+  const scoreEl = document.getElementById("score");
+  const distanceEl = document.getElementById("distance");
+  const meltFill = document.getElementById("meltFill");
+  const meltWrap = document.getElementById("meltWrap");
+  const statusEl = document.getElementById("status");
+  const soundBtn = document.getElementById("soundBtn");
+  const finalText = document.getElementById("finalText");
+  const overlayTitle = document.getElementById("overlayTitle");
+  const overlayTag = document.getElementById("overlayTag");
+  const eyebrow = document.getElementById("eyebrow");
+  const leftBtn = document.getElementById("leftBtn");
+  const rightBtn = document.getElementById("rightBtn");
+
+  let W = 0, H = 0, DPR = 1;
+  let roadL = 0, roadR = 0, roadW = 0, playerY = 0;
+  let lastTime = performance.now();
+  let state = "title";
+  let distance = 0;
+  let playerX = 0.5;
+  let melt = 19;
+  let shade = true;
+  let previousShade = true;
+  let scoreBonus = 0;
+  let shadeElapsed = 0;
+  let shadeMilestone = 0;
+  let bestShade = 0;
+  let sunExposure = 0;
+  let nearCooldown = 0;
+  let flash = 0;
+  let routeEnd = 10500;
+  let shadows = [];
+  let coolers = [];
+  let particles = [];
+  let popups = [];
+  let drips = [];
+  let courseTime = 0;
+  let dripClock = 0;
+  let dead = false;
+  let keys = { left: false, right: false };
+  let dragging = false;
+  let soundOn = true;
+  let audio = null;
+  let masterGain = null;
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const rand = (min, max) => min + Math.random() * (max - min);
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    W = Math.max(1, rect.width);
+    H = Math.max(1, rect.height);
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    roadL = W * 0.075;
+    roadR = W * 0.925;
+    roadW = roadR - roadL;
+    playerY = H * 0.72;
+  }
+
+  function xOnRoad(fraction) {
+    return roadL + clamp(fraction, 0, 1) * roadW;
+  }
+
+  function unlockAudio() {
+    if (!soundOn) return;
+    try {
+      if (!audio) {
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtor) return;
+        audio = new AudioCtor();
+        masterGain = audio.createGain();
+        masterGain.gain.value = 0.22;
+        masterGain.connect(audio.destination);
+      }
+      if (audio.state === "suspended") audio.resume();
+    } catch (e) {
+      soundOn = false;
+      soundBtn.textContent = "SOUND: OFF";
+    }
+  }
+
+  function tone(freq, duration, type, volume, offset = 0) {
+    if (!soundOn || !audio || !masterGain) return;
+    try {
+      const now = audio.currentTime + offset;
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain);
+      gain.connect(masterGain);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.03);
+    } catch (e) {}
+  }
+
+  function sound(name) {
+    if (!soundOn || !audio) return;
+    if (name === "cooler") {
+      tone(480, 0.13, "triangle", 0.16);
+      tone(720, 0.17, "sine", 0.13, 0.1);
+    } else if (name === "shade") {
+      const pitch = 460 + Math.min(shadeMilestone, 7) * 48;
+      tone(pitch, 0.14, "sine", 0.1);
+      tone(pitch * 1.5, 0.18, "triangle", 0.06, 0.08);
+    } else if (name === "sizzle") {
+      tone(115, 0.08, "sawtooth", 0.035);
+    } else if (name === "close") {
+      tone(170, 0.09, "square", 0.10);
+      tone(280, 0.11, "square", 0.06, 0.07);
+    } else if (name === "lose") {
+      tone(220, 0.28, "sawtooth", 0.13);
+      tone(125, 0.46, "sine", 0.12, 0.18);
+    } else if (name === "win") {
+      tone(523, 0.16, "triangle", 0.13);
+      tone(659, 0.16, "triangle", 0.13, 0.12);
+      tone(784, 0.28, "triangle", 0.15, 0.24);
+    }
+  }
+
+  function addPopup(text, color, x = 0.5, y = 0.62, size = 17) {
+    popups.push({ text, color, x, y, size, life: 1.05, maxLife: 1.05 });
+  }
+
+  function shadowX(shadow) {
+    return clamp(
+      shadow.x + Math.sin(courseTime * shadow.moveSpeed + shadow.phase) * shadow.moveAmp,
+      shadow.w * 0.5,
+      1 - shadow.w * 0.5
+    );
+  }
+
+  function buildCourse() {
+    shadows = [];
+    coolers = [];
+    let cursor = 105;
+    let safeX = 0.5;
+    let index = 0;
+
+    while (cursor < routeEnd + 900) {
+      const progress = cursor / routeEnd;
+      const early = cursor < 7900;
+      const width = early ? rand(0.53, 0.67) : rand(0.22, 0.38);
+      const height = early ? rand(360, 445) : rand(205, 295);
+      const gap = early ? rand(185, 265) : rand(190, 325);
+      const step = early ? rand(-0.15, 0.15) : rand(-0.27, 0.27);
+
+      safeX += step;
+      safeX = clamp(safeX, width * 0.5 + 0.035, 1 - width * 0.5 - 0.035);
+
+      shadows.push({
+        x: safeX,
+        y: cursor,
+        w: width,
+        h: height,
+        moveAmp: early ? 0 : rand(0.025, Math.min(0.115, 0.04 + progress * 0.09)),
+        moveSpeed: early ? 0 : rand(0.28, 0.76),
+        phase: rand(0, Math.PI * 2),
+        main: true,
+        seed: Math.random()
+      });
+
+      if (!early && Math.random() < 0.56) {
+        const smallW = rand(0.14, 0.22);
+        let sideX = Math.random() < 0.5 ? safeX - width * 0.62 : safeX + width * 0.62;
+        sideX = clamp(sideX, smallW * 0.5 + 0.02, 1 - smallW * 0.5 - 0.02);
+        shadows.push({
+          x: sideX,
+          y: cursor + rand(-55, 65),
+          w: smallW,
+          h: height * rand(0.52, 0.82),
+          moveAmp: rand(0.02, 0.08),
+          moveSpeed: rand(0.35, 0.9),
+          phase: rand(0, Math.PI * 2),
+          main: false,
+          seed: Math.random()
+        });
+      }
+
+      if (Math.random() < (early ? 0.86 : 0.63)) {
+        coolers.push({
+          x: clamp(safeX + rand(-width * 0.18, width * 0.18), 0.08, 0.92),
+          y: cursor + height * rand(-0.12, 0.18),
+          amount: early ? 22 : 19,
+          points: early ? 220 : 280,
+          collected: false,
+          risky: false
+        });
+      }
+
+      if (!early && Math.random() < 0.67) {
+        const riskX = Math.random() < 0.5 ? rand(0.09, 0.24) : rand(0.76, 0.91);
+        coolers.push({
+          x: riskX,
+          y: cursor + height * 0.5 + gap * rand(0.26, 0.72),
+          amount: Math.round(rand(26, 34)),
+          points: 450,
+          collected: false,
+          risky: true
+        });
+      }
+
+      cursor += height + gap;
+      index++;
+    }
+  }
+
+  function resetGame() {
+    distance = 0;
+    playerX = 0.5;
+    melt = 19;
+    shade = true;
+    previousShade = true;
+    scoreBonus = 0;
+    shadeElapsed = 0;
+    shadeMilestone = 0;
+    bestShade = 0;
+    sunExposure = 0;
+    nearCooldown = 0;
+    flash = 0;
+    courseTime = 0;
+    dripClock = 0;
+    dead = false;
+    particles = [];
+    popups = [];
+    drips = [];
+    buildCourse();
+    updateHUD();
+  }
+
+  function startGame() {
+    unlockAudio();
+    resetGame();
+    state = "running";
+    overlay.classList.add("hidden");
+    card.classList.remove("ended");
+    lastTime = performance.now();
+  }
+
+  function endGame(won) {
+    if (state !== "running") return;
+    state = won ? "won" : "over";
+    dead = !won;
+    keys.left = false;
+    keys.right = false;
+    dragging = false;
+    if (won) {
+      sound("win");
+      overlayTitle.textContent = "Route Cooled!";
+      overlayTag.textContent = "You dashed all the way through the heat.";
+      eyebrow.textContent = "FROSTY FINISH";
+    } else {
+      sound("lose");
+      overlayTitle.textContent = "Melted Out!";
+      overlayTag.textContent = "The sidewalk turned your pop into a puddle.";
+      eyebrow.textContent = "HEAT WAVE REPORT";
+    }
+
+    const score = Math.floor(distance / 8) + scoreBonus;
+    finalText.innerHTML =
+      "<b>Final score: " + score + "</b><br>" +
+      "Distance: " + Math.floor(distance / 10) + "m &nbsp;•&nbsp; Best shade streak: " +
+      Math.floor(bestShade) + "s";
+    startBtn.textContent = "DASH AGAIN";
+    card.classList.add("ended");
+    overlay.classList.remove("hidden");
+  }
+
+  function isInShade() {
+    for (const shadow of shadows) {
+      const dx = (playerX - shadowX(shadow)) / (shadow.w * 0.5);
+      const dy = (distance - shadow.y) / (shadow.h * 0.5);
+      if (dx * dx + dy * dy < 0.98) return true;
+    }
+    return false;
+  }
+
+  function collectCoolers() {
+    for (const cooler of coolers) {
+      if (cooler.collected) continue;
+      if (Math.abs(cooler.y - distance) < 43 && Math.abs(cooler.x - playerX) < 0.073) {
+        cooler.collected = true;
+        melt = Math.max(0, melt - cooler.amount);
+        scoreBonus += cooler.points;
+        addPopup(
+          cooler.risky ? "RISKY COOLER +" + cooler.points : "COOLER +" + cooler.points,
+          cooler.risky ? "#ffe272" : "#8df3ff",
+          cooler.x,
+          0.6,
+          cooler.risky ? 18 : 16
+        );
+        for (let i = 0; i < 15; i++) {
+          particles.push({
+            x: xOnRoad(cooler.x),
+            y: playerY + rand(-18, 18),
+            vx: rand(-80, 80),
+            vy: rand(-120, -20),
+            life: rand(0.35, 0.75),
+            maxLife: 0.75,
+            color: i % 2 ? "#d9fbff" : "#50dfff"
+          });
+        }
+        sound("cooler");
+      }
+    }
+  }
+
+  function updateHUD() {
+    const displayScore = Math.floor(distance / 8) + scoreBonus;
+    scoreEl.textContent = displayScore.toString();
+    distanceEl.textContent = Math.floor(distance / 10) + "m";
+    meltFill.style.width = clamp(melt, 0, 100) + "%";
+    meltWrap.classList.toggle("meltHot", !shade && state === "running");
+    if (state === "running") {
+      statusEl.textContent = shade ? ("SHADE " + Math.floor(shadeElapsed) + "s") : "IN SUN";
+      statusEl.style.color = shade ? "#8deeff" : "#ffd070";
+    } else {
+      statusEl.textContent = dead ? "OH NO" : (state === "won" ? "COOL!" : "READY");
+      statusEl.style.color = dead ? "#ffb05b" : "#8deeff";
+    }
+  }
+
+  function update(dt) {
+    if (state !== "running") {
+      updateParticles(dt);
+      return;
+    }
+
+    courseTime += dt;
+    const progress = distance / routeEnd;
+    const speed = 116 + Math.min(progress, 1) * 78;
+    const axis = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+
+    if (axis !== 0) {
+      playerX += axis * dt * 0.72;
+    }
+    playerX = clamp(playerX, 0.045, 0.955);
+    distance += speed * dt;
+    nearCooldown = Math.max(0, nearCooldown - dt);
+    flash = Math.max(0, flash - dt * 2.6);
+
+    const nowShade = isInShade();
+    previousShade = shade;
+    shade = nowShade;
+
+    if (shade) {
+      melt = Math.max(0, melt - 7.6 * dt);
+      shadeElapsed += dt;
+      bestShade = Math.max(bestShade, shadeElapsed);
+
+      const newSecond = Math.floor(shadeElapsed);
+      if (newSecond > shadeMilestone) {
+        shadeMilestone = newSecond;
+        const streakPoints = 14 + Math.min(newSecond, 10) * 3;
+        scoreBonus += streakPoints;
+        addPopup("SHADE +" + streakPoints, "#a4f7ff", playerX, 0.57, 14);
+        sound("shade");
+      }
+
+      if (!previousShade && sunExposure > 0.22 && sunExposure < 1.45 && melt > 37 && nearCooldown <= 0) {
+        scoreBonus += 85;
+        addPopup("CLOSE! +85", "#ffffff", playerX, 0.49, 20);
+        flash = 0.32;
+        nearCooldown = 1.25;
+        sound("close");
+      }
+      sunExposure = 0;
+    } else {
+      if (previousShade) {
+        shadeElapsed = 0;
+        shadeMilestone = 0;
+      }
+      const heatRate = 8.4 + Math.min(progress, 1) * 4.4;
+      melt += heatRate * dt;
+      sunExposure += dt;
+      dripClock += dt;
+      if (dripClock > 0.22) {
+        dripClock = 0;
+        drips.push({
+          x: xOnRoad(playerX) + rand(-12, 12),
+          y: playerY + 22,
+          vy: rand(85, 150),
+          life: rand(0.35, 0.62),
+          maxLife: 0.62
+        });
+      }
+      if (sunExposure > 0.38 && Math.floor(sunExposure * 1.15) !== Math.floor((sunExposure - dt) * 1.15)) {
+        sound("sizzle");
+      }
+    }
+
+    collectCoolers();
+    updateParticles(dt);
+
+    if (melt >= 100) {
+      melt = 100;
+      endGame(false);
+    } else if (distance >= routeEnd) {
+      distance = routeEnd;
+      endGame(true);
+    }
+    updateHUD();
+  }
+
+  function updateParticles(dt) {
+    for (const p of particles) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 145 * dt;
+      p.life -= dt;
+    }
+    particles = particles.filter(p => p.life > 0);
+
+    for (const d of drips) {
+      d.y += d.vy * dt;
+      d.vy += 230 * dt;
+      d.life -= dt;
+    }
+    drips = drips.filter(d => d.life > 0);
+
+    for (const pop of popups) {
+      pop.life -= dt;
+      pop.y -= dt * 0.055;
+    }
+    popups = popups.filter(pop => pop.life > 0);
+  }
+
+  function drawRoundedRect(x, y, w, h, r, fillStyle) {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+    if (fillStyle) {
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+    }
+  }
+
+  function drawBackground() {
+    const hotGradient = ctx.createLinearGradient(0, 0, 0, H);
+    hotGradient.addColorStop(0, "#ffc56a");
+    hotGradient.addColorStop(0.55, "#f2ad52");
+    hotGradient.addColorStop(1, "#df8c3e");
+    ctx.fillStyle = hotGradient;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "#bd8736";
+    ctx.fillRect(0, 0, roadL, H);
+    ctx.fillRect(roadR, 0, W - roadR, H);
+
+    ctx.fillStyle = "#d59a42";
+    ctx.fillRect(roadL - 5, 0, 5, H);
+    ctx.fillRect(roadR, 0, 5, H);
+
+    const sidewalk = ctx.createLinearGradient(roadL, 0, roadR, 0);
+    sidewalk.addColorStop(0, "#f5c76d");
+    sidewalk.addColorStop(0.5, "#ffd37a");
+    sidewalk.addColorStop(1, "#efb45a");
+    ctx.fillStyle = sidewalk;
+    ctx.fillRect(roadL, 0, roadW, H);
+
+    ctx.fillStyle = "rgba(117,75,38,0.16)";
+    ctx.fillRect(roadL, 0, 3, H);
+    ctx.fillRect(roadR - 3, 0, 3, H);
+
+    ctx.strokeStyle = "rgba(161, 102, 49, 0.19)";
+    ctx.lineWidth = 1.2;
+    const tileStart = Math.floor((distance - playerY) / 92) * 92;
+    for (let worldY = tileStart; worldY < distance + H + 120; worldY += 92) {
+      const sy = playerY - (worldY - distance);
+      ctx.beginPath();
+      ctx.moveTo(roadL, sy);
+      ctx.lineTo(roadR, sy);
+      ctx.stroke();
+    }
+
+    const verticalOffset = ((distance * 0.13) % 150);
+    for (let x = roadL + verticalOffset - 150; x < roadR + 150; x += 150) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x - 18, H);
+      ctx.stroke();
+    }
+
+    for (let i = 0; i < 7; i++) {
+      const y = ((i * 137 + 45 + distance * 0.28) % (H + 120)) - 60;
+      const x = roadL + ((i * 0.183 + 0.17) % 0.7) * roadW;
+      ctx.strokeStyle = "rgba(160, 93, 41, 0.24)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + 9, y + 8, x - 3, y + 17);
+      ctx.quadraticCurveTo(x - 10, y + 25, x + 5, y + 35);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "rgba(255, 245, 187, 0.18)";
+    for (let i = 0; i < 4; i++) {
+      const y = 80 + i * 156 + Math.sin(courseTime * 1.3 + i) * 8;
+      ctx.fillRect(roadL + 10, y, roadW - 20, 2);
+    }
+  }
+
+  function drawTreeAt(shadow, sx, sy) {
+    if (!shadow.main) return;
+    const side = shadow.x < 0.5 ? 1 : -1;
+    const trunkX = side > 0 ? roadL - 9 : roadR + 9;
+    const trunkY = sy - shadow.h * 0.22;
+    if (trunkY < -100 || trunkY > H + 100) return;
+
+    ctx.save();
+    ctx.fillStyle = "#704927";
+    ctx.fillRect(trunkX - 4, trunkY - 4, 8, 55);
+    ctx.fillStyle = "#4d6d3e";
+    ctx.beginPath();
+    ctx.arc(trunkX, trunkY - 17, 31, 0, Math.PI * 2);
+    ctx.arc(trunkX + side * 18, trunkY - 4, 25, 0, Math.PI * 2);
+    ctx.arc(trunkX - side * 15, trunkY - 2, 23, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(154, 187, 74, 0.58)";
+    ctx.beginPath();
+    ctx.arc(trunkX - 7, trunkY - 25, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawShadow(shadow) {
+    const sy = playerY - (shadow.y - distance);
+    if (sy < -shadow.h || sy > H + shadow.h) return;
+    const sx = xOnRoad(shadowX(shadow));
+    const sw = shadow.w * roadW;
+    const sh = shadow.h;
+
+    drawTreeAt(shadow, sx, sy);
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.fillStyle = shadow.main ? "rgba(35, 70, 74, 0.46)" : "rgba(39, 71, 69, 0.38)";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, sw * 0.5, sh * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(28, 55, 61, 0.24)";
+    for (let i = 0; i < 5; i++) {
+      const ang = (i / 5) * Math.PI * 2 + shadow.seed * 3;
+      const bx = Math.cos(ang) * sw * 0.18;
+      const by = Math.sin(ang) * sh * 0.16;
+      ctx.beginPath();
+      ctx.ellipse(bx, by, sw * 0.13, sh * 0.12, ang, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawCooler(cooler) {
+    if (cooler.collected) return;
+    const sy = playerY - (cooler.y - distance);
+    if (sy < -55 || sy > H + 55) return;
+    const x = xOnRoad(cooler.x);
+    const pulse = 1 + Math.sin(courseTime * 5 + cooler.y) * 0.07;
+
+    ctx.save();
+    ctx.translate(x, sy);
+    ctx.scale(pulse, pulse);
+
+    ctx.fillStyle = "rgba(71, 121, 131, 0.3)";
+    ctx.beginPath();
+    ctx.ellipse(2, 16, 19, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawRoundedRect(-16, -14, 32, 29, 5, "#279bd0");
+    drawRoundedRect(-17, -18, 34, 10, 4, "#d8f8ff");
+    ctx.fillStyle = "#75e7ff";
+    ctx.fillRect(-11, -9, 22, 4);
+    ctx.fillStyle = "#174a74";
+    ctx.fillRect(-2, -16, 4, 7);
+    ctx.fillStyle = "#e7fdff";
+    ctx.beginPath();
+    ctx.arc(-7, -2, 2.3, 0, Math.PI * 2);
+    ctx.arc(8, 5, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (cooler.risky) {
+      ctx.strokeStyle = "#ffe16b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 24, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (const d of drips) {
+      ctx.globalAlpha = clamp(d.life / d.maxLife, 0, 1);
+      ctx.fillStyle = "#ff8270";
+      ctx.beginPath();
+      ctx.ellipse(d.x, d.y, 2.4, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPlayer() {
+    const x = xOnRoad(playerX);
+    const hot = !shade && state === "running";
+    const meltRatio = clamp(melt / 100, 0, 1);
+
+    if (dead) {
+      ctx.save();
+      ctx.translate(x, playerY + 17);
+      ctx.fillStyle = "rgba(120, 53, 91, 0.24)";
+      ctx.beginPath();
+      ctx.ellipse(0, 12, 53, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      const puddle = ctx.createRadialGradient(-8, 2, 3, 0, 8, 48);
+      puddle.addColorStop(0, "#ffc0cf");
+      puddle.addColorStop(0.5, "#ef6287");
+      puddle.addColorStop(1, "#bd3f75");
+      ctx.fillStyle = puddle;
+      ctx.beginPath();
+      ctx.ellipse(0, 3, 45, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f8d6e2";
+      ctx.beginPath();
+      ctx.ellipse(-12, 0, 11, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    const lean = hot ? Math.sin(courseTime * 8) * 0.07 + meltRatio * 0.13 : Math.sin(courseTime * 4) * 0.025;
+
+    ctx.save();
+    ctx.translate(x, playerY);
+    ctx.rotate(lean);
+
+    ctx.fillStyle = "rgba(96, 64, 46, 0.25)";
+    ctx.beginPath();
+    ctx.ellipse(0, 31, 24, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#c68b52";
+    drawRoundedRect(-4, 25, 8, 27, 3, "#c88b51");
+    ctx.fillStyle = "#f1bb78";
+    ctx.fillRect(-1.5, 26, 3, 22);
+
+    const popHeight = 59 - meltRatio * 16;
+    const topY = -34 + meltRatio * 8;
+    const popGradient = ctx.createLinearGradient(-18, topY, 18, topY + popHeight);
+    if (hot) {
+      popGradient.addColorStop(0, "#ffcabd");
+      popGradient.addColorStop(0.45, "#f97b84");
+      popGradient.addColorStop(1, "#d85178");
+    } else {
+      popGradient.addColorStop(0, "#d7fbff");
+      popGradient.addColorStop(0.48, "#73dff2");
+      popGradient.addColorStop(1, "#398ed3");
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(-18, topY + 13);
+    ctx.quadraticCurveTo(-17, topY, 0, topY);
+    ctx.quadraticCurveTo(17, topY, 18, topY + 13);
+    ctx.lineTo(18 - meltRatio * 5, topY + popHeight);
+    ctx.quadraticCurveTo(0, topY + popHeight + 5, -18 + meltRatio * 5, topY + popHeight);
+    ctx.closePath();
+    ctx.fillStyle = popGradient;
+    ctx.fill();
+
+    ctx.strokeStyle = hot ? "#b53e65" : "#237bb7";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.54)";
+    ctx.beginPath();
+    ctx.ellipse(-8, topY + 18, 3.4, 11, -0.22, 0, Math.PI * 2);
+    ctx.fill();
+
+    const faceY = topY + popHeight * 0.58;
+    ctx.fillStyle = "#223b4d";
+    ctx.beginPath();
+    ctx.arc(-6, faceY, 2.1, 0, Math.PI * 2);
+    ctx.arc(7, faceY, 2.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#223b4d";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    if (hot) {
+      ctx.arc(1, faceY + 4, 5, 0.15, Math.PI - 0.15, true);
+    } else {
+      ctx.arc(1, faceY + 2, 5, 0.12, Math.PI - 0.12);
+    }
+    ctx.stroke();
+
+    if (shade) {
+      for (let i = 0; i < 5; i++) {
+        const a = courseTime * 3 + i * 1.26;
+        const sx = Math.cos(a) * (23 + (i % 2) * 5);
+        const sy = Math.sin(a * 1.4) * 28 - 4;
+        ctx.fillStyle = "#dcffff";
+        ctx.fillRect(sx - 1.5, sy - 4, 3, 8);
+        ctx.fillRect(sx - 4, sy - 1.5, 8, 3);
+      }
+    } else {
+      ctx.fillStyle = "rgba(255, 233, 199, 0.8)";
+      ctx.beginPath();
+      ctx.ellipse(-12, topY + popHeight + 4, 3.4, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(10, topY + popHeight + 9, 2.8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function drawPopups() {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "900 16px Arial";
+    for (const pop of popups) {
+      const alpha = clamp(pop.life / pop.maxLife, 0, 1);
+      const px = xOnRoad(pop.x);
+      const py = H * pop.y;
+      ctx.globalAlpha = alpha;
+      ctx.font = "900 " + pop.size + "px Arial";
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(47, 54, 58, 0.55)";
+      ctx.strokeText(pop.text, px, py);
+      ctx.fillStyle = pop.color;
+      ctx.fillText(pop.text, px, py);
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFinish() {
+    const sy = playerY - (routeEnd - distance);
+    if (sy < -60 || sy > H + 60) return;
+    ctx.fillStyle = "#f7fbdd";
+    ctx.fillRect(roadL, sy - 13, roadW, 27);
+    const cells = 10;
+    const cellW = roadW / cells;
+    for (let i = 0; i < cells; i++) {
+      ctx.fillStyle = i % 2 ? "#329096" : "#1e5259";
+      ctx.fillRect(roadL + i * cellW, sy - 13, cellW, 13);
+      ctx.fillStyle = i % 2 ? "#1e5259" : "#329096";
+      ctx.fillRect(roadL + i * cellW, sy, cellW, 14);
+    }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+
+    for (const shadow of shadows) drawShadow(shadow);
+    drawFinish();
+    for (const cooler of coolers) drawCooler(cooler);
+    drawParticles();
+    drawPlayer();
+    drawPopups();
+
+    if (flash > 0) {
+      ctx.fillStyle = "rgba(255,255,255," + (flash * 0.48) + ")";
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    if (state === "running" && !shade) {
+      const heat = clamp((melt - 25) / 110, 0, 0.2);
+      ctx.fillStyle = "rgba(255,112,39," + heat + ")";
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  function moveFromPointer(event) {
+    const rect = canvas.getBoundingClientRect();
+    const fraction = (event.clientX - rect.left - roadL) / roadW;
+    playerX = clamp(fraction, 0.045, 0.955);
+  }
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (state === "running") {
+      unlockAudio();
+      dragging = true;
+      moveFromPointer(event);
+      try { canvas.setPointerCapture(event.pointerId); } catch (e) {}
+    }
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (dragging && state === "running") {
+      moveFromPointer(event);
+    }
+  });
+
+  canvas.addEventListener("pointerup", () => { dragging = false; });
+  canvas.addEventListener("pointercancel", () => { dragging = false; });
+
+  function bindTouchSteer(button, side) {
+    const down = (event) => {
+      event.preventDefault();
+      unlockAudio();
+      keys[side] = true;
+      try { button.setPointerCapture(event.pointerId); } catch (e) {}
+    };
+    const up = (event) => {
+      event.preventDefault();
+      keys[side] = false;
+    };
+    button.addEventListener("pointerdown", down);
+    button.addEventListener("pointerup", up);
+    button.addEventListener("pointercancel", up);
+    button.addEventListener("pointerleave", (event) => {
+      if (event.buttons === 0) keys[side] = false;
+    });
+  }
+
+  bindTouchSteer(leftBtn, "left");
+  bindTouchSteer(rightBtn, "right");
+
+  window.addEventListener("keydown", (event) => {
+    const key = event.key.toLowerCase();
+    if (key === "arrowleft" || key === "a") {
+      event.preventDefault();
+      keys.left = true;
+      if (state === "running") unlockAudio();
+    }
+    if (key === "arrowright" || key === "d") {
+      event.preventDefault();
+      keys.right = true;
+      if (state === "running") unlockAudio();
+    }
+    if ((key === "enter" || key === " ") && state !== "running") {
+      event.preventDefault();
+      startGame();
+    }
+  });
+
+  window.addEventListener("keyup", (event) => {
+    const key = event.key.toLowerCase();
+    if (key === "arrowleft" || key === "a") keys.left = false;
+    if (key === "arrowright" || key === "d") keys.right = false;
+  });
+
+  startBtn.addEventListener("click", startGame);
+
+  soundBtn.addEventListener("click", () => {
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? "SOUND: ON" : "SOUND: OFF";
+    if (soundOn) {
+      unlockAudio();
+      tone(560, 0.1, "sine", 0.1);
+    }
+  });
+
+  window.addEventListener("resize", resize);
+
+  resize();
+  resetGame();
+  updateHUD();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

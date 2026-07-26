@@ -105,6 +105,15 @@
       "path": "games/foam-cup-sprint/",
       "mobile": true,
       "thumbnail": "games/foam-cup-sprint/cover.webp"
+    },
+    {
+      "slug": "shade-dash",
+      "title": "Shade Dash",
+      "tagline": "Stay cool, chase shade, beat the heat.",
+      "date": "2026-07-26",
+      "path": "games/shade-dash/",
+      "mobile": true,
+      "thumbnail": "games/shade-dash/cover.webp"
     }
   ]
 }
