@@ -136,6 +136,15 @@
       "path": "games/shade-dash/",
       "mobile": true,
       "thumbnail": "games/shade-dash/cover.webp"
+    },
+    {
+      "slug": "rude-fish-bad-bait",
+      "title": "Rude Fish, Bad Bait",
+      "tagline": "Catch insults before they reach the dock.",
+      "date": "2026-07-27",
+      "path": "games/rude-fish-bad-bait/",
+      "mobile": true,
+      "thumbnail": "games/rude-fish-bad-bait/cover.webp"
     }
   ]
 }

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rude Fish, Bad Bait</title>
+<style>
+  :root{
+    --ink:#082337;
+    --cream:#fff8d8;
+    --water:#116a89;
+    --water2:#0d4e70;
+    --lime:#75ff9a;
+    --gold:#ffd85c;
+    --coral:#ff735b;
+    --panel:#082b42;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    overflow:hidden;
+    background:#061d2e;
+    color:var(--cream);
+    font-family:Arial,Helvetica,sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  #game{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    background:
+      radial-gradient(circle at 15% 0%, #195678 0%, transparent 34%),
+      linear-gradient(#083149,#061d2e);
+  }
+  #hud{
+    min-height:66px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:7px 12px;
+    border-bottom:2px solid rgba(255,255,255,.13);
+    background:rgba(3,24,38,.8);
+  }
+  .brand{
+    min-width:195px;
+    line-height:1;
+  }
+  .brand h1{
+    margin:0;
+    font-size:clamp(17px,2.8vw,27px);
+    letter-spacing:.4px;
+    color:#fff3b0;
+    text-shadow:2px 2px 0 #16384c;
+  }
+  .brand p{
+    margin:4px 0 0;
+    color:#8fe7f0;
+    font-size:clamp(10px,1.6vw,13px);
+    font-weight:bold;
+  }
+  #stats{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:7px;
+  }
+  .stat{
+    min-width:77px;
+    padding:5px 8px;
+    border-radius:9px;
+    border:1px solid rgba(255,255,255,.18);
+    background:#0d3a55;
+    text-align:center;
+    font-size:12px;
+    font-weight:bold;
+    white-space:nowrap;
+  }
+  .stat b{color:#fff3ae;font-size:15px}
+  #comboStat b{color:var(--lime)}
+  #canvasWrap{
+    position:relative;
+    flex:1;
+    min-height:190px;
+    overflow:hidden;
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    cursor:crosshair;
+  }
+  #overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(3,21,33,.45);
+    z-index:5;
+  }
+  #overlay.hidden{display:none}
+  .card{
+    width:min(470px,94%);
+    padding:22px 20px 18px;
+    text-align:center;
+    border:2px solid #79dce3;
+    border-radius:18px;
+    background:linear-gradient(155deg,rgba(8,57,78,.97),rgba(4,30,47,.97));
+    box-shadow:0 12px 35px #00111c;
+  }
+  .card h2{
+    margin:0 0 7px;
+    color:#fff3ae;
+    font-size:clamp(23px,5vw,38px);
+  }
+  .card p{
+    margin:8px auto;
+    max-width:410px;
+    color:#d8f8f5;
+    font-size:14px;
+    line-height:1.35;
+  }
+  #startButton{
+    min-height:44px;
+    margin-top:8px;
+    padding:11px 25px;
+    border:2px solid #fff4ad;
+    border-radius:11px;
+    background:#f45f4c;
+    color:white;
+    font-size:17px;
+    font-weight:900;
+    letter-spacing:.7px;
+    box-shadow:0 4px 0 #a83531;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  #startButton:active{transform:translateY(3px);box-shadow:0 1px 0 #a83531}
+  #controls{
+    flex:none;
+    min-height:112px;
+    padding:6px 10px 8px;
+    border-top:2px solid rgba(255,255,255,.12);
+    background:linear-gradient(#082c42,#061f31);
+  }
+  #help{
+    margin:0 0 5px;
+    text-align:center;
+    color:#bceef1;
+    font-size:clamp(10px,1.75vw,13px);
+    line-height:1.22;
+  }
+  #controlRow{
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    gap:9px;
+  }
+  #baitChoices{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+  }
+  button{
+    font-family:inherit;
+    touch-action:manipulation;
+  }
+  .bait{
+    min-width:83px;
+    min-height:40px;
+    padding:5px 7px;
+    border:2px solid #39708a;
+    border-radius:10px;
+    background:#103a52;
+    color:#e8ffff;
+    font-size:11px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:transform .1s,background .1s,border-color .1s;
+  }
+  .bait .baitMark{
+    display:inline-block;
+    width:18px;
+    font-size:18px;
+    vertical-align:middle;
+    margin-right:3px;
+  }
+  .bait.selected{
+    border-color:#fff2a4;
+    background:#1d6675;
+    color:#fff8c6;
+    transform:translateY(-2px);
+    box-shadow:0 0 12px rgba(117,255,154,.42);
+  }
+  #actionButton{
+    min-width:116px;
+    min-height:40px;
+    border:2px solid #fff2a4;
+    border-radius:11px;
+    background:#f0644f;
+    color:white;
+    font-size:16px;
+    font-weight:900;
+    letter-spacing:.6px;
+    box-shadow:0 3px 0 #9f352e;
+    cursor:pointer;
+  }
+  #actionButton.wait{
+    background:#436579;
+    border-color:#9bd6e1;
+    box-shadow:0 3px 0 #243d4b;
+    font-size:12px;
+  }
+  #actionButton.flash{
+    animation:flash .38s infinite alternate;
+    background:#26bd61;
+    border-color:#efffb7;
+    box-shadow:0 3px 0 #08753a,0 0 16px #75ff9a;
+  }
+  @keyframes flash{to{transform:scale(1.06);filter:brightness(1.25)}}
+  @media(max-width:560px){
+    #hud{min-height:58px;padding:5px 7px}
+    .brand{min-width:150px}
+    .stat{min-width:59px;padding:4px 5px;font-size:10px}
+    .stat b{font-size:13px}
+    #controls{min-height:104px;padding:4px 5px 6px}
+    #controlRow{gap:5px}
+    #baitChoices{
+      flex:1 1 0;
+      min-width:0;
+      gap:4px;
+    }
+    .bait{
+      flex:1 1 0;
+      min-width:0;
+      min-height:48px;
+      padding:4px 2px;
+      font-size:9px;
+    }
+    .bait .baitMark{font-size:15px;width:14px;margin-right:1px}
+    #actionButton{
+      min-width:88px;
+      min-height:48px;
+      padding:4px 6px;
+      font-size:13px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div class="brand">
+      <h1>Rude Fish, Bad Bait</h1>
+      <p>Catch insults before they reach the dock.</p>
+    </div>
+    <div id="stats">
+      <div class="stat">SCORE<br><b id="score">0</b> / 300</div>
+      <div class="stat" id="comboStat">COMBO<br><b id="combo">x1</b></div>
+      <div class="stat">LANTERNS<br><b id="lanterns">3 / 3</b></div>
+    </div>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="pond" aria-label="Fishing pond game area"></canvas>
+    <div id="overlay">
+      <div class="card">
+        <h2 id="overlayTitle">Rude Fish, Bad Bait</h2>
+        <p id="overlayText">Picky fish are swimming toward the dock with insults ready. Match the bait bubble above each fish, cast into its lane, then reel inside the bright green timing ring.</p>
+        <p><b>Keyboard:</b> ← → lane, ↑ ↓ bait, Space cast or reel.<br><b>Touch:</b> tap a lane, tap bait, then Cast or flashing Reel.</p>
+        <button id="startButton">START POND</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <p id="help">How to play: match the fish bubble, cast ahead of it, and reel while the green ring shrinks. The thin white band is a perfect 20-point catch!</p>
+    <div id="controlRow">
+      <div id="baitChoices">
+        <button class="bait selected" data-bait="worm"><span class="baitMark">〰</span>WORM</button>
+        <button class="bait" data-bait="cracker"><span class="baitMark">▣</span>CRACKER</button>
+        <button class="bait" data-bait="cap"><span class="baitMark">◉</span>CAP</button>
+      </div>
+      <button id="actionButton">CAST</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("pond");
+  const ctx = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const comboEl = document.getElementById("combo");
+  const lanternEl = document.getElementById("lanterns");
+  const actionButton = document.getElementById("actionButton");
+  const overlay = document.getElementById("overlay");
+  const overlayTitle = document.getElementById("overlayTitle");
+  const overlayText = document.getElementById("overlayText");
+  const startButton = document.getElementById("startButton");
+  const baitButtons = [...document.querySelectorAll(".bait")];
+
+  let W = 1, H = 1, dpr = 1;
+  let state = "menu";
+  let lastTime = 0;
+  let elapsed = 0;
+  let score = 0;
+  let streak = 0;
+  let multiplier = 1;
+  let lanterns = 3;
+  let selectedLane = 1;
+  let selectedBait = "worm";
+  let fish = [];
+  let effects = [];
+  let activeCast = null;
+  let nextSpawn = 0.45;
+  let status = "PICK A LANE AND BAIT";
+  let statusUntil = 0;
+  let audioCtx = null;
+
+  const baitNames = { worm:"WORM", cracker:"CRACKER", cap:"SHINY CAP" };
+  const fishColors = ["#f38b65", "#f4c454", "#a286dd", "#74d5bc", "#ef7898"];
+  const rudeLines = [
+    "I was having a terrible day anyway!",
+    "Your hook has bad vibes!",
+    "Fine. But your hat is embarrassing.",
+    "Tell the dock I said it looks soggy!",
+    "You call that fishing? Rude.",
+    "This pond has customer service now!",
+    "I demand a less pointy exit!"
+  ];
+  const spitLines = [
+    "PTOO! That's not my snack!",
+    "Nice bait. Said nobody.",
+    "A bottle cap? I have standards!",
+    "Wrong! Try observing, land mammal.",
+    "That cracker is emotionally stale!"
+  ];
+
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    W = Math.max(1, r.width);
+    H = Math.max(1, r.height);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+
+  function laneY(lane) {
+    return H * ([0.29, 0.51, 0.73][lane]);
+  }
+
+  function hookX() {
+    return W * 0.57;
+  }
+
+  function rand(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function roundedRect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  }
+
+  function tone(freq, duration, type = "sine", slide = 0) {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    if (slide) osc.frequency.linearRampToValueAtTime(Math.max(25, freq + slide), now + duration);
+    gain.gain.setValueAtTime(0.075, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  }
+
+  function catchSound(perfect) {
+    tone(perfect ? 740 : 520, .11, "triangle", perfect ? 180 : 80);
+    setTimeout(() => tone(perfect ? 980 : 700, .12, "sine", 60), 60);
+  }
+
+  function wrongSound() {
+    tone(180, .16, "sawtooth", -90);
+    setTimeout(() => tone(105, .13, "square", -45), 70);
+  }
+
+  function splashSound() {
+    tone(130, .15, "triangle", -80);
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = score;
+    comboEl.textContent = "x" + multiplier;
+    lanternEl.textContent = lanterns + " / 3";
+    baitButtons.forEach(b => b.classList.toggle("selected", b.dataset.bait === selectedBait));
+
+    const hooked = fish.find(f => f.state === "bite" || f.state === "circle");
+    actionButton.classList.remove("flash", "wait");
+
+    if (hooked && hooked.state === "bite") {
+      actionButton.textContent = "REEL NOW!";
+      actionButton.classList.add("flash");
+    } else if (hooked) {
+      actionButton.textContent = "DON'T REEL";
+      actionButton.classList.add("wait");
+    } else {
+      actionButton.textContent = "CAST";
+    }
+  }
+
+  function setStatus(text, seconds = 1.5) {
+    status = text;
+    statusUntil = elapsed + seconds;
+  }
+
+  function addEffect(type, x, y, text = "", duration = 1) {
+    effects.push({ type, x:x / W, y:y / H, text, life:duration, max:duration, vy:0 });
+  }
+
+  function createFish() {
+    const level = elapsed;
+    const speed = level < 60
+      ? 0.070 + Math.random() * 0.010
+      : 0.095 + Math.min(.035, (level - 60) * .00055) + Math.random() * .014;
+    const lane = rand([0, 1, 2]);
+    const bait = rand(["worm", "cracker", "cap"]);
+    const fake = level > 32 && Math.random() < Math.min(.48, .16 + (level - 32) * .006);
+
+    fish.push({
+      x:-0.10,
+      lane,
+      bait,
+      speed,
+      color:rand(fishColors),
+      state:"approach",
+      fake,
+      circleStart:0,
+      biteStart:0,
+      biteDuration:0,
+      dead:false,
+      spat:false,
+      bob:Math.random() * Math.PI * 2
+    });
+  }
+
+  function startGame() {
+    initAudio();
+    state = "playing";
+    elapsed = 0;
+    score = 0;
+    streak = 0;
+    multiplier = 1;
+    lanterns = 3;
+    selectedLane = 1;
+    selectedBait = "worm";
+    fish = [];
+    effects = [];
+    activeCast = null;
+    nextSpawn = 0.45;
+    status = "FIRST FISH INCOMING — CHECK ITS BUBBLE!";
+    statusUntil = 3.2;
+    overlay.classList.add("hidden");
+    updateHUD();
+  }
+
+  function endGame(won) {
+    if (state !== "playing") return;
+    state = won ? "won" : "lost";
+    activeCast = null;
+    overlayTitle.textContent = won ? "POND CLEARED!" : "THE DOCK GOT ROASTED!";
+    overlayText.innerHTML = won
+      ? "You scored " + score + " points and kept enough rude fish out of the dock. The lantern keeper is mildly impressed."
+      : "Final score: " + score + ". Every fish that escaped snuffed out a dock lantern. Try matching the bait bubble before casting.";
+    startButton.textContent = won ? "FISH AGAIN" : "TRY AGAIN";
+    overlay.classList.remove("hidden");
+
+    if (won) {
+      tone(520, .13, "triangle", 120);
+      setTimeout(() => tone(740, .2, "triangle", 150), 100);
+    } else {
+      wrongSound();
+    }
+
+    updateHUD();
+  }
+
+  function breakCombo(reason) {
+    const hadCombo = streak > 0;
+    streak = 0;
+    multiplier = 1;
+    if (hadCombo) setStatus(reason + " — STREAK BROKEN!", 1.7);
+    else setStatus(reason, 1.35);
+  }
+
+  function loseLantern(reason, x, y) {
+    lanterns = Math.max(0, lanterns - 1);
+    addEffect("splash", x, y, "", 0.8);
+    addEffect("alert", x, y - 35, reason + "  LANTERN OUT!", 1.35);
+    splashSound();
+    if (lanterns <= 0) endGame(false);
+  }
+
+  function wrongBait(f) {
+    if (f.spat || f.dead) return;
+    f.spat = true;
+    activeCast = null;
+    addEffect("spit", f.x * W, laneY(f.lane), "", .65);
+    addEffect("speech", f.x * W, laneY(f.lane) - 42, rand(spitLines), 1.75);
+    breakCombo("WRONG BAIT!");
+    wrongSound();
+  }
+
+  function beginCircle(f) {
+    f.state = "circle";
+    f.circleStart = elapsed;
+    activeCast = null;
+    setStatus(f.fake ? "TWITCHY FISH — WAIT FOR THE REAL BITE!" : "FISH INTERESTED — WAIT FOR THE BITE!", 1.5);
+    tone(350, .08, "sine", 90);
+  }
+
+  function beginBite(f) {
+    f.state = "bite";
+    f.biteStart = elapsed;
+    const ramp = Math.max(0, elapsed - 38);
+    f.biteDuration = clamp(1.55 - ramp * .0085 - (f.fake ? .12 : 0), .72, 1.55);
+    setStatus("GREEN RING! REEL NOW!", f.biteDuration);
+    tone(600, .07, "sine", 150);
+  }
+
+  function escapeFish(f, reason) {
+    if (f.dead) return;
+    f.dead = true;
+    if (activeCast && activeCast.lane === f.lane) activeCast = null;
+    breakCombo(reason === "TOO EARLY!" ? "TOO EARLY!" : "MISSED REEL!");
+    const x = f.state === "approach" ? f.x * W : hookX();
+    const y = laneY(f.lane);
+    addEffect("redring", x, y, "", .62);
+    loseLantern(reason, x, y);
+  }
+
+  function catchFish(f) {
+    if (f.dead) return;
+    const progress = clamp((elapsed - f.biteStart) / f.biteDuration, 0, 1);
+    const radius = 74 - 61 * progress;
+    const perfect = Math.abs(radius - 43) < 7;
+    const base = perfect ? 20 : 10;
+    const earned = base * multiplier;
+
+    f.dead = true;
+    score += earned;
+    addEffect("splash", hookX(), laneY(f.lane), "", .7);
+    addEffect("score", hookX(), laneY(f.lane) - 18, "+" + earned + (perfect ? " PERFECT!" : ""), 1.12);
+    addEffect("speech", hookX(), laneY(f.lane) - 54, rand(rudeLines), 1.7);
+    streak++;
+    multiplier = Math.min(5, 1 + streak);
+    setStatus(perfect ? "PERFECT PLUCK! 20 BASE POINTS!" : "CAUGHT! KEEP THE STREAK GOING.", 1.35);
+    catchSound(perfect);
+    updateHUD();
+
+    if (score >= 300) endGame(true);
+  }
+
+  function castOrReel() {
+    if (state !== "playing") return;
+    initAudio();
+
+    const hooked = fish.find(f => !f.dead && (f.state === "bite" || f.state === "circle"));
+    if (hooked) {
+      if (hooked.state === "bite") catchFish(hooked);
+      else escapeFish(hooked, "TOO EARLY!");
+      return;
+    }
+
+    activeCast = {
+      lane:selectedLane,
+      bait:selectedBait,
+      life:3.25,
+      max:3.25
+    };
+
+    setStatus("CAST " + baitNames[selectedBait] + " INTO " + ["TOP", "MIDDLE", "BOTTOM"][selectedLane] + " LANE", 1.1);
+    tone(300, .07, "triangle", 130);
+    updateHUD();
+  }
+
+  function dockEscape(f) {
+    if (f.dead) return;
+    f.dead = true;
+    breakCombo("FISH REACHED THE DOCK!");
+    addEffect("speech", W * .89, laneY(f.lane) - 42, "Dock snack! Losers!", 1.25);
+    loseLantern("DOCK HIT!", W * .91, laneY(f.lane));
+  }
+
+  function update(dt) {
+    if (state !== "playing") return;
+    elapsed += dt;
+
+    if (nextSpawn <= 0) {
+      const earlySingle = elapsed < 60 && fish.some(f => !f.dead);
+      if (!earlySingle) {
+        createFish();
+        nextSpawn = elapsed < 60 ? 6.2 + Math.random() * 2.8 : 5.0 + Math.random() * 3.0;
+      } else {
+        nextSpawn = .35;
+      }
+    } else {
+      nextSpawn -= dt;
+    }
+
+    if (activeCast) {
+      activeCast.life -= dt;
+      if (activeCast.life <= 0) {
+        activeCast = null;
+        setStatus("CAST RETRIEVED — TIME THE NEXT ONE!", 1);
+      }
+    }
+
+    for (const f of fish) {
+      if (f.dead) continue;
+
+      if (f.state === "approach") {
+        f.x += f.speed * dt;
+
+        if (activeCast && activeCast.lane === f.lane && f.x >= .545 && f.x <= .585) {
+          if (activeCast.bait === f.bait) beginCircle(f);
+          else wrongBait(f);
+        }
+
+        if (f.x > .925) dockEscape(f);
+      } else if (f.state === "circle") {
+        const circleTime = elapsed - f.circleStart;
+        const waitTime = f.fake ? 1.57 : .72;
+        if (circleTime >= waitTime) beginBite(f);
+      } else if (f.state === "bite") {
+        if (elapsed - f.biteStart > f.biteDuration) escapeFish(f, "TOO LATE!");
+      }
+    }
+
+    fish = fish.filter(f => !f.dead);
+    effects.forEach(e => e.life -= dt);
+    effects = effects.filter(e => e.life > 0);
+    updateHUD();
+  }
+
+  function drawBait(type, x, y, scale = 1) {
+    ctx.save();
+    ctx.translate(x, y);
+
+    if (type === "worm") {
+      ctx.strokeStyle = "#ff9e9d";
+      ctx.lineWidth = 4 * scale;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-9 * scale, -3 * scale);
+      ctx.bezierCurveTo(-3 * scale, -10 * scale, 1 * scale, 7 * scale, 8 * scale, -5 * scale);
+      ctx.stroke();
+      ctx.fillStyle = "#713c52";
+      ctx.beginPath();
+      ctx.arc(8 * scale, -5 * scale, 1.4 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (type === "cracker") {
+      ctx.fillStyle = "#f5ce71";
+      ctx.strokeStyle = "#8c5b2f";
+      ctx.lineWidth = 1.5 * scale;
+      roundedRect(-8 * scale, -8 * scale, 16 * scale, 16 * scale, 3 * scale);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#a06a36";
+      [[-3,-3],[3,-2],[-1,4],[4,4]].forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p[0] * scale, p[1] * scale, 1.1 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else {
+      ctx.fillStyle = "#c4d5dc";
+      ctx.strokeStyle = "#5e7781";
+      ctx.lineWidth = 2 * scale;
+      ctx.beginPath();
+      ctx.arc(0, 0, 8 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1 * scale;
+      ctx.beginPath();
+      ctx.arc(0, 0, 4.5 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#e7f8ff";
+      ctx.beginPath();
+      ctx.arc(-2.5 * scale, -2.5 * scale, 2 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function drawFish(f) {
+    let x = f.x * W;
+    let y = laneY(f.lane);
+
+    if (f.state === "circle" || f.state === "bite") {
+      const t = elapsed - f.circleStart;
+      const radius = 25;
+      x = hookX() + Math.cos(t * 8 + f.bob) * radius;
+      y = laneY(f.lane) + Math.sin(t * 8 + f.bob) * radius * .55;
+
+      if (f.state === "circle" && f.fake) {
+        const twitchPhase = (t > .18 && t < .34) || (t > .68 && t < .84);
+        if (twitchPhase) y -= 10;
+      }
+    } else {
+      y += Math.sin(elapsed * 3 + f.bob) * 3;
+    }
+
+    const s = Math.max(19, Math.min(29, W / 28));
+    ctx.save();
+    ctx.translate(x, y);
+
+    ctx.fillStyle = "#2d3444";
+    ctx.beginPath();
+    ctx.moveTo(-s * .9, 0);
+    ctx.lineTo(-s * 1.45, -s * .56);
+    ctx.lineTo(-s * 1.38, s * .56);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = f.color;
+    ctx.beginPath();
+    ctx.ellipse(-s * .05, 0, s, s * .55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#173a4b";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#f7f4dc";
+    ctx.beginPath();
+    ctx.arc(s * .42, -s * .17, s * .18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#152535";
+    ctx.beginPath();
+    ctx.arc(s * .47, -s * .16, s * .075, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#203543";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(s * .52, s * .25);
+    ctx.lineTo(s * .8, s * .22);
+    ctx.stroke();
+
+    if (f.state === "circle" || f.state === "bite") {
+      ctx.fillStyle = "#dfffb1";
+      ctx.font = "bold 13px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("GULP!", 0, -s * .9);
+    }
+
+    ctx.restore();
+
+    if (f.state === "approach") {
+      const bx = x;
+      const by = y - s - 20;
+      ctx.fillStyle = "#fffceb";
+      ctx.strokeStyle = "#20506a";
+      ctx.lineWidth = 2;
+      roundedRect(bx - 22, by - 16, 44, 32, 13);
+      ctx.fill();
+      ctx.stroke();
+      drawBait(f.bait, bx, by, .78);
+
+      if (f.fake) {
+        ctx.fillStyle = "#ffdfa0";
+        ctx.strokeStyle = "#754231";
+        ctx.lineWidth = 1;
+        roundedRect(bx - 29, by - 34, 58, 14, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#65342c";
+        ctx.font = "bold 9px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("TWITCHY", bx, by - 24);
+      }
+    } else if (f.state === "circle" && f.fake) {
+      ctx.fillStyle = "#ffdfa0";
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("TWITCH... TWITCH...", hookX(), laneY(f.lane) - 55);
+    }
+  }
+
+  function drawWater() {
+    ctx.clearRect(0, 0, W, H);
+
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#1b7895");
+    sky.addColorStop(1, "#07506d");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    for (let i = 0; i < 18; i++) {
+      const y = (i / 18) * H;
+      const sway = Math.sin(elapsed * 1.4 + i * 1.9) * 9;
+      ctx.strokeStyle = i % 2 ? "rgba(144,232,229,.12)" : "rgba(2,50,81,.17)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, y + sway);
+
+      for (let x = 0; x <= W; x += 36) {
+        ctx.quadraticCurveTo(
+          x + 18,
+          y + sway + Math.sin(x * .04 + elapsed * 2 + i) * 3,
+          x + 36,
+          y + sway
+        );
+      }
+
+      ctx.stroke();
+    }
+
+    [0, 1, 2].forEach(lane => {
+      const y = laneY(lane);
+      ctx.fillStyle = lane === selectedLane ? "rgba(184,255,199,.11)" : "rgba(1,44,68,.14)";
+      roundedRect(W * .035, y - H * .075, W * .81, H * .15, H * .06);
+      ctx.fill();
+      ctx.strokeStyle = lane === selectedLane ? "rgba(191,255,205,.44)" : "rgba(218,255,255,.12)";
+      ctx.lineWidth = lane === selectedLane ? 2 : 1;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(230,255,242,.72)";
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(["TOP LANE", "MIDDLE LANE", "BOTTOM LANE"][lane], W * .047, y - H * .047);
+    });
+
+    ctx.fillStyle = "#154034";
+    ctx.fillRect(0, H * .88, W, H * .12);
+
+    for (let x = 5; x < W * .25; x += 18) {
+      ctx.strokeStyle = "#163f32";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, H * .9);
+      ctx.quadraticCurveTo(x - 8, H * .81 + Math.sin(x) * 5, x + 2, H * .76);
+      ctx.stroke();
+    }
+  }
+
+  function drawDock() {
+    const dx = W * .88;
+    ctx.fillStyle = "#6e452d";
+    ctx.fillRect(dx, H * .08, W * .12, H * .87);
+    ctx.fillStyle = "#966143";
+
+    for (let y = H * .1; y < H * .93; y += 21) {
+      ctx.fillRect(dx + 3, y, W * .11, 13);
+    }
+
+    ctx.fillStyle = "#372419";
+    ctx.fillRect(dx - 5, H * .04, 9, H * .93);
+    ctx.fillRect(W * .985, H * .04, 8, H * .93);
+
+    const lanternY = [H * .28, H * .51, H * .74];
+    lanternY.forEach((y, i) => {
+      const lit = i < lanterns;
+      ctx.strokeStyle = "#35231c";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(dx + W * .06, y - 20);
+      ctx.lineTo(dx + W * .06, y - 9);
+      ctx.stroke();
+
+      ctx.fillStyle = lit ? "#ffe368" : "#29333a";
+      if (lit) {
+        ctx.shadowColor = "#ffd741";
+        ctx.shadowBlur = 15;
+      }
+
+      roundedRect(dx + W * .045, y - 9, W * .03, 18, 4);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "#493727";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = "#ffefb0";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("THE DOCK", dx + W * .06, H * .035);
+  }
+
+  function drawLineAndHook() {
+    const hooked = fish.find(f => !f.dead && (f.state === "circle" || f.state === "bite"));
+    const cast = activeCast;
+    const lane = hooked ? hooked.lane : (cast ? cast.lane : null);
+
+    if (lane === null) return;
+
+    const x = hookX();
+    const y = laneY(lane);
+
+    ctx.strokeStyle = "rgba(247,251,228,.9)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(W * .82, 0);
+    ctx.quadraticCurveTo(W * .74, H * .13, x, y - 10);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#dfe8e4";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y + 1, 8, -.8, Math.PI * .85);
+    ctx.stroke();
+
+    if (cast) {
+      const swing = Math.sin(elapsed * 9) * 3;
+      drawBait(cast.bait, x - 8 + swing, y - 10, .7);
+      ctx.fillStyle = "#e8ffcc";
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(baitNames[cast.bait], x, y + 26);
+    }
+
+    if (hooked && hooked.state === "bite") {
+      const p = clamp((elapsed - hooked.biteStart) / hooked.biteDuration, 0, 1);
+      const radius = 74 - 61 * p;
+
+      ctx.strokeStyle = "#73ff93";
+      ctx.lineWidth = 5;
+      ctx.shadowColor = "#75ff9a";
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = "rgba(255,255,255,.9)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(x, y, 43, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#efffc5";
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("PERFECT BAND", x, y - 48);
+    }
+  }
+
+  function drawEffects() {
+    for (const e of effects) {
+      const x = e.x * W;
+      const y = e.y * H;
+      const p = 1 - e.life / e.max;
+      const alpha = clamp(e.life / e.max, 0, 1);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      if (e.type === "splash") {
+        ctx.strokeStyle = "#d5ffff";
+        ctx.lineWidth = 2.5;
+
+        for (let i = 0; i < 8; i++) {
+          const a = i * Math.PI / 4;
+          const r = 8 + p * 28;
+          ctx.beginPath();
+          ctx.moveTo(x + Math.cos(a) * 5, y + Math.sin(a) * 3);
+          ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r * .55);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#bfffff";
+        ctx.beginPath();
+        ctx.arc(x, y, 7 + p * 9, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (e.type === "spit") {
+        ctx.fillStyle = "#ffcced";
+
+        for (let i = 0; i < 6; i++) {
+          const a = -2.4 + i * .55;
+          const r = 11 + p * 28;
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r * .55, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (e.type === "redring") {
+        ctx.strokeStyle = "#ff5e62";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(x, y, 24 + p * 45, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#fff0d2";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x - 13, y - 13);
+        ctx.lineTo(x + 13, y + 13);
+        ctx.moveTo(x + 13, y - 13);
+        ctx.lineTo(x - 13, y + 13);
+        ctx.stroke();
+      } else if (e.type === "score" || e.type === "alert") {
+        ctx.translate(0, -p * 26);
+        ctx.font = e.type === "score" ? "bold 18px Arial" : "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillStyle = e.type === "score" ? "#fff7a8" : "#ffdfdf";
+        ctx.strokeStyle = "#12394c";
+        ctx.lineWidth = 4;
+        ctx.strokeText(e.text, x, y);
+        ctx.fillText(e.text, x, y);
+      } else if (e.type === "speech") {
+        ctx.font = "bold 12px Arial";
+        const tw = Math.min(W * .46, ctx.measureText(e.text).width + 18);
+        const bx = clamp(x - tw / 2, 4, W - tw - 4);
+        const by = y - p * 12;
+        ctx.fillStyle = "#fffceb";
+        ctx.strokeStyle = "#254758";
+        ctx.lineWidth = 2;
+        roundedRect(bx, by - 18, tw, 25, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#273946";
+        ctx.textAlign = "center";
+        ctx.fillText(e.text, bx + tw / 2, by - 2);
+      }
+
+      ctx.restore();
+    }
+  }
+
+  function drawStatus() {
+    if (state === "playing" && elapsed <= statusUntil) {
+      ctx.save();
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "center";
+      const text = status;
+      const tw = Math.min(W * .78, ctx.measureText(text).width + 24);
+      ctx.fillStyle = "rgba(3,32,48,.76)";
+      roundedRect(W / 2 - tw / 2, H * .03, tw, 28, 10);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(208,255,238,.68)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = "#ecfff4";
+      ctx.fillText(text, W / 2, H * .03 + 19);
+      ctx.restore();
+    }
+  }
+
+  function draw() {
+    drawWater();
+    drawDock();
+    drawLineAndHook();
+    fish.forEach(drawFish);
+    drawEffects();
+    drawStatus();
+
+    if (state === "menu") {
+      ctx.fillStyle = "rgba(255,255,255,.75)";
+      ctx.font = "bold 13px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Three lanes. Three suspicious baits. Zero polite fish.", W / 2, H * .91);
+    }
+  }
+
+  function frame(t) {
+    const dt = Math.min(.05, ((t - lastTime) || 0) / 1000);
+    lastTime = t;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+
+  function chooseLaneFromPointer(ev) {
+    if (state !== "playing") return;
+    initAudio();
+
+    const rect = canvas.getBoundingClientRect();
+    const y = (ev.clientY - rect.top) / rect.height * H;
+    let best = 0;
+    let dist = Infinity;
+
+    for (let i = 0; i < 3; i++) {
+      const d = Math.abs(y - laneY(i));
+      if (d < dist) {
+        dist = d;
+        best = i;
+      }
+    }
+
+    selectedLane = best;
+    setStatus(["TOP", "MIDDLE", "BOTTOM"][best] + " LANE SELECTED", .7);
+    updateHUD();
+  }
+
+  canvas.addEventListener("pointerdown", chooseLaneFromPointer);
+
+  actionButton.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    castOrReel();
+  });
+
+  baitButtons.forEach(button => {
+    button.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      initAudio();
+      selectedBait = button.dataset.bait;
+      setStatus(baitNames[selectedBait] + " BAIT SELECTED", .65);
+      updateHUD();
+    });
+  });
+
+  startButton.addEventListener("click", startGame);
+
+  window.addEventListener("keydown", e => {
+    const k = e.key;
+
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "Spacebar"].includes(k)) {
+      e.preventDefault();
+    }
+
+    if (state !== "playing") {
+      if ((k === " " || k === "Enter") && state !== "menu") startGame();
+      return;
+    }
+
+    if (k === "ArrowLeft") {
+      selectedLane = (selectedLane + 2) % 3;
+      setStatus(["TOP", "MIDDLE", "BOTTOM"][selectedLane] + " LANE SELECTED", .6);
+    } else if (k === "ArrowRight") {
+      selectedLane = (selectedLane + 1) % 3;
+      setStatus(["TOP", "MIDDLE", "BOTTOM"][selectedLane] + " LANE SELECTED", .6);
+    } else if (k === "ArrowUp") {
+      const order = ["worm", "cracker", "cap"];
+      selectedBait = order[(order.indexOf(selectedBait) + 2) % 3];
+      setStatus(baitNames[selectedBait] + " BAIT SELECTED", .6);
+    } else if (k === "ArrowDown") {
+      const order = ["worm", "cracker", "cap"];
+      selectedBait = order[(order.indexOf(selectedBait) + 1) % 3];
+      setStatus(baitNames[selectedBait] + " BAIT SELECTED", .6);
+    } else if (k === " " || k === "Spacebar") {
+      castOrReel();
+    }
+
+    updateHUD();
+  });
+
+  updateHUD();
+})();
+</script>
+</body>
+</html>

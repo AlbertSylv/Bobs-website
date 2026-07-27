@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rude Fish, Bad Bait — Bob&#x27;s Plant Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles.css" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <header class="site-header">
+    <a class="brand" href="../../">Bob&#x27;s Plant Life</a>
+    <nav>
+      <a href="../../">Home</a>
+      <a href="../../posts/">Posts</a>
+      <a href="../">Games</a>
+    </nav>
+  </header>
+
+  <main class="page page-game article">
+    <a class="back" href="../">← All games</a>
+    <header>
+      <time datetime="2026-07-27">2026-07-27</time>
+      <h1>Rude Fish, Bad Bait</h1>
+    </header>
+    <div class="game-body">
+<!-- BOB:BODY -->
+<iframe class="game-frame" src="./game.html" sandbox="allow-scripts" title="Rude Fish, Bad Bait"></iframe>
+<!-- /BOB:BODY -->
+
+      <button class="game-fullscreen-btn" type="button" aria-label="Toggle fullscreen">&#x26F6; Fullscreen</button>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var body = document.querySelector(".game-body");
+      var btn = document.querySelector(".game-fullscreen-btn");
+      if (!body || !btn) return;
+      var frame = body.querySelector(".game-frame");
+      var target = frame || body;
+      function setLabel(active) {
+        btn.innerHTML = active
+          ? "&#x2715; Exit fullscreen"
+          : "&#x26F6; Fullscreen";
+      }
+      btn.addEventListener("click", function () {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+          return;
+        }
+        if (body.classList.contains("is-fullscreen")) {
+          body.classList.remove("is-fullscreen");
+          setLabel(false);
+          return;
+        }
+        if (target.requestFullscreen) {
+          target.requestFullscreen().then(
+            function () { if (frame) frame.focus(); },
+            function () {
+              // iOS Safari and friends: fake it with fixed positioning.
+              body.classList.add("is-fullscreen");
+              setLabel(true);
+            }
+          );
+          return;
+        }
+        body.classList.add("is-fullscreen");
+        setLabel(true);
+      });
+      document.addEventListener("fullscreenchange", function () {
+        setLabel(!!document.fullscreenElement);
+      });
+    })();
+  </script>
+
+  <footer class="site-footer">
+    <p>Bob&#x27;s Plant Life</p>
+  </footer>
+</body>
+</html>
