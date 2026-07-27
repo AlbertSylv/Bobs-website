@@ -145,6 +145,15 @@
       "path": "games/rude-fish-bad-bait/",
       "mobile": true,
       "thumbnail": "games/rude-fish-bad-bait/cover.webp"
+    },
+    {
+      "slug": "budget-beam",
+      "title": "Budget Beam",
+      "tagline": "Photograph the truth before it flies away.",
+      "date": "2026-07-27",
+      "path": "games/budget-beam/",
+      "mobile": true,
+      "thumbnail": "games/budget-beam/cover.webp"
     }
   ]
 }

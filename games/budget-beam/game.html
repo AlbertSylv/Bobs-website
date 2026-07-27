@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Budget Beam</title>
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #050814;
+  font-family: Arial, Helvetica, sans-serif;
+}
+body {
+  color: #eef7ff;
+}
+#game {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+#brand {
+  position: absolute;
+  left: 14px;
+  top: max(12px, env(safe-area-inset-top));
+  text-shadow: 0 2px 8px #000;
+}
+#brand h1 {
+  margin: 0;
+  color: #dffcff;
+  font-size: clamp(19px, 4vw, 30px);
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+#brand p {
+  margin: 5px 0 0;
+  color: #9bc4d2;
+  font-size: clamp(10px, 2.3vw, 14px);
+  letter-spacing: .4px;
+}
+#stats {
+  position: absolute;
+  right: 14px;
+  top: max(12px, env(safe-area-inset-top));
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 7px;
+  text-align: center;
+  text-shadow: 0 2px 7px #000;
+}
+.stat {
+  min-width: 58px;
+  padding: 6px 8px 5px;
+  border: 1px solid rgba(151, 227, 255, .35);
+  border-radius: 8px;
+  background: rgba(5, 13, 30, .65);
+  box-shadow: inset 0 0 14px rgba(35, 158, 255, .08);
+}
+.stat small {
+  display: block;
+  color: #9ab6c9;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.stat strong {
+  display: block;
+  margin-top: 2px;
+  color: white;
+  font-size: clamp(13px, 2.8vw, 19px);
+}
+#badgeValue {
+  color: #ffd856;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+#notice {
+  position: absolute;
+  left: 50%;
+  top: 15%;
+  transform: translate(-50%, -8px) scale(.96);
+  opacity: 0;
+  width: min(84vw, 390px);
+  padding: 10px 15px;
+  box-sizing: border-box;
+  text-align: center;
+  border: 1px solid rgba(200, 239, 255, .54);
+  border-radius: 8px;
+  background: rgba(4, 12, 27, .88);
+  color: #effcff;
+  font-size: clamp(13px, 3vw, 18px);
+  font-weight: bold;
+  letter-spacing: .8px;
+  box-shadow: 0 4px 18px #000;
+  transition: opacity .15s, transform .15s;
+}
+#notice.show {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+#notice.good {
+  border-color: #64fff0;
+  color: #82fff3;
+}
+#notice.bad {
+  border-color: #ff5e68;
+  color: #ff8990;
+}
+#notice.warn {
+  border-color: #ffd45b;
+  color: #ffe290;
+}
+#how {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  width: min(92vw, 620px);
+  color: #c4d9e5;
+  font-size: clamp(10px, 2.5vw, 14px);
+  text-align: center;
+  line-height: 1.35;
+  text-shadow: 0 2px 5px #000;
+}
+#controls {
+  position: absolute;
+  left: 50%;
+  bottom: max(11px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+.control {
+  min-width: 74px;
+  min-height: 42px;
+  border: 1px solid rgba(150, 232, 255, .58);
+  border-radius: 9px;
+  background: rgba(4, 17, 38, .88);
+  color: #effcff;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: .7px;
+  box-shadow: 0 3px 12px #000, inset 0 0 12px rgba(71, 190, 255, .12);
+}
+.control:active {
+  background: rgba(38, 108, 144, .92);
+  transform: translateY(1px);
+}
+.control.snap {
+  border-color: #75fff0;
+  color: #79fff0;
+}
+#modal {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 16, .45);
+  transition: opacity .2s;
+}
+#modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.panel {
+  width: min(480px, 92vw);
+  padding: 23px 24px 21px;
+  box-sizing: border-box;
+  text-align: center;
+  border: 1px solid rgba(135, 229, 255, .58);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(8, 28, 56, .96), rgba(4, 11, 27, .96));
+  box-shadow: 0 10px 40px #000, inset 0 0 32px rgba(50, 160, 255, .12);
+}
+.panel h2 {
+  margin: 0 0 4px;
+  color: #d8fbff;
+  font-size: clamp(27px, 7vw, 45px);
+  letter-spacing: 2px;
+}
+.panel .tagline {
+  margin: 0 0 17px;
+  color: #8fc9da;
+  font-size: 15px;
+  font-style: italic;
+}
+.panel .brief {
+  margin: 0 auto 18px;
+  max-width: 390px;
+  color: #d3e4ed;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.panel .brief b {
+  color: #75fff0;
+}
+#startButton {
+  border: 1px solid #75fff0;
+  border-radius: 9px;
+  padding: 12px 24px;
+  background: linear-gradient(#168d96, #075663);
+  color: #efffff;
+  font-weight: bold;
+  font-size: 16px;
+  letter-spacing: 1px;
+  box-shadow: 0 3px 15px rgba(75, 255, 228, .26);
+}
+#startButton:active {
+  transform: translateY(1px);
+}
+#result {
+  margin: 0 0 14px;
+  color: #ffed9d;
+  min-height: 18px;
+  font-weight: bold;
+}
+@media (max-width: 540px) {
+  #stats {
+    top: 57px;
+    right: 8px;
+    gap: 4px;
+  }
+  .stat {
+    min-width: 45px;
+    padding: 4px 5px;
+  }
+  #brand {
+    left: 10px;
+  }
+  #how {
+    bottom: 62px;
+    font-size: 10px;
+  }
+  .control {
+    min-width: 66px;
+    min-height: 38px;
+    font-size: 11px;
+  }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Budget Beam paranormal photography game"></canvas>
+
+  <div id="hud">
+    <div id="brand">
+      <h1>BUDGET BEAM</h1>
+      <p>Photograph the truth before it flies away.</p>
+    </div>
+    <div id="stats">
+      <div class="stat"><small>Score</small><strong id="scoreValue">0</strong></div>
+      <div class="stat"><small>Multiplier</small><strong id="multValue">x1.00</strong></div>
+      <div class="stat"><small>Credibility</small><strong id="badgeValue">●●●</strong></div>
+      <div class="stat"><small>Time</small><strong id="timeValue">60</strong></div>
+    </div>
+    <div id="notice"></div>
+    <div id="how">Move: <b>← →</b> or swipe &nbsp;•&nbsp; Photograph: <b>SPACE</b> or tap &nbsp;•&nbsp; Snap glowing evidence inside the camera zone.</div>
+  </div>
+
+  <div id="controls" aria-label="Touch controls">
+    <button class="control" id="leftBtn">◀ LEFT</button>
+    <button class="control snap" id="snapBtn">SNAP</button>
+    <button class="control" id="rightBtn">RIGHT ▶</button>
+  </div>
+
+  <div id="modal">
+    <div class="panel">
+      <h2 id="modalTitle">BUDGET BEAM</h2>
+      <p class="tagline">Photograph the truth before it flies away.</p>
+      <p class="brief" id="modalBrief">
+        Slide between three lanes. Photograph <b>glowing alien evidence</b> only while it crosses the marked camera zone.
+        Red <b>MUNDANE</b> tags are embarrassing decoys. You have three credibility badges and sixty seconds.
+      </p>
+      <p id="result"></p>
+      <button id="startButton">OPEN CASE FILE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('scoreValue');
+  const multEl = document.getElementById('multValue');
+  const badgeEl = document.getElementById('badgeValue');
+  const timeEl = document.getElementById('timeValue');
+  const notice = document.getElementById('notice');
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBrief = document.getElementById('modalBrief');
+  const result = document.getElementById('result');
+  const startButton = document.getElementById('startButton');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+  const snapBtn = document.getElementById('snapBtn');
+
+  let w = 0;
+  let h = 0;
+  let dpr = 1;
+  let state = 'intro';
+  let startTime = 0;
+  let elapsed = 0;
+  let nextWave = 0.7;
+  let waveIndex = 0;
+  let score = 0;
+  let multiplier = 1;
+  let badges = 3;
+  let lane = 1;
+  let lanePulse = 0;
+  let objects = [];
+  let particles = [];
+  let cards = [];
+  let flash = null;
+  let noticeTimer = null;
+  let lastNow = performance.now();
+  let audioContext = null;
+  let touchStart = null;
+
+  const stars = Array.from({ length: 58 }, (_, i) => ({
+    x: ((i * 47) % 997) / 997,
+    y: ((i * 89 + 43) % 503) / 503 * 0.5,
+    s: 0.45 + ((i * 13) % 10) / 11,
+    a: 0.25 + ((i * 7) % 70) / 100
+  }));
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = Math.max(1, rect.width);
+    h = Math.max(1, rect.height);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  function rr(x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  }
+
+  function laneX(index) {
+    return w * (0.22 + index * 0.28);
+  }
+
+  function zoneInfo() {
+    const zoneH = Math.max(56, Math.min(102, h * 0.135));
+    return {
+      y: h * 0.605,
+      h: zoneH,
+      center: h * 0.605 + zoneH / 2
+    };
+  }
+
+  function currentObjectY(obj, now) {
+    const age = (now - obj.born) / 1000;
+    return -84 + ((h + 185) * age / obj.duration);
+  }
+
+  function objectX(obj, now) {
+    const age = (now - obj.born) / 1000;
+    return laneX(obj.lane) + Math.sin(age * obj.wobbleSpeed + obj.phase) * obj.drift;
+  }
+
+  function updateHud() {
+    scoreEl.textContent = Math.floor(score);
+    multEl.textContent = 'x' + multiplier.toFixed(2);
+    badgeEl.textContent = '●'.repeat(badges) + '○'.repeat(3 - badges);
+    timeEl.textContent = Math.max(0, Math.ceil(60 - elapsed));
+  }
+
+  function showNotice(text, type = 'good', duration = 1050) {
+    notice.textContent = text;
+    notice.className = 'show ' + type;
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => {
+      notice.className = '';
+    }, duration);
+  }
+
+  function initAudio() {
+    if (!audioContext) {
+      const AudioClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioClass) audioContext = new AudioClass();
+    }
+    if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+  }
+
+  function tone(freq, seconds, type, volume, slide = 0) {
+    if (!audioContext) return;
+    const now = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(25, freq + slide), now + seconds);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + seconds + 0.02);
+  }
+
+  function sound(kind) {
+    initAudio();
+    if (!audioContext) return;
+    if (kind === 'correct') {
+      tone(650, 0.08, 'triangle', 0.07, 280);
+      setTimeout(() => tone(1050, 0.11, 'sine', 0.06, 250), 55);
+    } else if (kind === 'late') {
+      tone(740, 0.09, 'triangle', 0.10, 500);
+      setTimeout(() => tone(1280, 0.14, 'sine', 0.09, 520), 50);
+    } else if (kind === 'bad') {
+      tone(160, 0.24, 'sawtooth', 0.07, -45);
+    } else if (kind === 'move') {
+      tone(270, 0.045, 'square', 0.025, 45);
+    } else if (kind === 'empty') {
+      tone(240, 0.045, 'square', 0.02, -25);
+    } else if (kind === 'lost') {
+      tone(110, 0.13, 'triangle', 0.03, -30);
+    }
+  }
+
+  function makeObject(type, objectLane, duration, delay = 0) {
+    const decoys = ['TRASH BAG', 'PARTY BALLOON', 'HUBCAP', 'LOST SHOE'];
+    const evidence = ['ORBITAL SPORE', 'SIGNAL SHARD', 'MOON SLUG', 'STAR RELIC'];
+    const difficult = elapsed > 22;
+    objects.push({
+      type,
+      lane: objectLane,
+      born: performance.now() + delay * 1000,
+      duration,
+      drift: type === 'evidence' ? (difficult ? 12 + Math.random() * 13 : 4 + Math.random() * 7) : (difficult ? 11 + Math.random() * 15 : 3 + Math.random() * 6),
+      wobbleSpeed: 1.8 + Math.random() * 1.8,
+      phase: Math.random() * Math.PI * 2,
+      label: type === 'evidence'
+        ? evidence[Math.floor(Math.random() * evidence.length)]
+        : decoys[Math.floor(Math.random() * decoys.length)],
+      style: Math.floor(Math.random() * 4),
+      captured: false,
+      freezeUntil: 0,
+      stamp: false
+    });
+  }
+
+  function spawnWave(now) {
+    const available = [0, 1, 2];
+    const evidenceLane = waveIndex % 3;
+    available.splice(available.indexOf(evidenceLane), 1);
+    const decoyLane = available[Math.floor(Math.random() * available.length)];
+    const otherLane = available.find(v => v !== decoyLane);
+
+    const duration = Math.max(4.65, 7.65 - elapsed * 0.045 + Math.random() * 0.35);
+    makeObject('evidence', evidenceLane, duration, 0);
+
+    const decoyDelay = elapsed < 15 ? 0.45 : (Math.random() * 0.3);
+    makeObject('decoy', decoyLane, duration + (Math.random() * 0.45 - 0.1), decoyDelay);
+
+    if (elapsed > 40 && waveIndex % 2 === 0 && otherLane !== undefined) {
+      makeObject('evidence', otherLane, Math.max(4.4, duration - 0.18), 0.72);
+    }
+
+    waveIndex++;
+    let gap;
+    if (elapsed < 20) gap = 7.1 + Math.random() * 0.8;
+    else if (elapsed < 40) gap = 5.8 + Math.random() * 0.7;
+    else gap = 5.0 + Math.random() * 0.6;
+    nextWave = elapsed + gap;
+  }
+
+  function addParticles(x, y, color, count, force = 1) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const speed = (30 + Math.random() * 120) * force;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - 18,
+        life: 0.35 + Math.random() * 0.48,
+        max: 0.7,
+        color,
+        size: 1.5 + Math.random() * 3
+      });
+    }
+  }
+
+  function addCard(kind, label) {
+    cards.unshift({
+      kind,
+      label,
+      born: performance.now()
+    });
+    cards = cards.slice(0, 3);
+  }
+
+  function move(direction) {
+    if (state === 'intro' || state === 'ended') {
+      beginGame();
+      if (state !== 'running') return;
+    }
+    const next = Math.max(0, Math.min(2, lane + direction));
+    if (next !== lane) {
+      lane = next;
+      lanePulse = 1;
+      sound('move');
+    }
+  }
+
+  function snap() {
+    if (state === 'intro' || state === 'ended') {
+      beginGame();
+      return;
+    }
+    if (state !== 'running') return;
+
+    const now = performance.now();
+    const zone = zoneInfo();
+    const candidates = objects.filter(obj => {
+      if (obj.captured || now < obj.born || obj.lane !== lane) return false;
+      const y = currentObjectY(obj, now);
+      return y >= zone.y - 9 && y <= zone.y + zone.h + 9;
+    });
+
+    if (!candidates.length) {
+      flash = { kind: 'empty', born: now, duration: 110, x: laneX(lane), y: zone.center };
+      showNotice('EMPTY FRAME', 'warn', 520);
+      sound('empty');
+      return;
+    }
+
+    candidates.sort((a, b) => {
+      const ay = Math.abs(currentObjectY(a, now) - zone.center);
+      const by = Math.abs(currentObjectY(b, now) - zone.center);
+      return ay - by;
+    });
+
+    const target = candidates[0];
+    const targetY = currentObjectY(target, now);
+    const targetX = objectX(target, now);
+    target.captured = true;
+    target.freezeUntil = now + 430;
+    target.stamp = true;
+
+    if (target.type === 'evidence') {
+      const lateAmount = Math.max(0, Math.min(1, (targetY - zone.center) / (zone.h * 0.48)));
+      const close = lateAmount > 0.37;
+      const base = Math.round(100 * multiplier);
+      const timingBonus = Math.round(lateAmount * 130);
+      const points = base + timingBonus;
+      score += points;
+      multiplier = Math.min(5, Math.round((multiplier + 0.25) * 100) / 100);
+      flash = { kind: close ? 'late' : 'good', born: now, duration: close ? 390 : 270, x: targetX, y: targetY };
+      addParticles(targetX, targetY, close ? '#fff5a1' : '#68fff0', close ? 28 : 16, close ? 1.5 : 1);
+      addCard('good', target.label);
+      if (close) {
+        showNotice('CLOSE EVIDENCE! +' + points, 'good', 1150);
+        sound('late');
+      } else {
+        showNotice('CASE FILE STAMPED  +' + points, 'good', 920);
+        sound('correct');
+      }
+    } else {
+      badges--;
+      multiplier = 1;
+      flash = { kind: 'bad', born: now, duration: 370, x: targetX, y: targetY };
+      addParticles(targetX, targetY, '#ff5263', 19, 1.15);
+      addCard('bad', target.label);
+      showNotice('EMBARRASSING PHOTO — CREDIBILITY LOST', 'bad', 1350);
+      sound('bad');
+      if (badges <= 0) {
+        updateHud();
+        setTimeout(() => endGame('CREDIBILITY GONE'), 390);
+      }
+    }
+    updateHud();
+  }
+
+  function beginGame() {
+    initAudio();
+    state = 'running';
+    startTime = performance.now();
+    elapsed = 0;
+    nextWave = 0.7;
+    waveIndex = 0;
+    score = 0;
+    multiplier = 1;
+    badges = 3;
+    lane = 1;
+    objects = [];
+    particles = [];
+    cards = [];
+    flash = null;
+    modal.classList.add('hidden');
+    notice.className = '';
+    updateHud();
+    showNotice('CASE OPEN — FIND THE GLOW', 'good', 1000);
+  }
+
+  function endGame(reason) {
+    if (state !== 'running') return;
+    state = 'ended';
+    modalTitle.textContent = reason;
+    modalBrief.innerHTML = reason === 'CREDIBILITY GONE'
+      ? 'The local paper printed your <b>mundane</b> photo collection. Better luck distinguishing aliens from rubbish next time.'
+      : 'The sixty-second patrol is over. Your camera survived, your credibility mostly survived, and the truth is filed.';
+    result.textContent = 'FINAL SCORE: ' + Math.floor(score) + '   •   BEST MULTIPLIER: x' + multiplier.toFixed(2);
+    startButton.textContent = 'OPEN ANOTHER CASE';
+    modal.classList.remove('hidden');
+    updateHud();
+  }
+
+  function update(now, dt) {
+    if (state !== 'running') return;
+    elapsed = (now - startTime) / 1000;
+
+    if (elapsed >= 60) {
+      elapsed = 60;
+      endGame('60 SECONDS SURVIVED');
+      return;
+    }
+
+    if (elapsed >= nextWave) spawnWave(now);
+
+    objects = objects.filter(obj => {
+      if (obj.captured) {
+        return now < obj.freezeUntil;
+      }
+      if (now < obj.born) return true;
+      const y = currentObjectY(obj, now);
+      if (y > h + 110) {
+        if (obj.type === 'evidence') {
+          multiplier = 1;
+          showNotice('EVIDENCE LOST — MULTIPLIER RESET', 'warn', 900);
+          sound('lost');
+        }
+        return false;
+      }
+      return true;
+    });
+
+    particles = particles.filter(p => {
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 110 * dt;
+      return p.life > 0;
+    });
+
+    lanePulse = Math.max(0, lanePulse - dt * 3.8);
+    updateHud();
+  }
+
+  function drawBackground(now) {
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#06102b');
+    sky.addColorStop(0.47, '#10183a');
+    sky.addColorStop(1, '#03050b');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    for (const star of stars) {
+      const twinkle = 0.65 + Math.sin(now / 800 + star.x * 25) * 0.35;
+      ctx.fillStyle = 'rgba(194,232,255,' + (star.a * twinkle) + ')';
+      ctx.fillRect(star.x * w, star.y * h, star.s, star.s);
+    }
+
+    const moonX = w * 0.82;
+    const moonY = h * 0.13;
+    const moonR = Math.min(w, h) * 0.047;
+    ctx.save();
+    ctx.shadowColor = '#a9d9ff';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#d2e6ed';
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#8295ad';
+    ctx.beginPath();
+    ctx.arc(moonX + moonR * .35, moonY - moonR * .16, moonR * .88, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    const horizon = h * 0.43;
+    for (let i = 0; i < 16; i++) {
+      const bw = w / 15 + (i % 3) * 7;
+      const x = i * w / 15 - 8;
+      const bh = h * (0.08 + ((i * 17) % 9) / 100);
+      ctx.fillStyle = i % 2 ? '#080d20' : '#0a1027';
+      ctx.fillRect(x, horizon - bh, bw, bh);
+      ctx.fillStyle = 'rgba(255,214,102,.23)';
+      for (let q = 0; q < 3; q++) {
+        if ((i + q) % 2 === 0) ctx.fillRect(x + 10 + q * 15, horizon - bh + 16 + q * 17, 4, 6);
+      }
+    }
+
+    ctx.fillStyle = '#060912';
+    ctx.fillRect(0, horizon, w, h - horizon);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(w * 0.39, horizon);
+    ctx.lineTo(w * 0.61, horizon);
+    ctx.lineTo(w * 1.04, h);
+    ctx.lineTo(w * -0.04, h);
+    ctx.closePath();
+    const road = ctx.createLinearGradient(0, horizon, 0, h);
+    road.addColorStop(0, '#171c31');
+    road.addColorStop(1, '#080a11');
+    ctx.fillStyle = road;
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(129,176,205,.25)';
+    ctx.lineWidth = 2;
+    for (const fraction of [0.39, 0.61]) {
+      ctx.beginPath();
+      ctx.moveTo(w * fraction, horizon);
+      ctx.lineTo(w * (fraction < .5 ? .02 : .98), h);
+      ctx.stroke();
+    }
+
+    ctx.setLineDash([16, 18]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(218,229,220,.23)';
+    for (const fraction of [0.48, 0.52]) {
+      ctx.beginPath();
+      ctx.moveTo(w * fraction, horizon);
+      ctx.lineTo(w * (fraction < .5 ? .34 : .66), h);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    for (const side of [0.1, 0.9]) {
+      const x = w * side;
+      ctx.strokeStyle = 'rgba(198,220,232,.28)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, h * .47);
+      ctx.lineTo(x, h * .65);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,214,124,.55)';
+      ctx.shadowColor = '#ffd37d';
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(x, h * .47, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  function drawInterference() {
+    if (elapsed < 24) return;
+    const phase = Math.floor(elapsed * 1.1) % 7;
+    if (phase > 1) return;
+
+    ctx.fillStyle = 'rgba(0, 0, 9, .38)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(122,185,238,.12)';
+    ctx.lineWidth = 1;
+    for (let y = h * .35; y < h * .84; y += 8) {
+      ctx.beginPath();
+      ctx.moveTo(0, y + Math.random() * 2);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(176,218,255,.72)';
+    ctx.font = 'bold 10px Arial';
+    ctx.fillText('SIGNAL INTERFERENCE — FOLLOW BRIGHT OUTLINES', 12, h * .33);
+  }
+
+  function drawZone() {
+    const zone = zoneInfo();
+    const activeX = laneX(lane);
+    ctx.save();
+
+    ctx.fillStyle = 'rgba(37,151,184,.075)';
+    ctx.fillRect(w * .08, zone.y, w * .84, zone.h);
+
+    for (let i = 0; i < 3; i++) {
+      const x = laneX(i);
+      const width = Math.min(w * .23, 150);
+      const isActive = i === lane;
+      ctx.strokeStyle = isActive ? 'rgba(109,255,243,.92)' : 'rgba(126,204,232,.46)';
+      ctx.lineWidth = isActive ? 3 : 1.5;
+      ctx.setLineDash(isActive ? [8, 4] : [5, 7]);
+      rr(x - width / 2, zone.y, width, zone.h, 9);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (isActive) {
+        ctx.fillStyle = 'rgba(70,255,229,.065)';
+        rr(x - width / 2, zone.y, width, zone.h, 9);
+        ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = '#acdbe9';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('CAMERA ZONE', activeX, zone.y - 9);
+    ctx.restore();
+  }
+
+  function drawEvidence(obj, x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.shadowColor = '#39fff1';
+    ctx.shadowBlur = 22;
+    ctx.strokeStyle = '#79fff0';
+    ctx.fillStyle = 'rgba(40, 210, 204, .34)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -24);
+    ctx.lineTo(24, 0);
+    ctx.lineTo(0, 24);
+    ctx.lineTo(-24, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff3a8';
+    ctx.shadowColor = '#fff1a6';
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = '#c2ffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, -3, 29, Math.PI * .12, Math.PI * .88);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    rr(-42, 29, 84, 16, 4);
+    ctx.fillStyle = 'rgba(4, 28, 45, .92)';
+    ctx.fill();
+    ctx.strokeStyle = '#5effe9';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#bafff7';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('EVIDENCE', 0, 40);
+    ctx.restore();
+  }
+
+  function drawDecoy(obj, x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = '#ff6b72';
+    ctx.fillStyle = '#697384';
+    ctx.lineWidth = 2.5;
+
+    if (obj.style === 0) {
+      ctx.beginPath();
+      ctx.moveTo(-20, 18);
+      ctx.lineTo(-24, -11);
+      ctx.lineTo(-10, -24);
+      ctx.lineTo(15, -19);
+      ctx.lineTo(23, 14);
+      ctx.lineTo(9, 25);
+      ctx.lineTo(-14, 23);
+      ctx.closePath();
+      ctx.fillStyle = '#59616f';
+      ctx.fill();
+      ctx.stroke();
+    } else if (obj.style === 1) {
+      ctx.fillStyle = '#c45a6c';
+      ctx.beginPath();
+      ctx.arc(0, -5, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, 13);
+      ctx.quadraticCurveTo(-8, 26, 7, 31);
+      ctx.stroke();
+    } else if (obj.style === 2) {
+      ctx.fillStyle = '#77808b';
+      ctx.beginPath();
+      ctx.arc(0, 0, 21, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#1b2330';
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = '#7b5e4d';
+      ctx.beginPath();
+      ctx.moveTo(-25, 13);
+      ctx.quadraticCurveTo(-5, -18, 17, -8);
+      ctx.lineTo(26, 8);
+      ctx.lineTo(7, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#ff6770';
+    rr(-43, -43, 86, 16, 4);
+    ctx.fill();
+    ctx.fillStyle = '#21060a';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('MUNDANE', 0, -32);
+
+    ctx.fillStyle = 'rgba(37,9,12,.88)';
+    rr(-48, 31, 96, 16, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#d85a61';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#ffb2b6';
+    ctx.font = 'bold 7px Arial';
+    ctx.fillText(obj.label, 0, 42);
+    ctx.restore();
+  }
+
+  function drawObjects(now) {
+    for (const obj of objects) {
+      if (now < obj.born) continue;
+      const y = currentObjectY(obj, now);
+      const x = objectX(obj, now);
+      if (y < -120 || y > h + 120) continue;
+
+      if (obj.captured) {
+        ctx.save();
+        ctx.globalAlpha = .45;
+        if (obj.type === 'evidence') drawEvidence(obj, x, y);
+        else drawDecoy(obj, x, y);
+        ctx.restore();
+        ctx.save();
+        ctx.strokeStyle = obj.type === 'evidence' ? '#e8fff8' : '#ff6a74';
+        ctx.lineWidth = 3;
+        rr(x - 45, y - 46, 90, 91, 5);
+        ctx.stroke();
+        ctx.restore();
+
+        if (obj.stamp) {
+          ctx.save();
+          ctx.translate(x + 35, y - 35);
+          ctx.rotate(-.18);
+          ctx.strokeStyle = obj.type === 'evidence' ? '#75fff0' : '#ff6570';
+          ctx.lineWidth = 2;
+          rr(-32, -11, 64, 22, 3);
+          ctx.stroke();
+          ctx.fillStyle = obj.type === 'evidence' ? '#75fff0' : '#ff6570';
+          ctx.font = 'bold 9px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(obj.type === 'evidence' ? 'CASE FILE ✓' : 'OH NO', 0, 3);
+          ctx.restore();
+        }
+      } else {
+        if (obj.type === 'evidence') drawEvidence(obj, x, y);
+        else drawDecoy(obj, x, y);
+      }
+    }
+  }
+
+  function drawPlayer() {
+    const x = laneX(lane);
+    const y = h * .86;
+    const pulse = lanePulse * 8;
+
+    ctx.save();
+    ctx.shadowColor = '#57f5ed';
+    ctx.shadowBlur = 16 + pulse;
+    ctx.fillStyle = 'rgba(71,255,232,.12)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 32, 45 + pulse, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = '#b8d5de';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y - 4);
+    ctx.lineTo(x - 12, y + 25);
+    ctx.lineTo(x - 23, y + 46);
+    ctx.moveTo(x - 12, y + 25);
+    ctx.lineTo(x + 8, y + 48);
+    ctx.stroke();
+
+    ctx.fillStyle = '#c1d5d5';
+    ctx.beginPath();
+    ctx.arc(x, y - 15, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#364655';
+    ctx.fillRect(x - 15, y - 29, 30, 7);
+    ctx.fillRect(x - 8, y - 36, 16, 10);
+
+    ctx.strokeStyle = '#b8d5de';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y + 9);
+    ctx.lineTo(x + 17, y + 1);
+    ctx.stroke();
+
+    ctx.fillStyle = '#1d2e3d';
+    rr(x + 11, y - 8, 22, 16, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#78fff0';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#d8ffff';
+    ctx.beginPath();
+    ctx.arc(x + 27, y, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#b4d6e2';
+    ctx.font = 'bold 9px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU', x, y + 65);
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      const alpha = Math.max(0, p.life / p.max);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawCards(now) {
+    const cardW = Math.min(146, w * .31);
+    const x = w - cardW - 12;
+    const baseY = h * .22;
+
+    cards.forEach((card, i) => {
+      const age = (now - card.born) / 1000;
+      if (age > 3.5) return;
+      const alpha = Math.min(1, Math.max(0, (3.5 - age) / .5));
+      const y = baseY + i * 55;
+      ctx.save();
+      ctx.globalAlpha = alpha * .88;
+      ctx.rotate((i - 1) * .015);
+      rr(x, y, cardW, 46, 5);
+      ctx.fillStyle = card.kind === 'good' ? 'rgba(8,54,63,.94)' : 'rgba(74,15,25,.94)';
+      ctx.fill();
+      ctx.strokeStyle = card.kind === 'good' ? '#61fff0' : '#ff6873';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = card.kind === 'good' ? '#77fff0' : '#ff8991';
+      ctx.font = 'bold 8px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(card.kind === 'good' ? 'CASE FILE PHOTO' : 'EMBARRASSING PHOTO', x + 8, y + 14);
+
+      ctx.fillStyle = '#e5f3f5';
+      ctx.font = 'bold 10px Arial';
+      ctx.fillText(card.label, x + 8, y + 30);
+      ctx.restore();
+    });
+    cards = cards.filter(card => now - card.born < 3600);
+  }
+
+  function drawFlash(now) {
+    if (!flash) return;
+    const age = now - flash.born;
+    if (age > flash.duration) {
+      flash = null;
+      return;
+    }
+    const alpha = 1 - age / flash.duration;
+    ctx.save();
+    if (flash.kind === 'bad') {
+      ctx.fillStyle = 'rgba(255,26,48,' + (alpha * .22) + ')';
+    } else if (flash.kind === 'empty') {
+      ctx.fillStyle = 'rgba(205,234,255,' + (alpha * .09) + ')';
+    } else {
+      ctx.fillStyle = 'rgba(224,255,248,' + (alpha * (flash.kind === 'late' ? .55 : .34)) + ')';
+    }
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = flash.kind === 'bad' ? '#ff5a66' : '#ecffff';
+    ctx.lineWidth = flash.kind === 'late' ? 7 : 4;
+    ctx.beginPath();
+    ctx.moveTo(flash.x - 38, flash.y);
+    ctx.lineTo(flash.x + 38, flash.y);
+    ctx.moveTo(flash.x, flash.y - 38);
+    ctx.lineTo(flash.x, flash.y + 38);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw(now) {
+    ctx.clearRect(0, 0, w, h);
+    drawBackground(now);
+    drawInterference();
+    drawZone();
+    drawObjects(now);
+    drawParticles();
+    drawPlayer();
+    drawCards(now);
+    drawFlash(now);
+
+    if (state === 'running' && elapsed > 42) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,221,113,.9)';
+      ctx.font = 'bold 10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('LATE WAVE: DOUBLE SIGNALS POSSIBLE', w / 2, h * .37);
+      ctx.restore();
+    }
+  }
+
+  function loop(now) {
+    const dt = Math.min(.05, (now - lastNow) / 1000);
+    lastNow = now;
+    update(now, dt);
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+
+  startButton.addEventListener('click', beginGame);
+
+  function bindControl(button, action) {
+    button.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      initAudio();
+      action();
+    });
+  }
+
+  bindControl(leftBtn, () => move(-1));
+  bindControl(rightBtn, () => move(1));
+  bindControl(snapBtn, snap);
+
+  window.addEventListener('keydown', event => {
+    const key = event.key;
+    if (key === 'ArrowLeft') {
+      event.preventDefault();
+      move(-1);
+    } else if (key === 'ArrowRight') {
+      event.preventDefault();
+      move(1);
+    } else if (key === ' ' || key === 'Spacebar' || key === 'Space') {
+      event.preventDefault();
+      snap();
+    }
+  });
+
+  canvas.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      touchStart = { x: event.clientX, y: event.clientY };
+      canvas.setPointerCapture(event.pointerId);
+    } else {
+      initAudio();
+    }
+  });
+
+  canvas.addEventListener('pointerup', event => {
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      if (!touchStart) return;
+      const dx = event.clientX - touchStart.x;
+      const dy = event.clientY - touchStart.y;
+      touchStart = null;
+      if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy)) {
+        initAudio();
+        move(dx > 0 ? 1 : -1);
+      } else if (Math.abs(dy) < 35) {
+        initAudio();
+        snap();
+      }
+    } else {
+      snap();
+    }
+  });
+
+  canvas.addEventListener('pointercancel', () => {
+    touchStart = null;
+  });
+
+  updateHud();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
