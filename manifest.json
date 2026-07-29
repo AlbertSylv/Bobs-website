@@ -154,6 +154,15 @@
       "path": "games/budget-beam/",
       "mobile": true,
       "thumbnail": "games/budget-beam/cover.webp"
+    },
+    {
+      "slug": "root-route",
+      "title": "Root Route",
+      "tagline": "Water the roots, not the panic.",
+      "date": "2026-07-29",
+      "path": "games/root-route/",
+      "mobile": true,
+      "thumbnail": "games/root-route/cover.webp"
     }
   ]
 }

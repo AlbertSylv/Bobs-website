@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Root Route</title>
+<style>
+  :root {
+    --ink: #183b39;
+    --cream: #fff9e9;
+    --green: #4aad59;
+    --green-dark: #277849;
+    --soil: #603825;
+    --soil-dark: #3b231b;
+    --clay: #c96d42;
+    --water: #61d2ed;
+    --red: #e85b58;
+    --blue: #4a9de7;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    color: var(--ink);
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,255,255,.72) 0 2px, transparent 3px),
+      radial-gradient(circle at 83% 11%, rgba(255,255,255,.58) 0 3px, transparent 4px),
+      linear-gradient(135deg, #dff3dc, #b8e8d0);
+  }
+
+  button {
+    appearance: none;
+    border: 0;
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    touch-action: manipulation;
+  }
+
+  button:focus-visible {
+    outline: 3px solid #ffcf58;
+    outline-offset: 3px;
+  }
+
+  button:active {
+    transform: translateY(2px);
+  }
+
+  #app {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    flex: 0 0 auto;
+    padding: 8px 12px 7px;
+    background: rgba(255,250,235,.93);
+    border-bottom: 2px solid rgba(39,120,73,.17);
+    box-shadow: 0 2px 12px rgba(28,74,50,.12);
+    z-index: 2;
+  }
+
+  .topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  h1 {
+    margin: 0;
+    color: var(--green-dark);
+    font-size: clamp(21px, 5.4vw, 31px);
+    line-height: .96;
+    letter-spacing: -.8px;
+  }
+
+  .tagline {
+    margin: 3px 0 0;
+    color: #58715e;
+    font-size: clamp(11px, 2.8vw, 14px);
+    font-style: italic;
+  }
+
+  #gardenTotal {
+    flex: 0 0 auto;
+    padding: 7px 9px;
+    border-radius: 12px;
+    color: white;
+    background: #28784a;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.16);
+    font-size: clamp(11px, 2.8vw, 14px);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  #hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 7px;
+    font-size: clamp(10px, 2.7vw, 13px);
+    font-weight: 700;
+  }
+
+  .pill {
+    padding: 5px 8px;
+    border: 1px solid rgba(95,70,40,.14);
+    border-radius: 999px;
+    color: #51432f;
+    background: #f4ead0;
+  }
+
+  #status {
+    flex: 1 1 165px;
+    color: #286947;
+    background: #e6f5e4;
+  }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.6);
+    color: #50624f;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  .dry { background: var(--red); }
+  .okay { background: var(--green); }
+  .flood { background: var(--blue); }
+
+  #help {
+    margin: 6px 1px 0;
+    color: #5d6d57;
+    font-size: clamp(10px, 2.6vw, 12px);
+    line-height: 1.25;
+  }
+
+  #stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 125px;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #outcome {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(18,57,41,.42);
+  }
+
+  #outcome.show {
+    display: flex;
+  }
+
+  .card {
+    width: min(365px, 92vw);
+    padding: 20px 17px 17px;
+    border: 3px solid #f1d5a0;
+    border-radius: 20px;
+    color: #5b513e;
+    background: var(--cream);
+    box-shadow: 0 12px 35px rgba(16,45,35,.35);
+    text-align: center;
+  }
+
+  .card.bad {
+    border-color: #efba9d;
+  }
+
+  .card h2 {
+    margin: 0 0 7px;
+    color: #2d7549;
+    font-size: 27px;
+  }
+
+  .card.bad h2 {
+    color: #aa493d;
+  }
+
+  .card p {
+    margin: 7px 0;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  #badges {
+    margin: 8px 0;
+    font-size: 31px;
+    letter-spacing: 3px;
+  }
+
+  #outcomeButton {
+    min-height: 48px;
+    margin-top: 9px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: #3c9b58;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.16);
+  }
+
+  .card.bad #outcomeButton {
+    background: #c86448;
+  }
+
+  #controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 10px 9px;
+    border-top: 2px solid rgba(39,120,73,.16);
+    background: rgba(255,250,235,.95);
+    z-index: 2;
+  }
+
+  .tilt-btn,
+  #valve {
+    min-height: 54px;
+    border-radius: 14px;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.16), 0 2px 0 rgba(41,79,50,.12);
+  }
+
+  .tilt-btn {
+    width: clamp(54px, 16vw, 72px);
+    background: #795038;
+    font-size: 25px;
+  }
+
+  #valve {
+    min-width: min(202px, 48vw);
+    padding: 0 15px;
+    background: #328ba3;
+    font-size: clamp(12px, 3.4vw, 15px);
+    letter-spacing: .2px;
+  }
+
+  @media (max-height: 575px) {
+    header {
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+
+    .tagline {
+      display: none;
+    }
+
+    #hud {
+      margin-top: 4px;
+    }
+
+    #help {
+      margin-top: 4px;
+    }
+
+    #controls {
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+
+    .tilt-btn,
+    #valve {
+      min-height: 48px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="topline">
+      <div>
+        <h1>Root Route</h1>
+        <p class="tagline">Water the roots, not the panic.</p>
+      </div>
+      <div id="gardenTotal">Garden: 0 leaves</div>
+    </div>
+
+    <div id="hud">
+      <span class="pill" id="potLabel">Pot 1 · First Sip</span>
+      <span class="pill" id="dropLabel">Drops: 4</span>
+      <span class="pill" id="status">Tap the large watering can to release a drop.</span>
+      <span class="legend">
+        <i class="dot dry"></i> dry
+        <i class="dot okay"></i> green
+        <i class="dot flood"></i> flood
+      </span>
+    </div>
+
+    <p id="help">How to play: tap the large can or valve for one drop, then hold ← / →, use the buttons, or drag across the pot to guide it. Give each red root two sips; avoid blue.</p>
+  </header>
+
+  <main id="stage" aria-label="Root Route game board">
+    <canvas id="game" aria-label="Soil channels, a large watering can tap target, and thirsty roots"></canvas>
+
+    <div id="outcome" aria-live="polite">
+      <div class="card" id="outcomeCard">
+        <h2 id="outcomeTitle">Pot cleared!</h2>
+        <div id="badges">🍃🍃🍃</div>
+        <p id="outcomeText"></p>
+        <button id="outcomeButton" type="button">Next pot</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="controls" aria-label="Game controls">
+    <button class="tilt-btn" id="leftBtn" type="button" aria-label="Tilt left">←</button>
+    <button id="valve" type="button" aria-label="Release one water drop">💧 VALVE · DROP</button>
+    <button class="tilt-btn" id="rightBtn" type="button" aria-label="Tilt right">→</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const stage = document.getElementById("stage");
+  const potLabel = document.getElementById("potLabel");
+  const dropLabel = document.getElementById("dropLabel");
+  const statusEl = document.getElementById("status");
+  const gardenTotal = document.getElementById("gardenTotal");
+  const outcome = document.getElementById("outcome");
+  const outcomeCard = document.getElementById("outcomeCard");
+  const outcomeTitle = document.getElementById("outcomeTitle");
+  const badges = document.getElementById("badges");
+  const outcomeText = document.getElementById("outcomeText");
+  const outcomeButton = document.getElementById("outcomeButton");
+  const valveButton = document.getElementById("valve");
+
+  const COLS = 7;
+  const ROWS = 9;
+
+  const levels = [
+    { name: "First Sip", drops: 4, roots: [{ x: 3, moisture: 0 }] },
+    { name: "Forked Thirst", drops: 6, roots: [{ x: 1, moisture: 0 }, { x: 5, moisture: 0 }] },
+    { name: "Three Ways Down", drops: 8, roots: [{ x: 1, moisture: 0 }, { x: 3, moisture: 1 }, { x: 5, moisture: 0 }] },
+    { name: "Tangled Garden", drops: 10, roots: [{ x: 0, moisture: 0 }, { x: 2, moisture: 0 }, { x: 4, moisture: 1 }, { x: 6, moisture: 0 }] }
+  ];
+
+  let W = 1;
+  let H = 1;
+  let dpr = 1;
+  let levelIndex = 0;
+  let roots = [];
+  let dropsLeft = 0;
+  let gardenLeaves = 0;
+  let phase = "playing";
+  let drop = null;
+  let tilt = 0;
+  let drag = null;
+  let board = null;
+  let canHit = { x: 0, y: 0, size: 56 };
+  let banner = { text: "", color: "#ffffff", time: 0 };
+  let effects = [];
+  let lastTime = performance.now();
+  const keys = { left: false, right: false };
+
+  function roundedRect(x, y, w, h, r) {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  }
+
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    W = Math.max(1, rect.width);
+    H = Math.max(1, rect.height);
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function makeBoard() {
+    const canSize = Math.max(56, Math.min(72, W * 0.21, H * 0.43));
+    const potW = Math.min(W * 0.91, 680);
+    const potX = (W - potW) / 2;
+    const potY = Math.max(5, canSize * 0.14);
+    const potH = Math.max(110, H - potY - 9);
+    const gridX = potX + Math.max(13, potW * 0.055);
+    const gridY = Math.min(H - 45, potY + canSize + 8);
+    const gridW = potW - (gridX - potX) * 2;
+    const gridBottom = potY + potH - 11;
+    const gridH = Math.max(25, gridBottom - gridY);
+
+    board = {
+      potX,
+      potY,
+      potW,
+      potH,
+      gridX,
+      gridY,
+      gridW,
+      gridH,
+      cw: gridW / COLS,
+      ch: gridH / ROWS,
+      canSize
+    };
+
+    canHit = {
+      x: Math.max(7, Math.min(W - canSize - 7, potX + potW - canSize - 8)),
+      y: Math.max(5, potY + 2),
+      size: canSize
+    };
+  }
+
+  function cellCenter(col, row) {
+    return {
+      x: board.gridX + (col + 0.5) * board.cw,
+      y: board.gridY + (row + 0.5) * board.ch
+    };
+  }
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  function updateHud() {
+    const level = levels[levelIndex];
+    potLabel.textContent = "Pot " + (levelIndex + 1) + " · " + level.name;
+    dropLabel.textContent = "Drops: " + dropsLeft;
+    gardenTotal.textContent = "Garden: " + gardenLeaves + (gardenLeaves === 1 ? " leaf" : " leaves");
+  }
+
+  function announce(text, color) {
+    banner = { text, color: color || "#ffffff", time: 1.5 };
+  }
+
+  function addEffect(x, y, color, type) {
+    effects.push({
+      x,
+      y,
+      color,
+      type,
+      life: type === "leaf" ? 0.95 : 0.6,
+      max: type === "leaf" ? 0.95 : 0.6,
+      seed: Math.random() * Math.PI * 2
+    });
+  }
+
+  function loadLevel(index) {
+    levelIndex = index;
+    const level = levels[index];
+    roots = level.roots.map((root, id) => ({
+      x: root.x,
+      moisture: root.moisture,
+      id,
+      pulse: Math.random() * Math.PI * 2,
+      perk: 0
+    }));
+    dropsLeft = level.drops;
+    drop = null;
+    tilt = 0;
+    phase = "playing";
+    effects = [];
+    banner = { text: "", color: "#fff", time: 0 };
+    outcome.classList.remove("show");
+    setStatus(index === 0 ? "Tap the large watering can to release a drop." : "Guide each drop to a red root.");
+    updateHud();
+  }
+
+  function rootAt(column) {
+    return roots.find(root => root.x === column);
+  }
+
+  function allRootsHealthy() {
+    return roots.every(root => root.moisture >= 2 && root.moisture <= 3);
+  }
+
+  function releaseDrop() {
+    if (phase !== "playing" || drop || dropsLeft <= 0) {
+      return;
+    }
+
+    dropsLeft--;
+    drop = {
+      x: 3,
+      row: -1,
+      progress: 0,
+      wobble: Math.random() * 10
+    };
+
+    updateHud();
+    announce("Drop released — steer while it falls.", "#d9f8ff");
+    setStatus("Hold a direction while the drop travels through the soil.");
+  }
+
+  function failPot(message) {
+    if (phase !== "playing") {
+      return;
+    }
+
+    phase = "failed";
+    drop = null;
+    setStatus(message);
+
+    window.setTimeout(() => {
+      outcomeCard.classList.add("bad");
+      outcomeTitle.textContent = "Pot needs a restart";
+      badges.textContent = "💧💧";
+      outcomeText.textContent = message + " Give each root exactly enough water: green is healthy, blue is flooded.";
+      outcomeButton.textContent = "Restart pot";
+      outcome.classList.add("show");
+    }, 280);
+  }
+
+  function clearPot() {
+    if (phase !== "playing") {
+      return;
+    }
+
+    phase = "cleared";
+    drop = null;
+
+    const originalDrops = levels[levelIndex].drops;
+    const savedRatio = dropsLeft / originalDrops;
+    const earned = savedRatio >= 0.5 ? 3 : savedRatio >= 0.2 ? 2 : 1;
+    gardenLeaves += earned;
+    updateHud();
+    setStatus("All roots are green!");
+
+    window.setTimeout(() => {
+      outcomeCard.classList.remove("bad");
+      outcomeTitle.textContent = levelIndex === levels.length - 1 ? "Garden revived!" : "Pot cleared!";
+      badges.textContent = "🍃".repeat(earned);
+      outcomeText.textContent = "You saved " + dropsLeft + " drop" + (dropsLeft === 1 ? "" : "s") +
+        " and earned " + earned + " leaf badge" + (earned === 1 ? "" : "s") + ".";
+      outcomeButton.textContent = levelIndex === levels.length - 1 ? "Grow again" : "Next pot";
+      outcome.classList.add("show");
+    }, 320);
+  }
+
+  function settleDrop() {
+    const root = rootAt(drop.x);
+
+    if (!root) {
+      addEffect(drop.x, ROWS - 0.3, "#bd885e", "splash");
+      drop = null;
+      announce("That channel drained into mud.", "#ffe2ae");
+      setStatus("Aim for a red root bulb at the bottom.");
+      if (dropsLeft <= 0 && !allRootsHealthy()) {
+        failPot("The watering can is empty before every root turned green.");
+      }
+      return;
+    }
+
+    root.moisture++;
+    root.perk = 1;
+    addEffect(root.x, ROWS - 0.35, root.moisture >= 4 ? "#7bdcf1" : "#dcff9a", root.moisture === 2 ? "leaf" : "splash");
+    drop = null;
+
+    if (root.moisture >= 4) {
+      announce("Flooded! Blue means too much water.", "#beeaff");
+      failPot("One root reached the blue flood zone.");
+      return;
+    }
+
+    if (root.moisture === 2) {
+      announce("Healthy root! It turned green.", "#dcff9a");
+      setStatus("Green roots are happy. Keep the others out of blue.");
+    } else if (root.moisture === 3) {
+      announce("One extra sip is still safe.", "#ffe4a8");
+      setStatus("That root is nearly full. Focus on red roots now.");
+    } else {
+      announce("A small sip — this root still needs water.", "#ffd8bc");
+      setStatus("Red roots need one more sip to become green.");
+    }
+
+    if (allRootsHealthy()) {
+      clearPot();
+    } else if (dropsLeft <= 0) {
+      failPot("The watering can is empty before every root turned green.");
+    }
+  }
+
+  function updateTiltFromKeys() {
+    if (keys.left && !keys.right) {
+      tilt = -1;
+    } else if (keys.right && !keys.left) {
+      tilt = 1;
+    } else {
+      tilt = 0;
+    }
+  }
+
+  function update(dt) {
+    if (banner.time > 0) {
+      banner.time -= dt;
+    }
+
+    effects.forEach(effect => {
+      effect.life -= dt;
+    });
+    effects = effects.filter(effect => effect.life > 0);
+
+    roots.forEach(root => {
+      root.perk = Math.max(0, root.perk - dt * 1.8);
+    });
+
+    if (!drop || phase !== "playing") {
+      return;
+    }
+
+    drop.progress += dt / 0.28;
+
+    if (drop.progress >= 1) {
+      drop.progress = 0;
+
+      if (tilt !== 0) {
+        drop.x = Math.max(0, Math.min(COLS - 1, drop.x + tilt));
+      }
+
+      drop.row++;
+
+      if (drop.row >= ROWS) {
+        settleDrop();
+      }
+    }
+  }
+
+  function drawBackground() {
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#bce9d4");
+    sky.addColorStop(1, "#e8f4cf");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "rgba(255,255,255,.27)";
+    for (let i = 0; i < 18; i++) {
+      const x = (i * 83 + 21) % W;
+      const y = (i * 53 + 17) % H;
+      ctx.beginPath();
+      ctx.arc(x, y, 1 + (i % 3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawPot() {
+    const b = board;
+    roundedRect(b.potX, b.potY + 15, b.potW, b.potH - 15, 22);
+
+    const potGradient = ctx.createLinearGradient(b.potX, 0, b.potX + b.potW, 0);
+    potGradient.addColorStop(0, "#9d5135");
+    potGradient.addColorStop(.2, "#dd8754");
+    potGradient.addColorStop(.75, "#c76842");
+    potGradient.addColorStop(1, "#8c442f");
+    ctx.fillStyle = potGradient;
+    ctx.fill();
+    ctx.strokeStyle = "#6f3528";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    roundedRect(b.potX - 5, b.potY + 8, b.potW + 10, 25, 13);
+    ctx.fillStyle = "#e8965e";
+    ctx.fill();
+    ctx.strokeStyle = "#7a3b2a";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function drawChannels() {
+    const b = board;
+
+    roundedRect(b.gridX - 3, b.gridY - 3, b.gridW + 6, b.gridH + 6, 8);
+    ctx.fillStyle = "#43281f";
+    ctx.fill();
+
+    roundedRect(b.gridX, b.gridY, b.gridW, b.gridH, 6);
+    ctx.save();
+    ctx.clip();
+
+    const soil = ctx.createLinearGradient(0, b.gridY, 0, b.gridY + b.gridH);
+    soil.addColorStop(0, "#71432d");
+    soil.addColorStop(1, "#4b2b21");
+    ctx.fillStyle = soil;
+    ctx.fillRect(b.gridX, b.gridY, b.gridW, b.gridH);
+
+    for (let i = 0; i < 55; i++) {
+      const x = b.gridX + ((i * 41 + 13) % b.gridW);
+      const y = b.gridY + ((i * 67 + 9) % b.gridH);
+      ctx.fillStyle = i % 3 ? "rgba(30,15,10,.2)" : "rgba(224,156,91,.13)";
+      ctx.beginPath();
+      ctx.arc(x, y, 0.8 + (i % 3) * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (let col = 0; col < COLS; col++) {
+      const x = b.gridX + col * b.cw + 1.5;
+      const w = Math.max(3, b.cw - 3);
+      roundedRect(x, b.gridY + 1.5, w, Math.max(5, b.gridH - 3), Math.min(7, b.cw * 0.18));
+      const channel = ctx.createLinearGradient(x, b.gridY, x + w, b.gridY);
+      channel.addColorStop(0, "#37605d");
+      channel.addColorStop(.48, "#719d95");
+      channel.addColorStop(1, "#315b58");
+      ctx.fillStyle = channel;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(220,255,237,.24)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    [2, 5].forEach(row => {
+      const y = b.gridY + row * b.ch + b.ch * 0.44;
+      ctx.strokeStyle = "rgba(229,255,230,.27)";
+      ctx.lineWidth = Math.max(1, Math.min(2, b.ch * 0.1));
+      ctx.beginPath();
+      ctx.moveTo(b.gridX + 4, y);
+      ctx.lineTo(b.gridX + b.gridW - 4, y);
+      ctx.stroke();
+    });
+
+    ctx.restore();
+  }
+
+  function drawLargeCan() {
+    const hit = canHit;
+    const s = hit.size;
+
+    ctx.save();
+
+    roundedRect(hit.x, hit.y, s, s, Math.max(12, s * 0.2));
+    ctx.fillStyle = "rgba(235,255,255,.23)";
+    ctx.fill();
+    ctx.strokeStyle = "#fff2a8";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const bx = hit.x + s * 0.18;
+    const by = hit.y + s * 0.31;
+    const bw = s * 0.48;
+    const bh = s * 0.29;
+
+    roundedRect(bx, by, bw, bh, s * 0.08);
+    ctx.fillStyle = "#4aa2bb";
+    ctx.fill();
+    ctx.strokeStyle = "#1d6177";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = "#236c80";
+    ctx.lineWidth = Math.max(3, s * 0.08);
+    ctx.beginPath();
+    ctx.arc(bx + bw * 0.28, by, bw * 0.3, Math.PI * 1.02, Math.PI * 1.95, true);
+    ctx.stroke();
+
+    ctx.fillStyle = "#68cce0";
+    ctx.beginPath();
+    ctx.moveTo(bx + bw, by + bh * 0.35);
+    ctx.lineTo(hit.x + s * 0.88, by + bh * 0.46);
+    ctx.lineTo(bx + bw, by + bh * 0.63);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#f6d55d";
+    ctx.fillRect(bx + bw * 0.42, by - s * 0.12, bw * 0.16, s * 0.14);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold " + Math.max(10, s * 0.17) + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("TAP", hit.x + s / 2, hit.y + s * 0.84);
+
+    ctx.restore();
+  }
+
+  function rootColor(root) {
+    if (root.moisture >= 4) return "#4a9de7";
+    if (root.moisture >= 2) return "#61c464";
+    if (root.moisture === 1) return "#e87b58";
+    return "#e85558";
+  }
+
+  function drawRoots(time) {
+    roots.forEach(root => {
+      const point = cellCenter(root.x, ROWS - 0.5);
+      const radius = Math.max(5, Math.min(board.cw, board.ch) * 0.31);
+      const healthy = root.moisture >= 2 && root.moisture <= 3;
+      const pulse = root.moisture < 2 ? 1 + Math.sin(time * 5 + root.pulse) * 0.07 : 1 + root.perk * 0.11;
+
+      ctx.save();
+      ctx.translate(point.x, point.y);
+      ctx.scale(pulse, pulse);
+
+      ctx.strokeStyle = healthy ? "#aeeb85" : root.moisture >= 4 ? "#a1ebff" : "#cf5d51";
+      ctx.lineWidth = Math.max(1, radius * 0.15);
+      ctx.lineCap = "round";
+
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * radius * 0.16, radius * 0.45);
+        ctx.quadraticCurveTo(i * radius * 0.8, radius * 0.82, i * radius * 0.93, radius * 1.16);
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#3d2828";
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(1, radius - 1.5), 0, Math.PI * 2);
+      ctx.clip();
+      const fillHeight = Math.min(4, root.moisture) / 4 * radius * 2;
+      ctx.fillStyle = rootColor(root);
+      ctx.fillRect(-radius, radius - fillHeight, radius * 2, fillHeight);
+      ctx.restore();
+
+      ctx.strokeStyle = healthy ? "#b9f58e" : root.moisture >= 4 ? "#b0efff" : "#ff9c94";
+      ctx.lineWidth = Math.max(1.2, radius * 0.13);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (healthy) {
+        ctx.fillStyle = "#dcff9d";
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.48, -radius * 0.75, radius * 0.34, radius * 0.14, -0.55, 0, Math.PI * 2);
+        ctx.ellipse(radius * 0.48, -radius * 0.75, radius * 0.34, radius * 0.14, 0.55, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#fff9e2";
+      ctx.font = "bold " + Math.max(8, radius * 0.57) + "px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(root.moisture + "/4", 0, 1);
+
+      ctx.restore();
+    });
+  }
+
+  function drawDrop() {
+    if (!drop) {
+      return;
+    }
+
+    const visualRow = Math.max(0, Math.min(ROWS - 0.25, drop.row + Math.min(1, drop.progress)));
+    const point = cellCenter(drop.x, visualRow);
+    const radius = Math.max(4, Math.min(board.cw, board.ch) * 0.16);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(111,223,240,.2)";
+    ctx.beginPath();
+    ctx.arc(point.x, point.y + radius, radius * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#74def1";
+    ctx.beginPath();
+    ctx.arc(point.x, point.y + radius * 0.22, radius, 0, Math.PI * 2);
+    ctx.moveTo(point.x - radius * 0.72, point.y + radius * 0.05);
+    ctx.quadraticCurveTo(point.x, point.y - radius * 1.7, point.x + radius * 0.72, point.y + radius * 0.05);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    ctx.beginPath();
+    ctx.arc(point.x - radius * 0.28, point.y - radius * 0.12, radius * 0.24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawEffects() {
+    effects.forEach(effect => {
+      const point = cellCenter(effect.x, Math.min(ROWS - 0.2, effect.y));
+      const progress = 1 - effect.life / effect.max;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, effect.life / effect.max);
+
+      if (effect.type === "leaf") {
+        for (let i = 0; i < 3; i++) {
+          const angle = effect.seed + i * 2.1;
+          const x = point.x + Math.cos(angle) * (7 + progress * 16);
+          const y = point.y + Math.sin(angle) * (7 + progress * 16) - progress * 12;
+          ctx.translate(x, y);
+          ctx.rotate(angle + progress * 2);
+          ctx.fillStyle = effect.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 4, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+      } else {
+        ctx.fillStyle = effect.color;
+        for (let i = 0; i < 4; i++) {
+          const angle = effect.seed + i * 1.7;
+          const distance = progress * (5 + i * 3);
+          ctx.beginPath();
+          ctx.arc(point.x + Math.cos(angle) * distance, point.y + Math.sin(angle) * distance, Math.max(1, 4 - progress * 2), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    });
+  }
+
+  function drawBanner() {
+    if (banner.time <= 0 || !banner.text) {
+      return;
+    }
+
+    const alpha = Math.min(1, banner.time * 3);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = "bold " + Math.max(11, Math.min(16, W * 0.035)) + "px Arial";
+    ctx.textAlign = "center";
+    const width = Math.min(W * 0.88, ctx.measureText(banner.text).width + 24);
+    const y = Math.min(H - 16, board.gridY - 8);
+
+    roundedRect(W / 2 - width / 2, y - 15, width, 24, 10);
+    ctx.fillStyle = "rgba(28,55,46,.77)";
+    ctx.fill();
+    ctx.fillStyle = banner.color;
+    ctx.fillText(banner.text, W / 2, y + 1);
+    ctx.restore();
+  }
+
+  function drawTiltLabel() {
+    const y = Math.min(H - 7, board.potY + board.potH - 8);
+    const text = tilt < 0 ? "TILT ←" : tilt > 0 ? "TILT →" : "LEVEL";
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,240,197,.72)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - 28, y);
+    ctx.lineTo(W / 2 + 28, y + tilt * 6);
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff0bf";
+    ctx.font = "bold 10px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(text, W / 2, y - 6);
+    ctx.restore();
+  }
+
+  function render(time) {
+    makeBoard();
+    drawBackground();
+    drawPot();
+    drawChannels();
+    drawRoots(time / 1000);
+    drawEffects();
+    drawDrop();
+    drawLargeCan();
+    drawTiltLabel();
+    drawBanner();
+  }
+
+  function loop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    update(dt);
+    render(now);
+    window.requestAnimationFrame(loop);
+  }
+
+  function canvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  }
+
+  function pointInCan(point) {
+    return point.x >= canHit.x &&
+      point.x <= canHit.x + canHit.size &&
+      point.y >= canHit.y &&
+      point.y <= canHit.y + canHit.size;
+  }
+
+  canvas.addEventListener("pointerdown", event => {
+    if (phase !== "playing") {
+      return;
+    }
+
+    const point = canvasPoint(event);
+
+    if (pointInCan(point)) {
+      releaseDrop();
+      return;
+    }
+
+    drag = { x: point.x };
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch (error) {
+      void error;
+    }
+  });
+
+  canvas.addEventListener("pointermove", event => {
+    if (!drag || phase !== "playing") {
+      return;
+    }
+
+    const point = canvasPoint(event);
+    const distance = point.x - drag.x;
+
+    if (Math.abs(distance) > 8) {
+      tilt = distance < 0 ? -1 : 1;
+    }
+  });
+
+  function stopDrag() {
+    if (drag) {
+      drag = null;
+      tilt = 0;
+    }
+  }
+
+  canvas.addEventListener("pointerup", stopDrag);
+  canvas.addEventListener("pointercancel", stopDrag);
+
+  valveButton.addEventListener("click", releaseDrop);
+
+  function bindTiltButton(id, direction) {
+    const button = document.getElementById(id);
+
+    button.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      if (phase === "playing") {
+        tilt = direction;
+      }
+      try {
+        button.setPointerCapture(event.pointerId);
+      } catch (error) {
+        void error;
+      }
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach(type => {
+      button.addEventListener(type, () => {
+        tilt = 0;
+      });
+    });
+  }
+
+  bindTiltButton("leftBtn", -1);
+  bindTiltButton("rightBtn", 1);
+
+  window.addEventListener("keydown", event => {
+    if (event.code === "Space") {
+      event.preventDefault();
+      if (!event.repeat) {
+        releaseDrop();
+      }
+    }
+
+    if (event.code === "ArrowLeft") {
+      event.preventDefault();
+      keys.left = true;
+      updateTiltFromKeys();
+    }
+
+    if (event.code === "ArrowRight") {
+      event.preventDefault();
+      keys.right = true;
+      updateTiltFromKeys();
+    }
+
+    if (event.key.toLowerCase() === "r" && phase === "failed") {
+      loadLevel(levelIndex);
+    }
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.code === "ArrowLeft") {
+      keys.left = false;
+      updateTiltFromKeys();
+    }
+
+    if (event.code === "ArrowRight") {
+      keys.right = false;
+      updateTiltFromKeys();
+    }
+  });
+
+  outcomeButton.addEventListener("click", () => {
+    if (phase === "failed") {
+      loadLevel(levelIndex);
+      return;
+    }
+
+    if (phase === "cleared") {
+      if (levelIndex >= levels.length - 1) {
+        gardenLeaves = 0;
+        loadLevel(0);
+      } else {
+        loadLevel(levelIndex + 1);
+      }
+    }
+  });
+
+  window.addEventListener("resize", resize);
+
+  resize();
+  loadLevel(0);
+  window.requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
