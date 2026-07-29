@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Damp Stamp</title>
+<style>
+  :root {
+    --ink: #173e3a;
+    --muted: #61766f;
+    --cream: #f7edcf;
+    --paper: #fffaf0;
+    --soil: #d8b98b;
+    --soil-dark: #765039;
+    --prewet: #527783;
+    --blue: #32a9ce;
+    --blue-dark: #197c9b;
+    --red: #df5b55;
+    --green: #4f9a55;
+    --green-dark: #2f7042;
+    --gold: #e6ae38;
+    --shadow: rgba(34, 62, 52, 0.18);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.75), transparent 32%),
+      linear-gradient(145deg, #e8f1d8, #f7e8c5);
+    color: var(--ink);
+    font-family: ui-rounded, "Trebuchet MS", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  button:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 4px solid rgba(50, 169, 206, .35);
+    outline-offset: 2px;
+  }
+
+  #app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: clamp(6px, 1.1vw, 14px);
+    padding: max(8px, env(safe-area-inset-top))
+             max(8px, env(safe-area-inset-right))
+             max(8px, env(safe-area-inset-bottom))
+             max(8px, env(safe-area-inset-left));
+  }
+
+  .topbar {
+    min-height: 66px;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) auto minmax(190px, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 8px clamp(10px, 2vw, 20px);
+    border: 1px solid rgba(57, 91, 73, .16);
+    border-radius: 20px;
+    background: rgba(255, 250, 240, .88);
+    box-shadow: 0 8px 28px var(--shadow);
+    backdrop-filter: blur(8px);
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: clamp(24px, 3vw, 38px);
+    line-height: .95;
+    letter-spacing: -.045em;
+  }
+
+  .tagline {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: clamp(11px, 1.3vw, 15px);
+    white-space: nowrap;
+  }
+
+  .plant-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 66px;
+    height: 54px;
+  }
+
+  #plantIcon {
+    width: 62px;
+    height: 54px;
+    overflow: visible;
+    transform-origin: 50% 100%;
+  }
+
+  #plantIcon.perk {
+    animation: plantPerk .8s cubic-bezier(.2, 1.6, .35, 1);
+  }
+
+  @keyframes plantPerk {
+    0% { transform: scaleY(.82) rotate(-3deg); }
+    35% { transform: scaleY(1.18) rotate(3deg); }
+    65% { transform: scaleY(.97) rotate(-1deg); }
+    100% { transform: scaleY(1) rotate(0); }
+  }
+
+  .top-stats {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .stat-pill {
+    min-width: 88px;
+    padding: 7px 10px;
+    border-radius: 14px;
+    background: #eef2df;
+    text-align: center;
+    border: 1px solid rgba(57, 91, 73, .12);
+  }
+
+  .stat-label {
+    display: block;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+  .stat-value {
+    display: block;
+    margin-top: 1px;
+    font-size: 15px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .main {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(275px, 340px);
+    gap: clamp(7px, 1.2vw, 15px);
+  }
+
+  .board-shell {
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(255,255,255,.76), transparent 52%),
+      linear-gradient(#dceac9, #c8d9ad);
+    border: 1px solid rgba(48, 90, 61, .16);
+    box-shadow: 0 12px 35px var(--shadow);
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  .board-shell::before,
+  .board-shell::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(93, 137, 70, .08);
+    transform: rotate(-15deg);
+  }
+
+  .board-shell::before {
+    left: -60px;
+    bottom: 15px;
+  }
+
+  .board-shell::after {
+    right: -70px;
+    top: 25px;
+    transform: rotate(20deg);
+  }
+
+  #board {
+    position: relative;
+    z-index: 1;
+    width: 96%;
+    height: 96%;
+    max-width: 920px;
+    max-height: 760px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .pot-rim {
+    fill: #b87550;
+    stroke: #8a5038;
+    stroke-width: 8;
+    filter: drop-shadow(0 10px 7px rgba(57, 46, 31, .2));
+  }
+
+  .pot-inner {
+    fill: #9a6044;
+    opacity: .6;
+  }
+
+  .soil-cell {
+    stroke: rgba(76, 59, 41, .19);
+    stroke-width: 3;
+  }
+
+  .soil-cell.dry {
+    fill: var(--soil);
+  }
+
+  .soil-cell.wet {
+    fill: var(--soil-dark);
+  }
+
+  .soil-cell.prewet {
+    fill: var(--prewet);
+    stroke: #385c66;
+  }
+
+  .prewet-mark {
+    fill: rgba(220, 247, 255, .72);
+    pointer-events: none;
+  }
+
+  .just-poured {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: plopCell .42s ease-out;
+  }
+
+  @keyframes plopCell {
+    0% { transform: scale(.72); opacity: .55; }
+    60% { transform: scale(1.06); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .preview {
+    stroke-width: 5;
+    pointer-events: none;
+  }
+
+  .preview.legal {
+    fill: rgba(50, 169, 206, .48);
+    stroke: #126f91;
+    filter: drop-shadow(0 0 9px rgba(51, 195, 238, .9));
+    animation: legalGlow 1.1s ease-in-out infinite alternate;
+  }
+
+  .preview.illegal {
+    fill: rgba(223, 91, 85, .48);
+    stroke: #ad332f;
+    filter: drop-shadow(0 0 6px rgba(223, 91, 85, .55));
+  }
+
+  @keyframes legalGlow {
+    from { opacity: .7; }
+    to { opacity: 1; }
+  }
+
+  .cursor-ring {
+    fill: none;
+    stroke: #133f3d;
+    stroke-width: 5;
+    stroke-dasharray: 10 7;
+    pointer-events: none;
+  }
+
+  .hint-dot {
+    fill: #8eddf1;
+    stroke: #157998;
+    stroke-width: 4;
+    animation: hintBob 1.2s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes hintBob {
+    from { opacity: .45; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(-2px); }
+  }
+
+  .shoot-stem {
+    fill: none;
+    stroke: #287342;
+    stroke-width: 6;
+    stroke-linecap: round;
+    pointer-events: none;
+  }
+
+  .shoot-leaf {
+    fill: #62b35c;
+    stroke: #277240;
+    stroke-width: 2;
+    pointer-events: none;
+    transform-box: fill-box;
+    transform-origin: bottom center;
+    animation: shootGrow .5s cubic-bezier(.2, 1.4, .4, 1);
+  }
+
+  @keyframes shootGrow {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+  }
+
+  .board-shell.urgent .soil-cell.dry {
+    animation: thirstyPulse .85s ease-in-out infinite alternate;
+  }
+
+  @keyframes thirstyPulse {
+    from { fill: #d8b98b; }
+    to { fill: #f1d9aa; }
+  }
+
+  .board-shell.denied {
+    animation: denyShake .28s linear;
+  }
+
+  @keyframes denyShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  .result-layer {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(24, 62, 55, .23);
+    backdrop-filter: blur(3px);
+  }
+
+  .result-layer.show {
+    display: flex;
+  }
+
+  .result-card {
+    width: min(430px, 94%);
+    padding: clamp(18px, 4vw, 30px);
+    border-radius: 26px;
+    background: var(--paper);
+    box-shadow: 0 18px 55px rgba(31, 54, 45, .3);
+    text-align: center;
+    border: 2px solid rgba(58, 111, 70, .2);
+    animation: resultPop .45s cubic-bezier(.2, 1.4, .4, 1);
+  }
+
+  @keyframes resultPop {
+    from { transform: scale(.78) translateY(18px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .result-card h2 {
+    margin: 0 0 7px;
+    font-size: clamp(27px, 5vw, 42px);
+    letter-spacing: -.04em;
+  }
+
+  .result-card p {
+    margin: 7px 0;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .award-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+  }
+
+  .award {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #eaf1d7;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .award.missed {
+    opacity: .42;
+    filter: grayscale(1);
+  }
+
+  .primary-result {
+    min-width: 150px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 15px;
+    padding: 12px 20px;
+    background: var(--green-dark);
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #214f31;
+  }
+
+  .primary-result:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #214f31;
+  }
+
+  .failure-banner {
+    position: absolute;
+    z-index: 4;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(500px, calc(100% - 24px));
+    padding: 10px 16px;
+    border-radius: 16px;
+    color: white;
+    background: rgba(150, 54, 49, .94);
+    box-shadow: 0 8px 22px rgba(76, 34, 31, .25);
+    text-align: center;
+    font-weight: 900;
+    display: none;
+  }
+
+  .failure-banner.show {
+    display: block;
+    animation: bannerDrop .35s ease-out;
+  }
+
+  @keyframes bannerDrop {
+    from { opacity: 0; transform: translate(-50%, -15px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  .panel {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 11px;
+    border-radius: 23px;
+    background: rgba(255, 250, 240, .92);
+    border: 1px solid rgba(57, 91, 73, .16);
+    box-shadow: 0 11px 34px var(--shadow);
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  .level-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .level-head h2 {
+    margin: 0;
+    font-size: clamp(20px, 2.2vw, 27px);
+    letter-spacing: -.025em;
+  }
+
+  .level-head p {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .minimum {
+    flex: none;
+    padding: 6px 9px;
+    border-radius: 12px;
+    background: #f0e4b7;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  .can-panel {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 16px;
+    background: #e8f1e7;
+  }
+
+  #canGraphic {
+    width: 60px;
+    height: 49px;
+    transform-origin: 50% 75%;
+  }
+
+  #canGraphic.low {
+    animation: canWobble .55s ease-in-out infinite;
+  }
+
+  #canGraphic.clunk {
+    animation: canClunk .3s linear;
+  }
+
+  @keyframes canWobble {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-4deg); }
+    75% { transform: rotate(4deg); }
+  }
+
+  @keyframes canClunk {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    35% { transform: translateX(-4px) rotate(-5deg); }
+    70% { transform: translateX(4px) rotate(5deg); }
+  }
+
+  .can-copy {
+    min-width: 0;
+  }
+
+  .can-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 7px;
+    font-weight: 900;
+  }
+
+  .can-line strong {
+    font-size: 18px;
+  }
+
+  .meter {
+    height: 13px;
+    margin-top: 5px;
+    display: flex;
+    gap: 3px;
+  }
+
+  .meter-segment {
+    flex: 1 1 0;
+    min-width: 4px;
+    border-radius: 4px;
+    background: #c8d1c5;
+    border: 1px solid rgba(35, 85, 74, .12);
+  }
+
+  .meter-segment.full {
+    background: linear-gradient(#57bfdb, #258cac);
+  }
+
+  .cards-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: .1em;
+    font-weight: 900;
+  }
+
+  .spray-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .spray-card {
+    min-height: 83px;
+    padding: 7px 4px 6px;
+    border: 2px solid #d7d9c6;
+    border-radius: 15px;
+    color: var(--ink);
+    background: #fffdf5;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 3px 0 #d5d1bd;
+  }
+
+  .spray-card:hover {
+    border-color: #79bfd1;
+  }
+
+  .spray-card.selected {
+    border-color: var(--blue-dark);
+    background: #e6f7fb;
+    box-shadow: 0 3px 0 #197c9b, 0 0 0 3px rgba(50,169,206,.14);
+  }
+
+  .spray-card:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #bdbba9;
+  }
+
+  .spray-card:disabled {
+    opacity: .55;
+    cursor: default;
+  }
+
+  .card-key {
+    float: left;
+    margin-left: 3px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+  .mini-shape {
+    display: grid;
+    width: 43px;
+    height: 38px;
+    margin: 1px auto 4px;
+    gap: 2px;
+    align-content: center;
+    justify-content: center;
+  }
+
+  .mini-cell {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: #3daac7;
+    border: 1px solid #197792;
+  }
+
+  .card-name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 900;
+  }
+
+  .card-size {
+    display: block;
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 800;
+  }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 8px;
+  }
+
+  .action {
+    min-height: 45px;
+    border: 0;
+    border-radius: 14px;
+    padding: 9px 10px;
+    cursor: pointer;
+    font-weight: 900;
+    touch-action: manipulation;
+  }
+
+  .action.secondary {
+    color: var(--ink);
+    background: #e8eadc;
+    box-shadow: 0 4px 0 #c8cbbb;
+  }
+
+  .action.pour {
+    color: white;
+    background: var(--blue-dark);
+    box-shadow: 0 4px 0 #10596f;
+    font-size: 16px;
+  }
+
+  .action:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(0,0,0,.2);
+  }
+
+  .action:disabled {
+    opacity: .42;
+    cursor: default;
+  }
+
+  .small-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .small-actions button {
+    min-height: 37px;
+    border: 1px solid #d1d5c4;
+    border-radius: 12px;
+    color: var(--ink);
+    background: #f4f2e7;
+    cursor: pointer;
+    font-weight: 900;
+  }
+
+  .small-actions button:disabled {
+    opacity: .4;
+    cursor: default;
+  }
+
+  .danger-pulse {
+    animation: dangerPulse .72s ease-in-out infinite alternate;
+    border-color: var(--red) !important;
+    color: #a83e39 !important;
+  }
+
+  @keyframes dangerPulse {
+    from { box-shadow: 0 0 0 0 rgba(223,91,85,.15); transform: scale(1); }
+    to { box-shadow: 0 0 0 6px rgba(223,91,85,.2); transform: scale(1.025); }
+  }
+
+  .message {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 13px;
+    background: #edf0e4;
+    color: #46625b;
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 850;
+  }
+
+  .message.good {
+    color: #14657e;
+    background: #e3f5fa;
+  }
+
+  .message.bad {
+    color: #983b37;
+    background: #f9e2df;
+  }
+
+  .howto {
+    margin: 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.25;
+    text-align: center;
+    font-weight: 750;
+  }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 850;
+  }
+
+  .legend i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 3px;
+    border-radius: 3px;
+    vertical-align: -1px;
+  }
+
+  .dry-key { background: var(--soil); }
+  .wet-key { background: var(--soil-dark); }
+  .pre-key { background: var(--prewet); }
+
+  @media (max-width: 760px) {
+    #app {
+      gap: 6px;
+      padding: max(5px, env(safe-area-inset-top))
+               max(5px, env(safe-area-inset-right))
+               max(5px, env(safe-area-inset-bottom))
+               max(5px, env(safe-area-inset-left));
+    }
+
+    .topbar {
+      min-height: 58px;
+      grid-template-columns: 1fr auto;
+      padding: 7px 10px;
+      border-radius: 16px;
+    }
+
+    .plant-wrap {
+      display: none;
+    }
+
+    .brand h1 {
+      font-size: 25px;
+    }
+
+    .tagline {
+      font-size: 10px;
+    }
+
+    .stat-pill {
+      min-width: 67px;
+      padding: 5px 7px;
+    }
+
+    .stat-value {
+      font-size: 12px;
+    }
+
+    .main {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(220px, 1fr) auto;
+      gap: 6px;
+    }
+
+    .board-shell {
+      border-radius: 18px;
+    }
+
+    .panel {
+      max-height: 45vh;
+      padding: 8px;
+      gap: 6px;
+      border-radius: 17px;
+    }
+
+    .level-head h2 {
+      font-size: 18px;
+    }
+
+    .level-head p,
+    .legend {
+      display: none;
+    }
+
+    .can-panel {
+      grid-template-columns: 48px 1fr;
+      padding: 5px 8px;
+    }
+
+    #canGraphic {
+      width: 46px;
+      height: 38px;
+    }
+
+    .spray-card {
+      min-height: 69px;
+      padding-top: 4px;
+    }
+
+    .mini-shape {
+      height: 28px;
+      margin-bottom: 2px;
+    }
+
+    .action {
+      min-height: 41px;
+    }
+
+    .small-actions button {
+      min-height: 34px;
+    }
+
+    .message {
+      min-height: 34px;
+      padding: 6px 9px;
+    }
+  }
+
+  @media (max-height: 520px) and (min-width: 761px) {
+    .topbar {
+      min-height: 52px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+
+    .plant-wrap {
+      height: 42px;
+    }
+
+    #plantIcon {
+      height: 43px;
+    }
+
+    .panel {
+      gap: 6px;
+      padding: 8px;
+    }
+
+    .spray-card {
+      min-height: 66px;
+    }
+
+    .mini-shape {
+      height: 25px;
+    }
+
+    .message {
+      min-height: 34px;
+    }
+
+    .legend {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Damp Stamp</h1>
+      <p class="tagline">Make the soil damp, not swamp.</p>
+    </div>
+
+    <div class="plant-wrap" aria-hidden="true">
+      <svg id="plantIcon" viewBox="0 0 80 65">
+        <path d="M40 52 C39 38 41 24 39 10" fill="none" stroke="#397d47" stroke-width="5" stroke-linecap="round"/>
+        <path d="M40 35 C27 32 19 24 18 15 C29 15 39 21 40 35Z" fill="#66ad5b" stroke="#397d47" stroke-width="2"/>
+        <path d="M40 25 C51 23 59 16 61 7 C50 7 41 13 40 25Z" fill="#79bf64" stroke="#397d47" stroke-width="2"/>
+        <path d="M24 52 H56 L52 63 H28Z" fill="#b56e4c" stroke="#824a35" stroke-width="2"/>
+      </svg>
+    </div>
+
+    <div class="top-stats">
+      <div class="stat-pill">
+        <span class="stat-label">Level</span>
+        <span class="stat-value" id="levelStat">1 / 4</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Leaves</span>
+        <span class="stat-value" id="leafStat">🍃 0 / 12</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="board-shell" id="boardShell" aria-label="Soil bed">
+      <svg id="board" role="application" aria-label="Tap a soil tile to position the spray preview"></svg>
+      <div class="failure-banner" id="failureBanner" aria-live="assertive"></div>
+      <div class="result-layer" id="resultLayer"></div>
+    </section>
+
+    <aside class="panel" aria-label="Game controls">
+      <div class="level-head">
+        <div>
+          <h2 id="levelName">Seedling Square</h2>
+          <p id="levelNote">Guide dots mark easy legal placements.</p>
+        </div>
+        <div class="minimum">
+          Minimum<br><strong id="minimumText">4 pours</strong>
+        </div>
+      </div>
+
+      <div class="can-panel">
+        <svg id="canGraphic" viewBox="0 0 90 70" aria-hidden="true">
+          <path d="M22 22 H65 V58 Q65 64 58 64 H29 Q22 64 22 57Z" fill="#68afbd" stroke="#276b78" stroke-width="4"/>
+          <path d="M65 30 L84 19 L87 26 L65 42Z" fill="#68afbd" stroke="#276b78" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 30 C8 25 7 54 23 52" fill="none" stroke="#276b78" stroke-width="6" stroke-linecap="round"/>
+          <path d="M32 17 Q43 5 55 17" fill="none" stroke="#276b78" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="83" cy="33" r="3" fill="#38aacc"/>
+        </svg>
+        <div class="can-copy">
+          <div class="can-line">
+            <span>Can meter</span>
+            <strong id="canText">4 / 4</strong>
+          </div>
+          <div class="meter" id="meter" aria-label="Watering can meter"></div>
+        </div>
+      </div>
+
+      <div class="cards-title">
+        <span>Choose a spray</span>
+        <span>Keys 1–3</span>
+      </div>
+
+      <div class="spray-cards" id="sprayCards"></div>
+
+      <div class="action-row">
+        <button class="action secondary" id="rotateBtn" type="button">↻ Rotate <small>(R)</small></button>
+        <button class="action pour" id="pourBtn" type="button">Pour <small>(Space)</small></button>
+      </div>
+
+      <div class="small-actions">
+        <button id="undoBtn" type="button">↶ Undo (U)</button>
+        <button id="restartBtn" type="button">Restart</button>
+      </div>
+
+      <div class="message" id="message" aria-live="polite">
+        Pick the glowing square, choose a soil cell, then Pour.
+      </div>
+
+      <p class="howto">
+        Tap a card → Rotate → soil cell → Pour. Cover every pale tile exactly once. Keyboard: 1–3, R, arrows, Space, U.
+      </p>
+
+      <div class="legend" aria-label="Soil legend">
+        <span><i class="dry-key"></i>thirsty</span>
+        <span><i class="wet-key"></i>poured</span>
+        <span><i class="pre-key"></i>pre-damp no-go</span>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  var shapes = {
+    square: {
+      id: "square",
+      name: "Square mist",
+      cells: [[0,0], [1,0], [0,1], [1,1]]
+    },
+    domino: {
+      id: "domino",
+      name: "Twin stream",
+      cells: [[0,0], [1,0]]
+    },
+    line3: {
+      id: "line3",
+      name: "Triple line",
+      cells: [[0,0], [1,0], [2,0]]
+    },
+    l3: {
+      id: "l3",
+      name: "Bent three",
+      cells: [[0,0], [0,1], [1,1]]
+    },
+    line4: {
+      id: "line4",
+      name: "Long four",
+      cells: [[0,0], [1,0], [2,0], [3,0]]
+    },
+    l4: {
+      id: "l4",
+      name: "Hook four",
+      cells: [[0,0], [0,1], [0,2], [1,2]]
+    }
+  };
+
+  var levels = [
+    {
+      name: "Seedling Square",
+      note: "Guide dots mark easy legal placements.",
+      map: [
+        "dddd",
+        "dddd",
+        "dddd",
+        "dddd"
+      ],
+      cards: ["square"],
+      capacity: 4,
+      minimum: 4,
+      hints: true,
+      startMessage: "The blue guide dots are safe anchors. Four square mists will fit."
+    },
+    {
+      name: "Long Planter",
+      note: "Squares are efficient; twins finish the narrow edge.",
+      map: [
+        "ddddd",
+        "ddddd",
+        "ddddd",
+        "ddddd"
+      ],
+      cards: ["square", "domino"],
+      capacity: 7,
+      minimum: 6,
+      hints: true,
+      startMessage: "Use big square mists where they fit, then rotate the twin stream for the edge."
+    },
+    {
+      name: "Crooked Herb Bed",
+      note: "The blue-gray strip is already damp.",
+      map: [
+        "...ddd",
+        "dddddd",
+        "dddwww",
+        "dddddd",
+        "dddddd",
+        "dddddd"
+      ],
+      cards: ["line3", "l3"],
+      capacity: 11,
+      minimum: 10,
+      hints: false,
+      startMessage: "This pot is irregular. Rotate around the pre-damp blue-gray strip."
+    },
+    {
+      name: "The Tight Ring",
+      note: "An exact can. Every pour must count.",
+      map: [
+        "dddddd",
+        "dddddd",
+        "ddwwdd",
+        "ddwwdd",
+        "dddddd",
+        "dddddd"
+      ],
+      cards: ["square", "line4", "l4"],
+      capacity: 8,
+      minimum: 8,
+      hints: false,
+      startMessage: "The can holds exactly eight pours. Fit four-tile sprays around the damp center."
+    }
+  ];
+
+  var board = document.getElementById("board");
+  var boardShell = document.getElementById("boardShell");
+  var sprayCards = document.getElementById("sprayCards");
+  var rotateBtn = document.getElementById("rotateBtn");
+  var pourBtn = document.getElementById("pourBtn");
+  var undoBtn = document.getElementById("undoBtn");
+  var restartBtn = document.getElementById("restartBtn");
+  var message = document.getElementById("message");
+  var levelName = document.getElementById("levelName");
+  var levelNote = document.getElementById("levelNote");
+  var minimumText = document.getElementById("minimumText");
+  var levelStat = document.getElementById("levelStat");
+  var leafStat = document.getElementById("leafStat");
+  var canText = document.getElementById("canText");
+  var meter = document.getElementById("meter");
+  var canGraphic = document.getElementById("canGraphic");
+  var resultLayer = document.getElementById("resultLayer");
+  var failureBanner = document.getElementById("failureBanner");
+  var plantIcon = document.getElementById("plantIcon");
+
+  var levelIndex = 0;
+  var level = levels[0];
+  var grid = [];
+  var rows = 0;
+  var cols = 0;
+  var selectedCard = 0;
+  var rotation = 0;
+  var cursor = { x: 0, y: 0 };
+  var history = [];
+  var canLeft = 0;
+  var pours = 0;
+  var undoUsed = false;
+  var state = "playing";
+  var totalLeaves = 0;
+  var pendingLeaves = 0;
+  var latestKeys = {};
+  var audioContext = null;
+
+  function createSvg(tag, attrs) {
+    var el = document.createElementNS(SVG_NS, tag);
+    var key;
+    for (key in attrs) {
+      if (Object.prototype.hasOwnProperty.call(attrs, key)) {
+        el.setAttribute(key, String(attrs[key]));
+      }
+    }
+    return el;
+  }
+
+  function ensureAudio() {
+    var AudioCtor;
+    if (audioContext) {
+      return audioContext;
+    }
+    AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtor) {
+      try {
+        audioContext = new AudioCtor();
+      } catch (err) {
+        audioContext = null;
+      }
+    }
+    return audioContext;
+  }
+
+  function tone(frequency, duration, type, volume, delay) {
+    var ctx = ensureAudio();
+    var oscillator;
+    var gain;
+    var start;
+    if (!ctx) {
+      return;
+    }
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    oscillator = ctx.createOscillator();
+    gain = ctx.createGain();
+    start = ctx.currentTime + (delay || 0);
+    oscillator.type = type || "sine";
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume || 0.05, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.03);
+  }
+
+  function playPlop() {
+    tone(125, 0.18, "sine", 0.09, 0);
+    tone(78, 0.22, "triangle", 0.045, 0.035);
+  }
+
+  function playClunk() {
+    tone(105, 0.1, "square", 0.045, 0);
+    tone(72, 0.13, "triangle", 0.04, 0.07);
+  }
+
+  function playChime() {
+    tone(523.25, 0.25, "sine", 0.06, 0);
+    tone(659.25, 0.28, "sine", 0.06, 0.11);
+    tone(783.99, 0.4, "sine", 0.065, 0.22);
+  }
+
+  function playRattle() {
+    tone(92, 0.08, "square", 0.035, 0);
+    tone(73, 0.08, "square", 0.035, 0.1);
+    tone(96, 0.08, "square", 0.035, 0.2);
+  }
+
+  function rotatedCells(shape, turns) {
+    var result = [];
+    var i;
+    var x;
+    var y;
+    var t;
+    var minX = Infinity;
+    var minY = Infinity;
+
+    for (i = 0; i < shape.cells.length; i += 1) {
+      x = shape.cells[i][0];
+      y = shape.cells[i][1];
+      for (t = 0; t < turns; t += 1) {
+        var oldX = x;
+        x = -y;
+        y = oldX;
+      }
+      result.push([x, y]);
+      if (x < minX) {
+        minX = x;
+      }
+      if (y < minY) {
+        minY = y;
+      }
+    }
+
+    for (i = 0; i < result.length; i += 1) {
+      result[i][0] -= minX;
+      result[i][1] -= minY;
+    }
+
+    result.sort(function (a, b) {
+      if (a[1] !== b[1]) {
+        return a[1] - b[1];
+      }
+      return a[0] - b[0];
+    });
+
+    return result;
+  }
+
+  function loadLevel(index) {
+    var y;
+    var x;
+    var ch;
+
+    levelIndex = index;
+    level = levels[index];
+    rows = level.map.length;
+    cols = 0;
+
+    for (y = 0; y < rows; y += 1) {
+      if (level.map[y].length > cols) {
+        cols = level.map[y].length;
+      }
+    }
+
+    grid = [];
+    for (y = 0; y < rows; y += 1) {
+      grid[y] = [];
+      for (x = 0; x < cols; x += 1) {
+        ch = level.map[y].charAt(x);
+        if (ch === "d") {
+          grid[y][x] = 1;
+        } else if (ch === "w") {
+          grid[y][x] = 2;
+        } else {
+          grid[y][x] = 0;
+        }
+      }
+    }
+
+    selectedCard = 0;
+    rotation = 0;
+    history = [];
+    canLeft = level.capacity;
+    pours = 0;
+    undoUsed = false;
+    state = "playing";
+    pendingLeaves = 0;
+    latestKeys = {};
+    resultLayer.className = "result-layer";
+    resultLayer.innerHTML = "";
+    failureBanner.className = "failure-banner";
+    findInitialCursor();
+    setMessage(level.startMessage, "");
+    renderAll();
+  }
+
+  function currentShape() {
+    return shapes[level.cards[selectedCard]];
+  }
+
+  function previewAt(x, y, shapeOverride, rotationOverride) {
+    var shape = shapeOverride || currentShape();
+    var turns = typeof rotationOverride === "number" ? rotationOverride : rotation;
+    var offsets = rotatedCells(shape, turns);
+    var cells = [];
+    var i;
+    var nx;
+    var ny;
+    var reason = "";
+
+    for (i = 0; i < offsets.length; i += 1) {
+      nx = x + offsets[i][0];
+      ny = y + offsets[i][1];
+      cells.push([nx, ny]);
+
+      if (!reason) {
+        if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) {
+          reason = "The preview crosses the pot edge.";
+        } else if (grid[ny][nx] === 0) {
+          reason = "The preview crosses the pot edge.";
+        } else if (grid[ny][nx] === 2) {
+          reason = "That patch is already pre-damp.";
+        } else if (grid[ny][nx] === 3) {
+          reason = "That soil has already been watered.";
+        }
+      }
+    }
+
+    return {
+      legal: reason === "",
+      reason: reason,
+      cells: cells
+    };
+  }
+
+  function findInitialCursor() {
+    var shape = currentShape();
+    var y;
+    var x;
+    var p;
+
+    for (y = 0; y < rows; y += 1) {
+      for (x = 0; x < cols; x += 1) {
+        p = previewAt(x, y, shape, rotation);
+        if (p.legal) {
+          cursor.x = x;
+          cursor.y = y;
+          return;
+        }
+      }
+    }
+
+    cursor.x = 0;
+    cursor.y = 0;
+  }
+
+  function dryCount() {
+    var count = 0;
+    var y;
+    var x;
+    for (y = 0; y < rows; y += 1) {
+      for (x = 0; x < cols; x += 1) {
+        if (grid[y][x] === 1) {
+          count += 1;
+        }
+      }
+    }
+    return count;
+  }
+
+  function anyLegalPlacement() {
+    var c;
+    var r;
+    var y;
+    var x;
+    var shape;
+
+    for (c = 0; c < level.cards.length; c += 1) {
+      shape = shapes[level.cards[c]];
+      for (r = 0; r < 4; r += 1) {
+        for (y = 0; y < rows; y += 1) {
+          for (x = 0; x < cols; x += 1) {
+            if (previewAt(x, y, shape, r).legal) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  function setMessage(text, kind) {
+    message.textContent = text;
+    message.className = "message";
+    if (kind) {
+      message.classList.add(kind);
+    }
+  }
+
+  function renderCards() {
+    var i;
+    var shape;
+    var button;
+    var key;
+    var mini;
+    var name;
+    var size;
+    var cells;
+    var maxX;
+    var maxY;
+    var c;
+    var cell;
+    var blank;
+    var x;
+    var y;
+    var occupied;
+
+    sprayCards.innerHTML = "";
+
+    for (i = 0; i < level.cards.length; i += 1) {
+      shape = shapes[level.cards[i]];
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "spray-card" + (i === selectedCard ? " selected" : "");
+      button.setAttribute("aria-label", "Spray " + (i + 1) + ": " + shape.name);
+      button.setAttribute("data-index", String(i));
+      button.disabled = state === "won" || state === "complete";
+
+      key = document.createElement("span");
+      key.className = "card-key";
+      key.textContent = String(i + 1);
+      button.appendChild(key);
+
+      mini = document.createElement("span");
+      mini.className = "mini-shape";
+      cells = rotatedCells(shape, i === selectedCard ? rotation : 0);
+      maxX = 0;
+      maxY = 0;
+
+      for (c = 0; c < cells.length; c += 1) {
+        if (cells[c][0] > maxX) {
+          maxX = cells[c][0];
+        }
+        if (cells[c][1] > maxY) {
+          maxY = cells[c][1];
+        }
+      }
+
+      mini.style.gridTemplateColumns = "repeat(" + (maxX + 1) + ", 9px)";
+      mini.style.gridTemplateRows = "repeat(" + (maxY + 1) + ", 9px)";
+
+      for (y = 0; y <= maxY; y += 1) {
+        for (x = 0; x <= maxX; x += 1) {
+          occupied = false;
+          for (c = 0; c < cells.length; c += 1) {
+            if (cells[c][0] === x && cells[c][1] === y) {
+              occupied = true;
+              break;
+            }
+          }
+          if (occupied) {
+            cell = document.createElement("span");
+            cell.className = "mini-cell";
+            mini.appendChild(cell);
+          } else {
+            blank = document.createElement("span");
+            blank.style.width = "9px";
+            blank.style.height = "9px";
+            mini.appendChild(blank);
+          }
+        }
+      }
+
+      button.appendChild(mini);
+
+      name = document.createElement("span");
+      name.className = "card-name";
+      name.textContent = shape.name;
+      button.appendChild(name);
+
+      size = document.createElement("span");
+      size.className = "card-size";
+      size.textContent = shape.cells.length + " tiles";
+      button.appendChild(size);
+
+      button.addEventListener("click", function () {
+        selectCard(parseInt(this.getAttribute("data-index"), 10));
+      });
+
+      sprayCards.appendChild(button);
+    }
+  }
+
+  function renderMeter() {
+    var i;
+    var segment;
+    meter.innerHTML = "";
+
+    for (i = 0; i < level.capacity; i += 1) {
+      segment = document.createElement("span");
+      segment.className = "meter-segment" + (i < canLeft ? " full" : "");
+      meter.appendChild(segment);
+    }
+
+    canText.textContent = canLeft + " / " + level.capacity;
+    meter.setAttribute("aria-label", canLeft + " of " + level.capacity + " pours remaining");
+
+    canGraphic.classList.toggle("low", state === "playing" && canLeft <= 2 && dryCount() > 0);
+  }
+
+  function renderHUD() {
+    var shownLeaves = totalLeaves + pendingLeaves;
+    levelName.textContent = level.name;
+    levelNote.textContent = level.note;
+    minimumText.textContent = level.minimum + (level.minimum === 1 ? " pour" : " pours");
+    levelStat.textContent = (levelIndex + 1) + " / " + levels.length;
+    leafStat.textContent = "🍃 " + shownLeaves + " / " + (levels.length * 3);
+    renderMeter();
+
+    rotateBtn.disabled = state === "won" || state === "complete";
+    pourBtn.disabled = state !== "playing";
+    undoBtn.disabled = history.length === 0 || state === "won" || state === "complete";
+    restartBtn.disabled = state === "complete";
+
+    undoBtn.classList.toggle("danger-pulse", state === "lost" && history.length > 0);
+    restartBtn.classList.toggle("danger-pulse", state === "lost");
+  }
+
+  function renderBoard() {
+    var viewWidth = cols * 100 + 80;
+    var viewHeight = rows * 100 + 90;
+    var y;
+    var x;
+    var status;
+    var rect;
+    var mark;
+    var p;
+    var i;
+    var cell;
+    var cls;
+    var hint;
+    var h;
+    var shoot;
+    var origin;
+    var sx;
+    var sy;
+    var group;
+
+    board.innerHTML = "";
+    board.setAttribute("viewBox", "-40 -35 " + viewWidth + " " + viewHeight);
+    board.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    rect = createSvg("rect", {
+      x: -18,
+      y: -17,
+      width: cols * 100 + 36,
+      height: rows * 100 + 50,
+      rx: 44,
+      class: "pot-rim"
+    });
+    board.appendChild(rect);
+
+    rect = createSvg("rect", {
+      x: 0,
+      y: 0,
+      width: cols * 100,
+      height: rows * 100,
+      rx: 28,
+      class: "pot-inner"
+    });
+    board.appendChild(rect);
+
+    for (y = 0; y < rows; y += 1) {
+      for (x = 0; x < cols; x += 1) {
+        status = grid[y][x];
+        if (status === 0) {
+          continue;
+        }
+
+        cls = "soil-cell ";
+        if (status === 1) {
+          cls += "dry";
+        } else if (status === 2) {
+          cls += "prewet";
+        } else {
+          cls += "wet";
+        }
+
+        if (latestKeys[x + "," + y]) {
+          cls += " just-poured";
+        }
+
+        rect = createSvg("rect", {
+          x: x * 100 + 7,
+          y: y * 100 + 7,
+          width: 86,
+          height: 86,
+          rx: 18,
+          class: cls
+        });
+        board.appendChild(rect);
+
+        if (status === 2) {
+          mark = createSvg("path", {
+            d: "M " + (x * 100 + 50) + " " + (y * 100 + 27) +
+               " C " + (x * 100 + 37) + " " + (y * 100 + 45) + ", " +
+               (x * 100 + 39) + " " + (y * 100 + 64) + ", " +
+               (x * 100 + 50) + " " + (y * 100 + 68) +
+               " C " + (x * 100 + 62) + " " + (y * 100 + 64) + ", " +
+               (x * 100 + 63) + " " + (y * 100 + 45) + ", " +
+               (x * 100 + 50) + " " + (y * 100 + 27) + " Z",
+            class: "prewet-mark"
+          });
+          board.appendChild(mark);
+        }
+      }
+    }
+
+    if (level.hints && state === "playing") {
+      for (y = 0; y < rows; y += 1) {
+        for (x = 0; x < cols; x += 1) {
+          h = previewAt(x, y);
+          if (h.legal) {
+            hint = createSvg("circle", {
+              cx: x * 100 + 21,
+              cy: y * 100 + 21,
+              r: 8,
+              class: "hint-dot"
+            });
+            board.appendChild(hint);
+          }
+        }
+      }
+    }
+
+    for (i = 0; i < history.length; i += 1) {
+      origin = history[i].cells[0];
+      sx = origin[0] * 100 + 50;
+      sy = origin[1] * 100 + 69;
+      shoot = createSvg("path", {
+        d: "M " + sx + " " + sy + " Q " + (sx - 2) + " " + (sy - 15) + " " + sx + " " + (sy - 27),
+        class: "shoot-stem"
+      });
+      board.appendChild(shoot);
+      shoot = createSvg("ellipse", {
+        cx: sx - 8,
+        cy: sy - 25,
+        rx: 10,
+        ry: 6,
+        transform: "rotate(25 " + (sx - 8) + " " + (sy - 25) + ")",
+        class: "shoot-leaf"
+      });
+      board.appendChild(shoot);
+      shoot = createSvg("ellipse", {
+        cx: sx + 8,
+        cy: sy - 31,
+        rx: 10,
+        ry: 6,
+        transform: "rotate(-28 " + (sx + 8) + " " + (sy - 31) + ")",
+        class: "shoot-leaf"
+      });
+      board.appendChild(shoot);
+    }
+
+    if (state !== "complete") {
+      p = previewAt(cursor.x, cursor.y);
+      group = createSvg("g", {});
+
+      for (i = 0; i < p.cells.length; i += 1) {
+        cell = p.cells[i];
+        rect = createSvg("rect", {
+          x: cell[0] * 100 + 10,
+          y: cell[1] * 100 + 10,
+          width: 80,
+          height: 80,
+          rx: 17,
+          class: "preview " + (p.legal ? "legal" : "illegal")
+        });
+        group.appendChild(rect);
+      }
+
+      board.appendChild(group);
+
+      rect = createSvg("rect", {
+        x: cursor.x * 100 + 3,
+        y: cursor.y * 100 + 3,
+        width: 94,
+        height: 94,
+        rx: 21,
+        class: "cursor-ring"
+      });
+      board.appendChild(rect);
+    }
+
+    boardShell.classList.toggle("urgent", state === "playing" && canLeft <= 2 && dryCount() > 0);
+  }
+
+  function renderResult() {
+    var noUndoClass;
+    var minClass;
+
+    if (state === "won") {
+      noUndoClass = undoUsed ? "award missed" : "award";
+      minClass = pours === level.minimum ? "award" : "award missed";
+
+      resultLayer.innerHTML =
+        '<div class="result-card">' +
+          '<h2>Perfectly damp!</h2>' +
+          '<p>The whole patch perked up.</p>' +
+          '<div class="award-row">' +
+            '<span class="award">🍃 Pot cleared</span>' +
+            '<span class="' + noUndoClass + '">🍃 No undo</span>' +
+            '<span class="' + minClass + '">🍃 Minimum pours</span>' +
+          '</div>' +
+          '<p><strong>' + pendingLeaves + ' of 3 leaves earned</strong></p>' +
+          '<button class="primary-result" id="nextBtn" type="button">' +
+            (levelIndex === levels.length - 1 ? "See the garden" : "Next pot") +
+          '</button>' +
+        '</div>';
+      resultLayer.className = "result-layer show";
+      document.getElementById("nextBtn").addEventListener("click", nextLevel);
+    } else if (state === "complete") {
+      resultLayer.innerHTML =
+        '<div class="result-card">' +
+          '<h2>Garden complete!</h2>' +
+          '<p>You made every bed damp without making a swamp.</p>' +
+          '<div class="award-row"><span class="award">🍃 ' +
+            totalLeaves + ' / ' + (levels.length * 3) + ' total leaves</span></div>' +
+          '<button class="primary-result" id="againBtn" type="button">Play again</button>' +
+        '</div>';
+      resultLayer.className = "result-layer show";
+      document.getElementById("againBtn").addEventListener("click", playAgain);
+    } else {
+      resultLayer.className = "result-layer";
+      resultLayer.innerHTML = "";
+    }
+
+    if (state === "lost") {
+      failureBanner.textContent = canLeft === 0
+        ? "The can is empty and pale soil remains. Undo or Restart."
+        : "No spray fits the remaining pale soil. Undo or Restart.";
+      failureBanner.className = "failure-banner show";
+    } else {
+      failureBanner.className = "failure-banner";
+      failureBanner.textContent = "";
+    }
+  }
+
+  function renderAll() {
+    renderCards();
+    renderHUD();
+    renderBoard();
+    renderResult();
+  }
+
+  function selectCard(index) {
+    if (index < 0 || index >= level.cards.length || state === "won" || state === "complete") {
+      return;
+    }
+    selectedCard = index;
+    rotation = 0;
+    setMessage("Selected " + currentShape().name + ". Tap an anchor tile, then Pour.", "");
+    renderCards();
+    renderBoard();
+  }
+
+  function rotateSpray() {
+    var p;
+    if (state === "won" || state === "complete") {
+      return;
+    }
+    rotation = (rotation + 1) % 4;
+    p = previewAt(cursor.x, cursor.y);
+    if (p.legal) {
+      setMessage("Rotated. The blue preview is safe to pour.", "good");
+    } else {
+      setMessage("Rotated, but this red preview is blocked.", "bad");
+    }
+    renderCards();
+    renderBoard();
+  }
+
+  function bumpDenied() {
+    boardShell.classList.remove("denied");
+    canGraphic.classList.remove("clunk");
+    void boardShell.offsetWidth;
+    boardShell.classList.add("denied");
+    canGraphic.classList.add("clunk");
+    window.setTimeout(function () {
+      boardShell.classList.remove("denied");
+      canGraphic.classList.remove("clunk");
+    }, 340);
+  }
+
+  function pour() {
+    var p;
+    var i;
+    var cell;
+    var remaining;
+
+    if (state !== "playing") {
+      if (state === "lost") {
+        setMessage("Undo the previous pour or restart this pot.", "bad");
+        playClunk();
+        bumpDenied();
+      }
+      return;
+    }
+
+    p = previewAt(cursor.x, cursor.y);
+
+    if (!p.legal) {
+      setMessage("Dry clunk — " + p.reason, "bad");
+      playClunk();
+      bumpDenied();
+      return;
+    }
+
+    latestKeys = {};
+    for (i = 0; i < p.cells.length; i += 1) {
+      cell = p.cells[i];
+      grid[cell[1]][cell[0]] = 3;
+      latestKeys[cell[0] + "," + cell[1]] = true;
+    }
+
+    history.push({
+      cells: p.cells.slice(),
+      card: selectedCard,
+      rotation: rotation,
+      cursor: { x: cursor.x, y: cursor.y }
+    });
+
+    canLeft -= 1;
+    pours += 1;
+    playPlop();
+
+    if (navigator.vibrate) {
+      navigator.vibrate(18);
+    }
+
+    remaining = dryCount();
+
+    if (remaining === 0) {
+      winLevel();
+      return;
+    }
+
+    if (canLeft <= 0) {
+      loseLevel("The can ran dry with " + remaining + " thirsty tiles left.");
+      return;
+    }
+
+    if (!anyLegalPlacement()) {
+      loseLevel("The remaining soil cannot fit any spray.");
+      return;
+    }
+
+    if (canLeft <= 2) {
+      setMessage("Nearly empty! " + remaining + " thirsty tiles are pulsing pale.", "bad");
+    } else {
+      setMessage("Soft plop — " + remaining + " thirsty tiles remain.", "good");
+    }
+
+    renderAll();
+
+    window.setTimeout(function () {
+      latestKeys = {};
+      renderBoard();
+    }, 460);
+  }
+
+  function winLevel() {
+    pendingLeaves = 1;
+    if (!undoUsed) {
+      pendingLeaves += 1;
+    }
+    if (pours === level.minimum) {
+      pendingLeaves += 1;
+    }
+
+    state = "won";
+    setMessage("Crisp chime — every tile is damp exactly once!", "good");
+    playChime();
+
+    plantIcon.classList.remove("perk");
+    void plantIcon.offsetWidth;
+    plantIcon.classList.add("perk");
+
+    renderAll();
+  }
+
+  function loseLevel(text) {
+    state = "lost";
+    setMessage(text + " Undo or Restart.", "bad");
+    playRattle();
+    renderAll();
+  }
+
+  function undo() {
+    var last;
+    var i;
+    var cell;
+
+    if (history.length === 0 || state === "won" || state === "complete") {
+      setMessage("There is no previous pour to undo.", "");
+      return;
+    }
+
+    last = history.pop();
+
+    for (i = 0; i < last.cells.length; i += 1) {
+      cell = last.cells[i];
+      grid[cell[1]][cell[0]] = 1;
+    }
+
+    canLeft += 1;
+    pours -= 1;
+    undoUsed = true;
+    selectedCard = last.card;
+    rotation = last.rotation;
+    cursor.x = last.cursor.x;
+    cursor.y = last.cursor.y;
+    state = "playing";
+    latestKeys = {};
+
+    setMessage("Previous pour lifted. That soil is thirsty again; the undo leaf is spent.", "");
+    renderAll();
+  }
+
+  function restartLevel() {
+    loadLevel(levelIndex);
+  }
+
+  function nextLevel() {
+    totalLeaves += pendingLeaves;
+    pendingLeaves = 0;
+
+    if (levelIndex < levels.length - 1) {
+      loadLevel(levelIndex + 1);
+    } else {
+      state = "complete";
+      setMessage("All pots cleared. Your damp garden is thriving!", "good");
+      renderAll();
+    }
+  }
+
+  function playAgain() {
+    totalLeaves = 0;
+    pendingLeaves = 0;
+    loadLevel(0);
+  }
+
+  function moveCursor(dx, dy) {
+    var p;
+
+    if (state === "won" || state === "complete") {
+      return;
+    }
+
+    cursor.x = Math.max(0, Math.min(cols - 1, cursor.x + dx));
+    cursor.y = Math.max(0, Math.min(rows - 1, cursor.y + dy));
+    p = previewAt(cursor.x, cursor.y);
+
+    if (p.legal) {
+      setMessage("Blue glow: this preview is safe.", "good");
+    } else {
+      setMessage("Red preview: " + p.reason, "bad");
+    }
+    renderBoard();
+  }
+
+  function boardPoint(event) {
+    var svgPoint = board.createSVGPoint();
+    var matrix = board.getScreenCTM();
+    var transformed;
+    var rect;
+    var viewWidth;
+    var viewHeight;
+    var scale;
+    var renderedWidth;
+    var renderedHeight;
+    var offsetX;
+    var offsetY;
+
+    if (matrix) {
+      svgPoint.x = event.clientX;
+      svgPoint.y = event.clientY;
+      try {
+        transformed = svgPoint.matrixTransform(matrix.inverse());
+        return {
+          x: transformed.x,
+          y: transformed.y
+        };
+      } catch (err) {
+        /* Use the preserveAspectRatio-aware fallback below. */
+      }
+    }
+
+    rect = board.getBoundingClientRect();
+    viewWidth = cols * 100 + 80;
+    viewHeight = rows * 100 + 90;
+    scale = Math.min(rect.width / viewWidth, rect.height / viewHeight);
+
+    if (!isFinite(scale) || scale <= 0) {
+      return { x: -Infinity, y: -Infinity };
+    }
+
+    renderedWidth = viewWidth * scale;
+    renderedHeight = viewHeight * scale;
+    offsetX = (rect.width - renderedWidth) / 2;
+    offsetY = (rect.height - renderedHeight) / 2;
+
+    return {
+      x: -40 + (event.clientX - rect.left - offsetX) / scale,
+      y: -35 + (event.clientY - rect.top - offsetY) / scale
+    };
+  }
+
+  board.addEventListener("pointerdown", function (event) {
+    var point;
+    var x;
+    var y;
+    var p;
+
+    if (state === "won" || state === "complete") {
+      return;
+    }
+
+    point = boardPoint(event);
+    x = Math.floor(point.x / 100);
+    y = Math.floor(point.y / 100);
+
+    if (x < 0 || y < 0 || x >= cols || y >= rows) {
+      return;
+    }
+
+    cursor.x = x;
+    cursor.y = y;
+    p = previewAt(x, y);
+
+    if (p.legal) {
+      setMessage("Blue glow: ready to Pour.", "good");
+    } else {
+      setMessage("Red preview: " + p.reason, "bad");
+    }
+
+    renderBoard();
+  });
+
+  rotateBtn.addEventListener("click", rotateSpray);
+  pourBtn.addEventListener("click", pour);
+  undoBtn.addEventListener("click", undo);
+  restartBtn.addEventListener("click", restartLevel);
+
+  document.addEventListener("keydown", function (event) {
+    var key = event.key.toLowerCase();
+    var number;
+
+    if (key === "arrowleft") {
+      event.preventDefault();
+      moveCursor(-1, 0);
+    } else if (key === "arrowright") {
+      event.preventDefault();
+      moveCursor(1, 0);
+    } else if (key === "arrowup") {
+      event.preventDefault();
+      moveCursor(0, -1);
+    } else if (key === "arrowdown") {
+      event.preventDefault();
+      moveCursor(0, 1);
+    } else if (key === "r") {
+      event.preventDefault();
+      rotateSpray();
+    } else if (key === "u") {
+      event.preventDefault();
+      undo();
+    } else if (key === " " || key === "spacebar") {
+      event.preventDefault();
+      pour();
+    } else if (key === "1" || key === "2" || key === "3") {
+      number = parseInt(key, 10) - 1;
+      if (number < level.cards.length) {
+        event.preventDefault();
+        selectCard(number);
+      }
+    }
+  });
+
+  loadLevel(0);
+}());
+</script>
+</body>
+</html>

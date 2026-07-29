@@ -1,0 +1,11 @@
+{
+  "title": "Damp Stamp",
+  "slug": "damp-stamp",
+  "tagline": "Make the soil damp, not swamp.",
+  "concept": "A turn-based shape-fitting puzzle about stamping measured sprays across thirsty soil without watering any patch twice.",
+  "core_loop": "Choose a spray shape, rotate it, preview it over the soil, then pour; each satisfying 5–15 second placement darkens a clean patch and makes the remaining puzzle tighter.",
+  "mechanics": "Controls: tap a spray card, Rotate, and a large soil cell, then tap Pour; keyboard players use 1–3, R, arrow keys, and Space, with an on-screen Undo button or U for the previous pour.; Win/lose: darken every pale tile exactly once before the visible can meter empties; previews crossing wet soil or the pot edge are blocked, and running out with dry tiles remaining loses the round.; Scoring: earn one leaf for clearing the pot, one for using no undo, and one for finishing with the displayed minimum number of pours.",
+  "feedback": "A legal preview glows blue, poured soil darkens with a soft plop, and completed patches sprout tiny green shoots; an illegal preview turns red and the can gives a dry clunk, while a nearly empty can wobbles and remaining thirsty tiles pulse pale. On victory the whole plant perks up with a crisp chime; on failure the empty can rattles and Restart and Undo pulse immediately.",
+  "difficulty": "The first minute uses small square beds, one obvious spray shape, and highlighted legal placements; later pots become larger and irregular, offer mixed rotatable shapes, include visible pre-damp no-go tiles, and tighten the pour budget without adding a timer or hidden rules.",
+  "mobile": true
+}

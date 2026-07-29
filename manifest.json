@@ -163,6 +163,15 @@
       "path": "games/root-route/",
       "mobile": true,
       "thumbnail": "games/root-route/cover.webp"
+    },
+    {
+      "slug": "damp-stamp",
+      "title": "Damp Stamp",
+      "tagline": "Make the soil damp, not swamp.",
+      "date": "2026-07-29",
+      "path": "games/damp-stamp/",
+      "mobile": true,
+      "thumbnail": "games/damp-stamp/cover.webp"
     }
   ]
 }
