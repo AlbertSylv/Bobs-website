@@ -172,6 +172,15 @@
       "path": "games/damp-stamp/",
       "mobile": true,
       "thumbnail": "games/damp-stamp/cover.webp"
+    },
+    {
+      "slug": "crumple-and-chuck",
+      "title": "Crumple & Chuck",
+      "tagline": "Bin one tiny grievance at a time.",
+      "date": "2026-07-30",
+      "path": "games/crumple-and-chuck/",
+      "mobile": true,
+      "thumbnail": "games/crumple-and-chuck/cover.webp"
     }
   ]
 }

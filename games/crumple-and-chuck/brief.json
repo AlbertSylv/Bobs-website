@@ -1,0 +1,11 @@
+{
+  "title": "Crumple & Chuck",
+  "slug": "crumple-and-chuck",
+  "tagline": "Bin one tiny grievance at a time.",
+  "concept": "Flick crumpled annoyances through compact desk-sized obstacle puzzles and into a wastebasket without clobbering anything worth keeping.",
+  "core_loop": "Study the clear first-bounce preview, aim for a direct toss or satisfying bank shot, release, and watch the paper ricochet for two seconds; fast retries and increasingly clever angles make each successful thunk worth chasing.",
+  "mechanics": "Controls: drag from the paper ball and release to throw on touch; use arrow keys to set angle and power, Space to throw, and R to restart on keyboard.; Win/lose: land the paper in the bin to clear the level; a throw is spent when it stops elsewhere or hits a hazard-marked fragile object, and losing all three visible throws restarts the short level.; Scoring: earn points for clearing with throws remaining and for intentional bank shots, with the current score and best score always visible.",
+  "feedback": "A valid aim shows a bold dotted path to the first impact; success makes the bin squash, the paper vanish with a deep thunk, and the score pop upward, while failure leaves the paper exactly where it landed and visibly removes one spare throw; a rim hit produces a sharp clang, a dramatic bin wobble, and a brief slow-motion near-miss without changing the result.",
+  "difficulty": "The first minute uses a wide bin, open sightlines, and generous collision edges; later levels add simple stationary barriers, hazard-marked keepsakes, and clearly animated steady fan currents that invite bank shots, while remaining untimed and deterministic.",
+  "mobile": true
+}
