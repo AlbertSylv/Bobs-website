@@ -188,6 +188,15 @@
       "path": "games/crumple-and-chuck/",
       "mobile": true,
       "thumbnail": "games/crumple-and-chuck/cover.webp"
+    },
+    {
+      "slug": "lunar-runabout",
+      "title": "Lunar Runabout",
+      "tagline": "One tiny rover. Several unreasonable craters.",
+      "date": "2026-07-31",
+      "path": "games/lunar-runabout/",
+      "mobile": true,
+      "thumbnail": "games/lunar-runabout/cover.webp"
     }
   ]
 }

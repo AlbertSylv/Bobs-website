@@ -1,0 +1,11 @@
+{
+  "title": "Lunar Runabout",
+  "slug": "lunar-runabout",
+  "tagline": "One tiny rover. Several unreasonable craters.",
+  "concept": "Pilot a springy lunar rover over compact obstacle courses, gather rock samples, and return upright to the lander.",
+  "core_loop": "Read the next hill or crater, feather left or right for 5–15 seconds, adjust the rover’s pitch during hops, then land cleanly and collect the next sample; mastering momentum and watching the suspension narrowly recover keeps each short stretch satisfying.",
+  "mechanics": "Controls: Hold the left or right half of the screen, or the matching arrow key, to drive; while airborne, the same controls rotate the rover, and releasing both lets it coast.; Win/lose: Collect every visibly marked sample and reach the lander upright; flipping past the rollover line or falling into a crater triggers an immediate retry from the latest sample checkpoint.; Scoring: Earn one badge per sample, plus clearly previewed bonus badges for gentle landings and completing a course without a rollover.",
+  "feedback": "Samples flash into the rover’s rack with a bright ping, clean landings squash the suspension and kick up a crisp dust ring, and earned badges fill immediately; hard landings produce an amber chassis flash and metallic clunk, near-rollovers show the balance line turning red as one wheel hangs in space, and a full flip freezes briefly with a dry failure caption before instant retry.",
+  "difficulty": "The opening courses use broad slopes, shallow craters, and generous checkpoints; later hand-built courses introduce steeper ramps, uneven landing shelves, and linked hops that demand controlled momentum, without timers or hidden hazards.",
+  "mobile": true
+}
