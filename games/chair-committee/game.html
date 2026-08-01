@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Chair Committee</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+:root {
+  --ink:#25302f;
+  --paper:#eee9dc;
+  --paper2:#e4ddcd;
+  --green:#4f8067;
+  --red:#a8463f;
+  --amber:#c58b32;
+  --gold:#c7a45b;
+}
+body {
+  overflow:hidden;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:Arial, Helvetica, sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+}
+button { font:inherit; }
+#app {
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.75), transparent 55%),
+    var(--paper);
+}
+header {
+  min-height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:10px 16px 9px;
+  border-bottom:2px solid rgba(37,48,47,.18);
+  background:rgba(246,242,232,.94);
+  z-index:4;
+}
+.brand { min-width:0; }
+h1 {
+  margin:0;
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:clamp(23px, 3.1vw, 34px);
+  letter-spacing:.01em;
+  line-height:.95;
+}
+.tagline {
+  margin-top:5px;
+  color:#66706c;
+  font-size:clamp(11px, 1.4vw, 14px);
+  letter-spacing:.055em;
+}
+.stats {
+  display:flex;
+  align-items:stretch;
+  gap:7px;
+  flex:0 0 auto;
+}
+.stat {
+  min-width:76px;
+  padding:6px 9px;
+  border:1px solid rgba(37,48,47,.24);
+  background:#faf7ee;
+  box-shadow:0 2px 0 rgba(37,48,47,.08);
+  text-align:center;
+}
+.stat .label {
+  display:block;
+  color:#737873;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.16em;
+}
+.stat strong {
+  display:block;
+  margin-top:2px;
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:19px;
+  line-height:1;
+}
+#scoreStat.bump {
+  animation:scoreBump .32s ease-out;
+}
+@keyframes scoreBump {
+  0% { transform:scale(1); background:#faf7ee; }
+  45% { transform:scale(1.12); background:#d9ead9; }
+  100% { transform:scale(1); background:#faf7ee; }
+}
+#stage {
+  position:relative;
+  min-height:0;
+  overflow:hidden;
+  touch-action:none;
+}
+#gameCanvas {
+  display:block;
+  width:100%;
+  height:100%;
+  touch-action:none;
+  cursor:grab;
+}
+#gameCanvas.dragging { cursor:grabbing; }
+#queuePanel {
+  position:absolute;
+  right:10px;
+  top:10px;
+  width:142px;
+  padding:8px;
+  border:1px solid rgba(37,48,47,.27);
+  border-top:4px solid var(--ink);
+  background:rgba(249,246,237,.9);
+  box-shadow:0 4px 14px rgba(37,48,47,.11);
+  pointer-events:none;
+}
+.queueTitle {
+  margin-bottom:6px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.18em;
+  color:#69716d;
+}
+.queueRow {
+  height:55px;
+  display:grid;
+  grid-template-columns:23px 1fr;
+  align-items:center;
+  border-top:1px solid rgba(37,48,47,.12);
+}
+.queueRow:first-of-type { border-top:0; }
+.queueNumber {
+  font-family:Georgia, "Times New Roman", serif;
+  font-weight:bold;
+  color:#7a7568;
+}
+.queueRow canvas {
+  width:92px;
+  height:50px;
+  display:block;
+}
+#toast {
+  position:absolute;
+  left:50%;
+  top:12px;
+  transform:translate(-50%,-8px);
+  max-width:calc(100% - 330px);
+  padding:7px 13px;
+  border:1px solid rgba(37,48,47,.2);
+  background:rgba(250,247,238,.94);
+  box-shadow:0 3px 12px rgba(37,48,47,.12);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-align:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s, transform .18s;
+}
+#toast.show {
+  opacity:1;
+  transform:translate(-50%,0);
+}
+#modal {
+  position:absolute;
+  inset:0;
+  display:none;
+  place-items:center;
+  padding:20px;
+  background:rgba(31,38,37,.18);
+  z-index:5;
+}
+#modal.show { display:grid; }
+.modalCard {
+  width:min(390px, 92vw);
+  padding:22px;
+  border:2px solid var(--ink);
+  border-top-width:8px;
+  background:#f8f4e8;
+  box-shadow:9px 9px 0 rgba(37,48,47,.2);
+  text-align:center;
+}
+#modalTitle {
+  margin:0;
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:28px;
+}
+#modalText {
+  min-height:37px;
+  margin:9px 0 16px;
+  color:#5f6763;
+  font-size:14px;
+  line-height:1.35;
+}
+#modalButton {
+  min-width:170px;
+  min-height:48px;
+  padding:10px 18px;
+  border:0;
+  border-bottom:4px solid #17201f;
+  background:var(--ink);
+  color:white;
+  font-weight:900;
+  letter-spacing:.09em;
+  cursor:pointer;
+}
+#modalButton:active {
+  transform:translateY(2px);
+  border-bottom-width:2px;
+}
+footer {
+  position:relative;
+  z-index:4;
+  padding:7px 10px calc(8px + env(safe-area-inset-bottom));
+  border-top:2px solid rgba(37,48,47,.18);
+  background:rgba(246,242,232,.97);
+}
+.how {
+  margin:0 0 6px;
+  overflow:hidden;
+  color:#626b67;
+  font-size:11px;
+  line-height:1.2;
+  text-align:center;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.controls {
+  width:min(690px, 100%);
+  margin:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr 1.15fr 1.15fr 1.8fr;
+  gap:7px;
+}
+.control {
+  min-width:0;
+  min-height:52px;
+  border:1px solid rgba(37,48,47,.42);
+  border-bottom:4px solid rgba(37,48,47,.55);
+  background:#f7f3e8;
+  color:var(--ink);
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+  touch-action:none;
+}
+.control small {
+  display:block;
+  margin-top:1px;
+  color:#777b75;
+  font-size:8px;
+  letter-spacing:.12em;
+}
+.control:active,
+.control.active {
+  transform:translateY(2px);
+  border-bottom-width:2px;
+  background:#e6dfcf;
+}
+.rotate { background:#ebe3cf; }
+#dropButton {
+  border-color:#2b5c49;
+  border-bottom-color:#274b3d;
+  background:var(--green);
+  color:white;
+  letter-spacing:.09em;
+}
+#dropButton small { color:#dce9df; }
+#dropButton:disabled {
+  opacity:.48;
+  filter:grayscale(.5);
+}
+
+@media (max-width:620px) {
+  header {
+    min-height:64px;
+    padding:8px 9px;
+    gap:7px;
+  }
+  .tagline { font-size:10px; }
+  .stats { gap:4px; }
+  .stat {
+    min-width:57px;
+    padding:5px 5px;
+  }
+  .stat strong { font-size:16px; }
+  .stat .label { font-size:7px; }
+  #queuePanel {
+    width:112px;
+    right:6px;
+    top:6px;
+    padding:6px;
+  }
+  .queueRow {
+    height:47px;
+    grid-template-columns:18px 1fr;
+  }
+  .queueRow canvas {
+    width:76px;
+    height:43px;
+  }
+  #toast {
+    max-width:calc(100% - 130px);
+    left:8px;
+    transform:translate(0,-8px);
+  }
+  #toast.show { transform:translate(0,0); }
+  .control {
+    min-height:49px;
+    font-size:17px;
+  }
+  footer {
+    padding-left:6px;
+    padding-right:6px;
+  }
+  .controls { gap:5px; }
+}
+
+@media (max-width:420px) {
+  header {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:5px;
+    padding-left:6px;
+    padding-right:6px;
+  }
+  h1 { font-size:20px; }
+  .tagline {
+    margin-top:3px;
+    font-size:9px;
+    letter-spacing:.02em;
+  }
+  .stats { gap:3px; }
+  .stat {
+    min-width:46px;
+    padding:5px 3px;
+  }
+  .stat strong { font-size:14px; }
+  .stat .label {
+    font-size:6px;
+    letter-spacing:.1em;
+  }
+  .controls {
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:6px;
+  }
+  .control {
+    min-width:0;
+    min-height:48px;
+  }
+  #leftButton {
+    grid-column:1 / 3;
+    grid-row:1;
+  }
+  #rightButton {
+    grid-column:3 / 5;
+    grid-row:1;
+  }
+  #rotateLeftButton {
+    grid-column:1;
+    grid-row:2;
+  }
+  #rotateRightButton {
+    grid-column:2;
+    grid-row:2;
+  }
+  #dropButton {
+    grid-column:3 / 5;
+    grid-row:2;
+  }
+}
+
+@media (max-width:340px) {
+  h1 { font-size:18px; }
+  .tagline { display:none; }
+  .stat {
+    min-width:43px;
+    padding-left:2px;
+    padding-right:2px;
+  }
+  .controls { gap:5px; }
+}
+
+@media (max-height:480px) {
+  header {
+    min-height:48px;
+    padding-top:5px;
+    padding-bottom:5px;
+  }
+  h1 { font-size:22px; }
+  .tagline {
+    margin-top:2px;
+    font-size:9px;
+  }
+  .stat { padding:3px 5px; }
+  footer {
+    padding-top:4px;
+    padding-bottom:4px;
+  }
+  .how { display:none; }
+  .control { min-height:44px; }
+  #queuePanel {
+    transform:scale(.86);
+    transform-origin:top right;
+  }
+}
+
+@media (max-width:420px) and (max-height:480px) {
+  h1 { font-size:18px; }
+  .control { min-height:44px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>Chair Committee</h1>
+      <div class="tagline">Put bad design on top of itself.</div>
+    </div>
+    <div class="stats" aria-label="Game statistics">
+      <div class="stat"><span class="label">ROUND</span><strong id="roundValue">1</strong></div>
+      <div class="stat" id="scoreStat"><span class="label">SCORE</span><strong id="scoreValue">0</strong></div>
+      <div class="stat"><span class="label">LONGEST</span><strong id="bestValue">0.0 ch</strong></div>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="gameCanvas" aria-label="Chair stacking game"></canvas>
+
+    <aside id="queuePanel" aria-label="Next two chairs">
+      <div class="queueTitle">NEXT TWO</div>
+      <div class="queueRow"><span class="queueNumber">1</span><canvas id="preview1"></canvas></div>
+      <div class="queueRow"><span class="queueNumber">2</span><canvas id="preview2"></canvas></div>
+    </aside>
+
+    <div id="toast" role="status"></div>
+
+    <div id="modal">
+      <div class="modalCard">
+        <h2 id="modalTitle">Motion denied.</h2>
+        <div id="modalText">The chair has left the committee.</div>
+        <button id="modalButton" type="button">RETRY NOW</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p class="how">Drag the hovering chair or use ← →. Rotate with Q / E. Press Space or Drop. Secure six without losing one.</p>
+    <div class="controls">
+      <button class="control move" id="leftButton" type="button" aria-label="Move left">←<small>MOVE</small></button>
+      <button class="control move" id="rightButton" type="button" aria-label="Move right">→<small>MOVE</small></button>
+      <button class="control rotate" id="rotateLeftButton" type="button" aria-label="Rotate counterclockwise">↶<small>Q · TURN</small></button>
+      <button class="control rotate" id="rotateRightButton" type="button" aria-label="Rotate clockwise">↷<small>E · TURN</small></button>
+      <button class="control" id="dropButton" type="button">DROP<small>SPACE</small></button>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var stage = document.getElementById("stage");
+  var canvas = document.getElementById("gameCanvas");
+  var ctx = canvas.getContext("2d");
+  var scoreValue = document.getElementById("scoreValue");
+  var roundValue = document.getElementById("roundValue");
+  var bestValue = document.getElementById("bestValue");
+  var scoreStat = document.getElementById("scoreStat");
+  var toast = document.getElementById("toast");
+  var modal = document.getElementById("modal");
+  var modalTitle = document.getElementById("modalTitle");
+  var modalText = document.getElementById("modalText");
+  var modalButton = document.getElementById("modalButton");
+  var dropButton = document.getElementById("dropButton");
+  var previewCanvases = [
+    document.getElementById("preview1"),
+    document.getElementById("preview2")
+  ];
+
+  var W = 0;
+  var H = 0;
+  var dpr = 1;
+  var scale = 1;
+  var nominalChairHeight = 90;
+  var platform = null;
+  var bodies = [];
+  var current = null;
+  var queue = [];
+  var particles = [];
+  var contactFlashes = [];
+  var state = "boot";
+  var round = 1;
+  var placed = 0;
+  var score = 0;
+  var checkpointScore = 0;
+  var bestHeight = 0;
+  var bonusAwarded = [false, false, false];
+  var bonusValues = [2, 3, 5];
+  var bonusHeights = [];
+  var platformFlash = 0;
+  var transitionTimer = 0;
+  var slowMotion = 0;
+  var dragging = false;
+  var dragOffset = 0;
+  var heldLeft = false;
+  var heldRight = false;
+  var toastTimer = 0;
+  var lastTime = performance.now();
+  var accumulator = 0;
+  var resizeTimer = 0;
+  var audioContext = null;
+  var lastCreakTime = 0;
+  var idCounter = 1;
+
+  var colors = {
+    blue:"#557a83",
+    blue2:"#78959b",
+    coral:"#b95d4f",
+    coral2:"#cf8373",
+    mustard:"#b28a38",
+    mustard2:"#d0ad5d",
+    green:"#66806a",
+    green2:"#8ca08b",
+    plum:"#765c70",
+    plum2:"#9a7d91",
+    clay:"#9a694f",
+    clay2:"#bd8a68",
+    gray:"#66706e",
+    gray2:"#929b96"
+  };
+
+  var templates = [
+    {
+      name:"The Reliable Mistake", color:colors.blue, accent:colors.blue2,
+      parts:[
+        {x:0,y:0,w:72,h:17,a:0,role:"seat"},
+        {x:-27,y:-35,w:16,h:58,a:-0.035,role:"back"},
+        {x:27,y:-18,w:10,h:24,a:0.08,role:"nub"},
+        {x:-24,y:33,w:12,h:56,a:0.035,role:"leg"},
+        {x:24,y:33,w:12,h:56,a:-0.035,role:"leg"},
+        {x:2,y:23,w:47,h:7,a:0.13,role:"brace",accent:true}
+      ]
+    },
+    {
+      name:"The Molar", color:colors.mustard, accent:colors.mustard2,
+      parts:[
+        {x:0,y:0,w:76,h:18,a:0,role:"seat"},
+        {x:0,y:-38,w:60,h:43,a:0,role:"back",accent:true},
+        {x:-30,y:-19,w:12,h:25,a:0,role:"back"},
+        {x:30,y:-19,w:12,h:25,a:0,role:"back"},
+        {x:-26,y:34,w:15,h:58,a:-0.03,role:"leg"},
+        {x:26,y:34,w:15,h:58,a:0.03,role:"leg"}
+      ]
+    },
+    {
+      name:"The Waiting Room", color:colors.green, accent:colors.green2,
+      parts:[
+        {x:0,y:0,w:78,h:18,a:0,role:"seat"},
+        {x:-29,y:-37,w:15,h:62,a:0,role:"back"},
+        {x:0,y:-47,w:58,h:18,a:0.03,role:"back",accent:true},
+        {x:-27,y:34,w:13,h:58,a:0.02,role:"leg"},
+        {x:27,y:34,w:13,h:58,a:-0.02,role:"leg"},
+        {x:0,y:31,w:46,h:7,a:-0.08,role:"brace"}
+      ]
+    },
+    {
+      name:"The Side Opinion", color:colors.coral, accent:colors.coral2,
+      parts:[
+        {x:2,y:0,w:78,h:15,a:0.045,role:"seat"},
+        {x:-30,y:-37,w:13,h:66,a:-0.18,role:"back"},
+        {x:-20,y:-59,w:36,h:14,a:0.12,role:"back",accent:true},
+        {x:-24,y:35,w:11,h:64,a:0.16,role:"leg"},
+        {x:28,y:31,w:9,h:55,a:-0.08,role:"leg"},
+        {x:35,y:-16,w:19,h:9,a:-0.13,role:"nub",accent:true}
+      ]
+    },
+    {
+      name:"The Unilateral", color:colors.plum, accent:colors.plum2,
+      parts:[
+        {x:-3,y:0,w:84,h:16,a:-0.05,role:"seat"},
+        {x:30,y:-35,w:14,h:63,a:0.13,role:"back"},
+        {x:12,y:-59,w:49,h:15,a:-0.17,role:"back",accent:true},
+        {x:-32,y:35,w:10,h:67,a:-0.12,role:"leg"},
+        {x:24,y:30,w:14,h:53,a:0.19,role:"leg"},
+        {x:-2,y:25,w:45,h:8,a:0.32,role:"brace"}
+      ]
+    },
+    {
+      name:"The Cantilever Memo", color:colors.clay, accent:colors.clay2,
+      parts:[
+        {x:0,y:0,w:82,h:15,a:0.025,role:"seat"},
+        {x:-31,y:-38,w:12,h:68,a:-0.06,role:"back"},
+        {x:-4,y:-61,w:57,h:14,a:0.06,role:"back",accent:true},
+        {x:29,y:31,w:11,h:60,a:-0.12,role:"leg"},
+        {x:2,y:57,w:65,h:10,a:0.08,role:"foot"},
+        {x:-25,y:30,w:9,h:38,a:0.24,role:"brace",accent:true}
+      ]
+    },
+    {
+      name:"The Dissenting Stool", color:colors.gray, accent:colors.gray2,
+      parts:[
+        {x:0,y:-2,w:88,h:17,a:0.07,role:"seat"},
+        {x:-35,y:-29,w:11,h:47,a:-0.28,role:"back"},
+        {x:-19,y:-51,w:38,h:13,a:0.21,role:"back",accent:true},
+        {x:-29,y:35,w:11,h:67,a:0.2,role:"leg"},
+        {x:4,y:38,w:9,h:72,a:-0.07,role:"leg"},
+        {x:34,y:29,w:8,h:52,a:-0.24,role:"leg"},
+        {x:3,y:24,w:54,h:7,a:-0.18,role:"brace",accent:true}
+      ]
+    }
+  ];
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function rotatePoint(x, y, a) {
+    var c = Math.cos(a);
+    var s = Math.sin(a);
+    return {x:x * c - y * s, y:x * s + y * c};
+  }
+
+  function cross(a, b) {
+    return a.x * b.y - a.y * b.x;
+  }
+
+  function pointVelocity(body, r) {
+    return {
+      x:body.vx - body.omega * r.y,
+      y:body.vy + body.omega * r.x
+    };
+  }
+
+  function templatePool() {
+    if (round === 1) return [0, 1, 2];
+    if (round === 2) return [0, 1, 2, 3, 4];
+    if (round === 3) return [1, 2, 3, 4, 5, 6];
+    return [2, 3, 4, 5, 6];
+  }
+
+  function nextTemplateIndex() {
+    var pool = templatePool();
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function localBounds(parts) {
+    var minX = Infinity;
+    var maxX = -Infinity;
+    var minY = Infinity;
+    var maxY = -Infinity;
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      var hx = p.w / 2;
+      var hy = p.h / 2;
+      var corners = [
+        rotatePoint(-hx,-hy,p.a),
+        rotatePoint(hx,-hy,p.a),
+        rotatePoint(hx,hy,p.a),
+        rotatePoint(-hx,hy,p.a)
+      ];
+      for (var j = 0; j < corners.length; j++) {
+        var x = p.x + corners[j].x;
+        var y = p.y + corners[j].y;
+        minX = Math.min(minX,x);
+        maxX = Math.max(maxX,x);
+        minY = Math.min(minY,y);
+        maxY = Math.max(maxY,y);
+      }
+    }
+    return {minX:minX,maxX:maxX,minY:minY,maxY:maxY};
+  }
+
+  function createBody(templateIndex, x, y, bodyScale) {
+    var t = templates[templateIndex];
+    var parts = [];
+    var area = 0;
+    for (var i = 0; i < t.parts.length; i++) {
+      var p = t.parts[i];
+      parts.push({
+        x:p.x * bodyScale,
+        y:p.y * bodyScale,
+        w:p.w * bodyScale,
+        h:p.h * bodyScale,
+        a:p.a,
+        role:p.role,
+        accent:p.accent === true
+      });
+      area += p.w * p.h * bodyScale * bodyScale;
+    }
+    var bnd = localBounds(parts);
+    var mass = Math.max(1.2, area / 1450);
+    var bw = bnd.maxX - bnd.minX;
+    var bh = bnd.maxY - bnd.minY;
+    var inertia = mass * (bw * bw + bh * bh) / 12;
+    return {
+      id:idCounter++,
+      templateIndex:templateIndex,
+      template:t,
+      parts:parts,
+      localBounds:bnd,
+      x:x,
+      y:y,
+      angle:0,
+      vx:0,
+      vy:0,
+      omega:0,
+      mass:mass,
+      invMass:1 / mass,
+      inertia:inertia,
+      invInertia:1 / inertia,
+      radius:Math.sqrt(bw * bw + bh * bh) * .58,
+      dynamic:false,
+      secured:false,
+      touching:false,
+      stableTime:0,
+      dropAge:0,
+      glow:0,
+      impactCooldown:0
+    };
+  }
+
+  function createPlatform() {
+    var factors = [0.76, 0.62, 0.50, 0.44];
+    var factor = factors[Math.min(round - 1, factors.length - 1)];
+    var pw = Math.min(W - 26, Math.max(150 * scale, W * factor));
+    var py = H - Math.max(31, 36 * scale);
+    var px = (W - pw) / 2;
+    platform = {
+      x:px,
+      y:py,
+      w:pw,
+      h:Math.max(34, 40 * scale),
+      body:{
+        id:0,
+        x:0,
+        y:0,
+        angle:0,
+        vx:0,
+        vy:0,
+        omega:0,
+        invMass:0,
+        invInertia:0,
+        dynamic:false,
+        static:true,
+        parts:[{
+          x:px + pw / 2,
+          y:py + Math.max(17,20 * scale),
+          w:pw,
+          h:Math.max(34,40 * scale),
+          a:0
+        }]
+      }
+    };
+  }
+
+  function refillQueue() {
+    while (queue.length < 2) queue.push(nextTemplateIndex());
+    drawPreviews();
+  }
+
+  function spawnChair() {
+    if (state === "failed" || state === "cleared") return;
+    if (queue.length < 1) queue.push(nextTemplateIndex());
+    var index = queue.shift();
+    refillQueue();
+    current = createBody(index, platform.x + platform.w / 2, 0, scale);
+    current.angle = 0;
+    positionChairAtTop();
+    clampCurrentX();
+    state = "aiming";
+    dropButton.disabled = false;
+    showToast("CHAIR " + (placed + 1) + " OF 6 · " + current.template.name.toUpperCase(), 1.35);
+  }
+
+  function positionChairAtTop() {
+    if (!current || state !== "aiming") return;
+    var bounds = transformedRelativeBounds(current);
+    current.y = Math.max(10, 16 * scale) - bounds.minY;
+  }
+
+  function transformedRelativeBounds(body) {
+    var minX = Infinity;
+    var maxX = -Infinity;
+    var minY = Infinity;
+    var maxY = -Infinity;
+    for (var i = 0; i < body.parts.length; i++) {
+      var rect = getRect(body, body.parts[i]);
+      for (var j = 0; j < rect.verts.length; j++) {
+        minX = Math.min(minX, rect.verts[j].x - body.x);
+        maxX = Math.max(maxX, rect.verts[j].x - body.x);
+        minY = Math.min(minY, rect.verts[j].y - body.y);
+        maxY = Math.max(maxY, rect.verts[j].y - body.y);
+      }
+    }
+    return {minX:minX,maxX:maxX,minY:minY,maxY:maxY};
+  }
+
+  function clampCurrentX() {
+    if (!current) return;
+    var b = transformedRelativeBounds(current);
+    current.x = clamp(current.x, 8 - b.minX, W - 8 - b.maxX);
+  }
+
+  function configureBonuses() {
+    var multipliers;
+    if (round === 1) multipliers = [1.65, 3.05, 4.45];
+    else if (round === 2) multipliers = [1.9, 3.45, 4.95];
+    else multipliers = [2.05, 3.75, 5.25];
+    bonusHeights = [
+      multipliers[0] * nominalChairHeight,
+      multipliers[1] * nominalChairHeight,
+      multipliers[2] * nominalChairHeight
+    ];
+  }
+
+  function beginRound(isRetry) {
+    bodies = [];
+    particles = [];
+    contactFlashes = [];
+    queue = [];
+    current = null;
+    placed = 0;
+    bonusAwarded = [false,false,false];
+    platformFlash = 0;
+    slowMotion = 0;
+    transitionTimer = 0;
+    score = checkpointScore;
+    updateScore(false);
+    roundValue.textContent = String(round);
+    createPlatform();
+    configureBonuses();
+    state = "between";
+    modal.classList.remove("show");
+    dropButton.disabled = true;
+
+    queue.push(nextTemplateIndex());
+    queue.push(nextTemplateIndex());
+    queue.push(nextTemplateIndex());
+    refillQueue();
+
+    if (isRetry) showToast("ROUND " + round + " · FILE REOPENED", 1.25);
+    else if (round === 1) showToast("ROUND 1 · WIDE MANDATE · FORGIVING CONTACTS", 1.8);
+    else if (round === 2) showToast("ROUND 2 · NARROWER TERMS", 1.6);
+    else showToast("ROUND " + round + " · ASYMMETRY SUBCOMMITTEE", 1.6);
+
+    spawnChair();
+  }
+
+  function updateScore(animated) {
+    scoreValue.textContent = String(score);
+    if (animated) {
+      scoreStat.classList.remove("bump");
+      void scoreStat.offsetWidth;
+      scoreStat.classList.add("bump");
+    }
+  }
+
+  function showToast(text, seconds) {
+    toast.textContent = text;
+    toast.classList.add("show");
+    toastTimer = seconds || 1.2;
+  }
+
+  function ensureAudio() {
+    if (!audioContext) {
+      var AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtor) audioContext = new AudioCtor();
+    }
+    if (audioContext && audioContext.state === "suspended") audioContext.resume();
+  }
+
+  function tone(freq, duration, type, volume, delay, endFreq) {
+    if (!audioContext) return;
+    var now = audioContext.currentTime + (delay || 0);
+    var osc = audioContext.createOscillator();
+    var gain = audioContext.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, now);
+    if (endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20,endFreq), now + duration);
+    }
+    gain.gain.setValueAtTime(Math.max(.0001,volume || .03), now);
+    gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + duration + .02);
+  }
+
+  function playTick() {
+    tone(290,.045,"square",.018,0,240);
+  }
+
+  function playThunk() {
+    tone(92,.16,"sine",.09,0,48);
+    tone(155,.08,"triangle",.045,.015,88);
+  }
+
+  function playBonus() {
+    tone(420,.12,"sine",.035,0,580);
+    tone(620,.16,"sine",.03,.09,760);
+  }
+
+  function playCreak() {
+    var now = performance.now();
+    if (now - lastCreakTime < 650) return;
+    lastCreakTime = now;
+    tone(185,.34,"sawtooth",.012,0,112);
+  }
+
+  function playClatter() {
+    for (var i = 0; i < 6; i++) {
+      tone(
+        150 + Math.random() * 210,
+        .09 + Math.random() * .1,
+        "square",
+        .025,
+        i * .055,
+        70 + Math.random() * 80
+      );
+    }
+    tone(65,.42,"triangle",.07,.05,35);
+  }
+
+  function getRect(body, part) {
+    var local = rotatePoint(part.x, part.y, body.angle);
+    var cx = body.x + local.x;
+    var cy = body.y + local.y;
+    var a = body.angle + part.a;
+    var c = Math.cos(a);
+    var s = Math.sin(a);
+    var hx = part.w / 2;
+    var hy = part.h / 2;
+    var verts = [
+      {x:cx - c*hx + s*hy, y:cy - s*hx - c*hy},
+      {x:cx + c*hx + s*hy, y:cy + s*hx - c*hy},
+      {x:cx + c*hx - s*hy, y:cy + s*hx + c*hy},
+      {x:cx - c*hx - s*hy, y:cy - s*hx + c*hy}
+    ];
+    return {
+      cx:cx,
+      cy:cy,
+      a:a,
+      verts:verts,
+      axes:[{x:c,y:s},{x:-s,y:c}]
+    };
+  }
+
+  function projectVerts(verts, axis) {
+    var min = Infinity;
+    var max = -Infinity;
+    for (var i = 0; i < verts.length; i++) {
+      var d = verts[i].x * axis.x + verts[i].y * axis.y;
+      min = Math.min(min,d);
+      max = Math.max(max,d);
+    }
+    return {min:min,max:max};
+  }
+
+  function supportAverage(verts, axis, useMax) {
+    var extreme = useMax ? -Infinity : Infinity;
+    var i;
+    for (i = 0; i < verts.length; i++) {
+      var d = verts[i].x * axis.x + verts[i].y * axis.y;
+      if (useMax) extreme = Math.max(extreme,d);
+      else extreme = Math.min(extreme,d);
+    }
+    var x = 0;
+    var y = 0;
+    var count = 0;
+    for (i = 0; i < verts.length; i++) {
+      var value = verts[i].x * axis.x + verts[i].y * axis.y;
+      if (Math.abs(value - extreme) < 2.2) {
+        x += verts[i].x;
+        y += verts[i].y;
+        count++;
+      }
+    }
+    if (count === 0) return verts[0];
+    return {x:x/count,y:y/count};
+  }
+
+  function sat(rectA, rectB) {
+    var axes = [rectA.axes[0],rectA.axes[1],rectB.axes[0],rectB.axes[1]];
+    var smallest = Infinity;
+    var best = null;
+    for (var i = 0; i < axes.length; i++) {
+      var axis = axes[i];
+      var pa = projectVerts(rectA.verts,axis);
+      var pb = projectVerts(rectB.verts,axis);
+      var overlap = Math.min(pa.max,pb.max) - Math.max(pa.min,pb.min);
+      if (overlap <= 0) return null;
+      if (overlap < smallest) {
+        smallest = overlap;
+        best = {x:axis.x,y:axis.y};
+      }
+    }
+    var dx = rectB.cx - rectA.cx;
+    var dy = rectB.cy - rectA.cy;
+    if (dx * best.x + dy * best.y < 0) {
+      best.x = -best.x;
+      best.y = -best.y;
+    }
+    var sa = supportAverage(rectA.verts,best,true);
+    var sb = supportAverage(rectB.verts,best,false);
+    return {
+      n:best,
+      depth:smallest,
+      point:{x:(sa.x + sb.x)/2,y:(sa.y + sb.y)/2}
+    };
+  }
+
+  function broadOverlap(a, b) {
+    if (b.static) return true;
+    var dx = b.x - a.x;
+    var dy = b.y - a.y;
+    var rr = a.radius + b.radius;
+    return dx * dx + dy * dy < rr * rr;
+  }
+
+  function resolvePair(a, b, report) {
+    if (!broadOverlap(a,b)) return;
+    for (var i = 0; i < a.parts.length; i++) {
+      var raRect = getRect(a,a.parts[i]);
+      for (var j = 0; j < b.parts.length; j++) {
+        var rbRect = getRect(b,b.parts[j]);
+        var hit = sat(raRect,rbRect);
+        if (!hit) continue;
+        resolveHit(a,b,hit,report);
+      }
+    }
+  }
+
+  function resolveHit(a, b, hit, report) {
+    var invMassSum = a.invMass + b.invMass;
+    if (invMassSum <= 0) return;
+
+    a.touching = true;
+    if (!b.static) b.touching = true;
+
+    var correction = Math.max(hit.depth - .18,0) * .34 / invMassSum;
+    if (a.invMass > 0) {
+      a.x -= hit.n.x * correction * a.invMass;
+      a.y -= hit.n.y * correction * a.invMass;
+    }
+    if (b.invMass > 0) {
+      b.x += hit.n.x * correction * b.invMass;
+      b.y += hit.n.y * correction * b.invMass;
+    }
+
+    var ra = {x:hit.point.x - a.x,y:hit.point.y - a.y};
+    var rb = {x:hit.point.x - b.x,y:hit.point.y - b.y};
+    var va = pointVelocity(a,ra);
+    var vb = pointVelocity(b,rb);
+    var rv = {x:vb.x - va.x,y:vb.y - va.y};
+    var velAlong = rv.x * hit.n.x + rv.y * hit.n.y;
+    var impact = Math.max(0,-velAlong);
+
+    if (report && impact > 72) {
+      var stressed = Math.abs(a.omega) > .22 ||
+        angleStrain(a.angle) > .11 ||
+        (!b.static && Math.abs(b.omega) > .22);
+      if (stressed) {
+        contactFlashes.push({
+          x:hit.point.x,
+          y:hit.point.y,
+          life:.48,
+          max:.48
+        });
+        slowMotion = Math.max(slowMotion,.34);
+        playCreak();
+      }
+    }
+
+    if (velAlong > 1) return;
+
+    var ran = cross(ra,hit.n);
+    var rbn = cross(rb,hit.n);
+    var denom = invMassSum +
+      ran * ran * a.invInertia +
+      rbn * rbn * b.invInertia;
+    if (denom <= 0) return;
+
+    var restitution = impact > 180 ? .08 : .025;
+    var impulseAmount = -(1 + restitution) * velAlong / denom;
+    var ix = hit.n.x * impulseAmount;
+    var iy = hit.n.y * impulseAmount;
+
+    if (a.invMass > 0) {
+      a.vx -= ix * a.invMass;
+      a.vy -= iy * a.invMass;
+      a.omega -= cross(ra,{x:ix,y:iy}) * a.invInertia;
+    }
+    if (b.invMass > 0) {
+      b.vx += ix * b.invMass;
+      b.vy += iy * b.invMass;
+      b.omega += cross(rb,{x:ix,y:iy}) * b.invInertia;
+    }
+
+    va = pointVelocity(a,ra);
+    vb = pointVelocity(b,rb);
+    rv = {x:vb.x - va.x,y:vb.y - va.y};
+    var normalSpeed = rv.x * hit.n.x + rv.y * hit.n.y;
+    var tx = rv.x - hit.n.x * normalSpeed;
+    var ty = rv.y - hit.n.y * normalSpeed;
+    var tl = Math.sqrt(tx * tx + ty * ty);
+    if (tl > .001) {
+      tx /= tl;
+      ty /= tl;
+      var rat = ra.x * ty - ra.y * tx;
+      var rbt = rb.x * ty - rb.y * tx;
+      var frictionDenom = invMassSum +
+        rat * rat * a.invInertia +
+        rbt * rbt * b.invInertia;
+      var jt = -(rv.x * tx + rv.y * ty) / frictionDenom;
+      var maxFriction = impulseAmount * .68;
+      jt = clamp(jt,-maxFriction,maxFriction);
+      var fix = tx * jt;
+      var fiy = ty * jt;
+      if (a.invMass > 0) {
+        a.vx -= fix * a.invMass;
+        a.vy -= fiy * a.invMass;
+        a.omega -= cross(ra,{x:fix,y:fiy}) * a.invInertia;
+      }
+      if (b.invMass > 0) {
+        b.vx += fix * b.invMass;
+        b.vy += fiy * b.invMass;
+        b.omega += cross(rb,{x:fix,y:fiy}) * b.invInertia;
+      }
+    }
+
+    if (round === 1 && a.dynamic && impact < 115) {
+      var quarter = Math.PI / 2;
+      var target = Math.round(a.angle / quarter) * quarter;
+      var delta = target - a.angle;
+      if (Math.abs(delta) < .13 && Math.abs(a.omega) < .65) {
+        a.angle += delta * .1;
+        a.omega *= .86;
+      }
+    }
+  }
+
+  function angleStrain(angle) {
+    var quarter = Math.PI / 2;
+    var nearest = Math.round(angle / quarter) * quarter;
+    return Math.abs(angle - nearest);
+  }
+
+  function physicsStep(dt) {
+    var gravity = 900 * scale;
+    var i;
+    var j;
+
+    for (i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      b.touching = false;
+      b.vy += gravity * dt;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.angle += b.omega * dt;
+    }
+
+    for (var iteration = 0; iteration < 7; iteration++) {
+      for (i = 0; i < bodies.length; i++) {
+        resolvePair(bodies[i],platform.body,iteration === 0);
+      }
+      for (i = 0; i < bodies.length; i++) {
+        for (j = i + 1; j < bodies.length; j++) {
+          resolvePair(bodies[i],bodies[j],iteration === 0);
+        }
+      }
+    }
+
+    var linearDamp = Math.pow(.994,dt * 90);
+    var angularDamp = Math.pow(.991,dt * 90);
+    for (i = 0; i < bodies.length; i++) {
+      bodies[i].vx *= linearDamp;
+      bodies[i].vy *= linearDamp;
+      bodies[i].omega *= angularDamp;
+    }
+  }
+
+  function dropCurrent() {
+    if (state !== "aiming" || !current) return;
+    ensureAudio();
+    dragging = false;
+    canvas.classList.remove("dragging");
+    current.dynamic = true;
+    current.vx = 0;
+    current.vy = 8 * scale;
+    current.omega *= .25;
+    current.dropAge = 0;
+    bodies.push(current);
+    state = "falling";
+    dropButton.disabled = true;
+    tone(245,.05,"triangle",.018,0,180);
+  }
+
+  function secureCurrent() {
+    if (!current || state !== "falling") return;
+    current.secured = true;
+    current.glow = .7;
+    current.vx *= .4;
+    current.vy *= .4;
+    current.omega *= .45;
+    placed++;
+    score++;
+    updateScore(true);
+    playThunk();
+    burst(current.x,current.y,"#5e9a72",15);
+    updateHeightRewards();
+    showToast("THUNK · CHAIR " + placed + " SECURED", 1.05);
+    state = "between";
+    transitionTimer = .72;
+    dropButton.disabled = true;
+  }
+
+  function towerTop() {
+    var top = platform.y;
+    for (var i = 0; i < bodies.length; i++) {
+      if (!bodies[i].secured) continue;
+      for (var j = 0; j < bodies[i].parts.length; j++) {
+        var rect = getRect(bodies[i],bodies[i].parts[j]);
+        for (var k = 0; k < rect.verts.length; k++) {
+          top = Math.min(top,rect.verts[k].y);
+        }
+      }
+    }
+    return top;
+  }
+
+  function updateHeightRewards() {
+    var height = Math.max(0,platform.y - towerTop());
+    var cleanHeight = height / nominalChairHeight;
+    if (cleanHeight > bestHeight) {
+      bestHeight = cleanHeight;
+      bestValue.textContent = bestHeight.toFixed(1) + " ch";
+    }
+    for (var i = 0; i < bonusHeights.length; i++) {
+      if (!bonusAwarded[i] && height >= bonusHeights[i]) {
+        bonusAwarded[i] = true;
+        score += bonusValues[i];
+        updateScore(true);
+        playBonus();
+        burst(W * .32,platform.y - bonusHeights[i],"#c9a348",18);
+        showToast("HEIGHT LINE CROSSED · +" + bonusValues[i] + " POINTS", 1.35);
+      }
+    }
+  }
+
+  function burst(x,y,color,count) {
+    for (var i = 0; i < count; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var speed = 35 + Math.random() * 105;
+      particles.push({
+        x:x,
+        y:y,
+        vx:Math.cos(a)*speed,
+        vy:Math.sin(a)*speed - 35,
+        life:.65 + Math.random()*.35,
+        max:1,
+        size:2 + Math.random()*3,
+        color:color
+      });
+    }
+  }
+
+  function failRound() {
+    if (state === "failed" || state === "cleared") return;
+    state = "failed";
+    current = null;
+    transitionTimer = 2.35;
+    platformFlash = 1;
+    dropButton.disabled = true;
+    playClatter();
+
+    for (var i = 0; i < bodies.length; i++) {
+      bodies[i].omega += (Math.random() - .5) * 2.5;
+      bodies[i].vx += (Math.random() - .5) * 85 * scale;
+    }
+    burst(platform.x + platform.w/2,platform.y,"#a8463f",28);
+
+    var verdicts = [
+      ["MOTION DENIED.","The chair has left the committee."],
+      ["NO QUORUM.","Gravity has registered an objection."],
+      ["REFERRED BACK.","The structure lacked institutional support."],
+      ["MINUTES AMENDED.","This tower is no longer standing."],
+      ["PROPOSAL TABLED.","Unfortunately, so was everything else."]
+    ];
+    var v = verdicts[Math.floor(Math.random()*verdicts.length)];
+    modalTitle.textContent = v[0];
+    modalText.textContent = v[1] + " Round score will be restored.";
+    modalButton.textContent = "RETRY NOW";
+    modal.classList.add("show");
+  }
+
+  function clearRound() {
+    if (state === "failed" || state === "cleared") return;
+    state = "cleared";
+    transitionTimer = 2.6;
+    checkpointScore = score;
+    dropButton.disabled = true;
+    playBonus();
+    burst(platform.x + platform.w/2,Math.max(35,towerTop()),"#c7a45b",34);
+    modalTitle.textContent = "MOTION CARRIED.";
+    modalText.textContent = "Six chairs secured. The tower is unexpectedly dignified.";
+    modalButton.textContent = "NEXT ROUND";
+    modal.classList.add("show");
+  }
+
+  function retryOrContinue() {
+    ensureAudio();
+    if (state === "failed") {
+      beginRound(true);
+    } else if (state === "cleared") {
+      round++;
+      beginRound(false);
+    }
+  }
+
+  function updateGame(dt) {
+    if (toastTimer > 0) {
+      toastTimer -= dt;
+      if (toastTimer <= 0) toast.classList.remove("show");
+    }
+
+    platformFlash = Math.max(0,platformFlash - dt * 1.5);
+    slowMotion = Math.max(0,slowMotion - dt);
+
+    for (var i = contactFlashes.length - 1; i >= 0; i--) {
+      contactFlashes[i].life -= dt;
+      if (contactFlashes[i].life <= 0) contactFlashes.splice(i,1);
+    }
+
+    for (i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.life -= dt;
+      p.vy += 180 * scale * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= Math.pow(.985,dt*60);
+      if (p.life <= 0) particles.splice(i,1);
+    }
+
+    for (i = 0; i < bodies.length; i++) {
+      bodies[i].glow = Math.max(0,bodies[i].glow - dt);
+      bodies[i].impactCooldown = Math.max(0,bodies[i].impactCooldown - dt);
+    }
+
+    if (state === "aiming" && current) {
+      var move = 0;
+      if (heldLeft) move -= 1;
+      if (heldRight) move += 1;
+      if (move !== 0) {
+        current.x += move * 210 * scale * dt;
+        clampCurrentX();
+      }
+    }
+
+    if (state === "falling" && current) {
+      current.dropAge += dt;
+      var speed = Math.sqrt(current.vx*current.vx + current.vy*current.vy);
+      var stableLimit = current.dropAge > 4 ? 24 * scale : 14 * scale;
+      var spinLimit = current.dropAge > 4 ? .52 : .30;
+      if (current.touching && speed < stableLimit && Math.abs(current.omega) < spinLimit) {
+        current.stableTime += dt;
+      } else {
+        current.stableTime = Math.max(0,current.stableTime - dt * .75);
+      }
+      if (current.stableTime > .62) secureCurrent();
+    }
+
+    if (state === "between") {
+      transitionTimer -= dt;
+      if (transitionTimer <= 0) {
+        if (placed >= 6) clearRound();
+        else spawnChair();
+      }
+    }
+
+    if (state === "failed" || state === "cleared") {
+      transitionTimer -= dt;
+      if (transitionTimer <= 0) retryOrContinue();
+    }
+
+    if (state !== "failed" && state !== "cleared") {
+      for (i = 0; i < bodies.length; i++) {
+        var b = bodies[i];
+        if (b.y > H + 115 * scale ||
+            b.x < -150 * scale ||
+            b.x > W + 150 * scale) {
+          failRound();
+          break;
+        }
+      }
+    }
+  }
+
+  function drawBackground() {
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "#eee9dc";
+    ctx.fillRect(0,0,W,H);
+
+    var grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,"rgba(255,255,255,.47)");
+    grad.addColorStop(1,"rgba(207,197,175,.17)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle = "rgba(56,67,64,.055)";
+    ctx.lineWidth = 1;
+    var grid = Math.max(28,38*scale);
+    var x;
+    var y;
+    for (x = 0; x < W; x += grid) {
+      ctx.beginPath();
+      ctx.moveTo(x,0);
+      ctx.lineTo(x,H);
+      ctx.stroke();
+    }
+    for (y = 0; y < H; y += grid) {
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(W,y);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "rgba(37,48,47,.045)";
+    ctx.font = "bold " + Math.max(34,58*scale) + "px Georgia";
+    ctx.textAlign = "center";
+    ctx.fillText("COMMITTEE CHAMBER",W/2,H*.56);
+  }
+
+  function drawHeightLines() {
+    ctx.save();
+    ctx.font = "bold " + Math.max(9,10*scale) + "px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    for (var i = 0; i < bonusHeights.length; i++) {
+      var y = platform.y - bonusHeights[i];
+      if (y < 13 || y > H) continue;
+      ctx.setLineDash([7,6]);
+      ctx.lineWidth = bonusAwarded[i] ? 2 : 1.2;
+      ctx.strokeStyle = bonusAwarded[i] ?
+        "rgba(74,126,94,.7)" :
+        "rgba(150,119,53,.55)";
+      ctx.beginPath();
+      ctx.moveTo(12,y);
+      ctx.lineTo(W-12,y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      var label = bonusAwarded[i] ?
+        "HEIGHT +" + bonusValues[i] + " ✓" :
+        "HEIGHT BONUS +" + bonusValues[i];
+      var tw = ctx.measureText(label).width + 12;
+      ctx.fillStyle = bonusAwarded[i] ?
+        "rgba(224,239,226,.94)" :
+        "rgba(247,239,210,.94)";
+      ctx.fillRect(14,y-18,tw,17);
+      ctx.fillStyle = bonusAwarded[i] ? "#46745b" : "#8c6a2c";
+      ctx.fillText(label,20,y-4);
+    }
+    ctx.restore();
+  }
+
+  function drawPlatform() {
+    var flash = platformFlash;
+    ctx.save();
+    ctx.shadowColor = "rgba(23,30,29,.2)";
+    ctx.shadowBlur = 9;
+    ctx.shadowOffsetY = 5;
+    ctx.fillStyle = flash > 0 ?
+      "rgba(151,55,48," + (.72 + flash*.2) + ")" :
+      "#394443";
+    ctx.fillRect(platform.x,platform.y,platform.w,Math.max(29,34*scale));
+    ctx.shadowColor = "transparent";
+
+    ctx.fillStyle = flash > 0 ? "#e99b91" : "#65716d";
+    ctx.fillRect(platform.x,platform.y,platform.w,Math.max(5,6*scale));
+
+    var footW = Math.max(18,24*scale);
+    var footH = H - platform.y;
+    ctx.fillStyle = flash > 0 ? "#74352f" : "#28312f";
+    ctx.fillRect(platform.x + platform.w*.16,platform.y+26*scale,footW,footH);
+    ctx.fillRect(platform.x + platform.w*.84-footW,platform.y+26*scale,footW,footH);
+
+    ctx.fillStyle = "rgba(255,255,255,.24)";
+    ctx.font = "bold " + Math.max(8,9*scale) + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      round === 1 ? "WIDE MANDATE" : "AUTHORIZED LOAD: SIX CHAIRS",
+      platform.x+platform.w/2,
+      platform.y+18*scale
+    );
+    ctx.restore();
+  }
+
+  function landingTarget(body) {
+    var rel = transformedRelativeBounds(body);
+    var left = body.x + rel.minX;
+    var right = body.x + rel.maxX;
+    var targetY = platform.y;
+    for (var i = 0; i < bodies.length; i++) {
+      for (var j = 0; j < bodies[i].parts.length; j++) {
+        var rect = getRect(bodies[i],bodies[i].parts[j]);
+        for (var k = 0; k < rect.verts.length; k++) {
+          var v = rect.verts[k];
+          if (v.x >= left && v.x <= right) targetY = Math.min(targetY,v.y);
+        }
+      }
+    }
+    return targetY - rel.maxY;
+  }
+
+  function drawLandingShadow() {
+    if (round !== 1 || state !== "aiming" || !current) return;
+    var ghostY = landingTarget(current);
+    ctx.save();
+    ctx.globalAlpha = .15;
+    ctx.setLineDash([5,5]);
+    ctx.strokeStyle = "#3d6f60";
+    ctx.beginPath();
+    ctx.moveTo(current.x,current.y + transformedRelativeBounds(current).maxY);
+    ctx.lineTo(current.x,ghostY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    var oldY = current.y;
+    current.y = ghostY;
+    drawBody(ctx,current,true);
+    current.y = oldY;
+    ctx.restore();
+  }
+
+  function drawBody(context, body, ghost) {
+    var t = body.template;
+    context.save();
+    context.translate(body.x,body.y);
+    context.rotate(body.angle);
+    context.lineJoin = "round";
+
+    if (body.glow > 0 && !ghost) {
+      context.shadowColor = "rgba(54,160,92,.95)";
+      context.shadowBlur = 18 * body.glow;
+    }
+
+    for (var i = 0; i < body.parts.length; i++) {
+      var p = body.parts[i];
+      context.save();
+      context.translate(p.x,p.y);
+      context.rotate(p.a);
+      context.fillStyle = ghost ? "#4f8067" : (p.accent ? t.accent : t.color);
+      context.strokeStyle = ghost ? "#31594a" : "#26312f";
+      context.lineWidth = Math.max(1.2,1.8*scale);
+      context.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      context.strokeRect(-p.w/2,-p.h/2,p.w,p.h);
+
+      if (!ghost &&
+          (p.role === "seat" || p.role === "back") &&
+          p.w > 30*scale) {
+        context.strokeStyle = "rgba(255,255,255,.25)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(-p.w*.34,-p.h*.18);
+        context.lineTo(p.w*.34,-p.h*.18);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    if (!ghost) {
+      var seat = body.parts[0];
+      context.fillStyle = "#e9dfc6";
+      context.strokeStyle = "#26312f";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.arc(
+        seat.x-seat.w*.29,
+        seat.y,
+        Math.max(1.7,2.3*scale),
+        0,
+        Math.PI*2
+      );
+      context.fill();
+      context.stroke();
+      context.beginPath();
+      context.arc(
+        seat.x+seat.w*.29,
+        seat.y,
+        Math.max(1.7,2.3*scale),
+        0,
+        Math.PI*2
+      );
+      context.fill();
+      context.stroke();
+    }
+    context.restore();
+  }
+
+  function drawContacts() {
+    ctx.save();
+    for (var i = 0; i < contactFlashes.length; i++) {
+      var c = contactFlashes[i];
+      var alpha = c.life / c.max;
+      var radius = (1-alpha)*15*scale + 4;
+      ctx.strokeStyle = "rgba(213,142,37," + alpha + ")";
+      ctx.fillStyle = "rgba(231,166,52," + (alpha*.34) + ")";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(c.x,c.y,radius,0,Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(c.x-radius-5,c.y);
+      ctx.lineTo(c.x+radius+5,c.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    ctx.save();
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      ctx.globalAlpha = clamp(p.life / p.max,0,1);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+    }
+    ctx.restore();
+  }
+
+  function drawStatus() {
+    ctx.save();
+    var text;
+    if (state === "aiming") text = "POSITIONING";
+    else if (state === "falling") text = "UNDER REVIEW";
+    else if (state === "between") text = "SECURED";
+    else text = "";
+    if (text) {
+      ctx.fillStyle = "rgba(247,243,232,.88)";
+      ctx.fillRect(10,10,126,27);
+      ctx.strokeStyle = "rgba(37,48,47,.25)";
+      ctx.strokeRect(10.5,10.5,125,26);
+      ctx.fillStyle = "#384340";
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText((placed+1 > 6 ? 6 : placed+1) + "/6 · " + text,19,24);
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    drawBackground();
+    drawHeightLines();
+    drawLandingShadow();
+    drawPlatform();
+
+    for (var i = 0; i < bodies.length; i++) {
+      drawBody(ctx,bodies[i],false);
+    }
+    if (state === "aiming" && current) drawBody(ctx,current,false);
+
+    drawContacts();
+    drawParticles();
+    drawStatus();
+  }
+
+  function drawPreview(canvasElement, templateIndex) {
+    var rect = canvasElement.getBoundingClientRect();
+    var pd = Math.min(2,window.devicePixelRatio || 1);
+    canvasElement.width = Math.max(1,Math.round(rect.width*pd));
+    canvasElement.height = Math.max(1,Math.round(rect.height*pd));
+    var pc = canvasElement.getContext("2d");
+    pc.setTransform(pd,0,0,pd,0,0);
+    pc.clearRect(0,0,rect.width,rect.height);
+    if (typeof templateIndex !== "number") return;
+
+    var tempScale = Math.min(rect.width/115,rect.height/105);
+    var body = createBody(
+      templateIndex,
+      rect.width/2,
+      rect.height/2+4,
+      tempScale
+    );
+    body.angle = 0;
+    var b = transformedRelativeBounds(body);
+    body.y = rect.height/2 - (b.minY+b.maxY)/2;
+    drawBody(pc,body,false);
+  }
+
+  function drawPreviews() {
+    drawPreview(previewCanvases[0],queue[0]);
+    drawPreview(previewCanvases[1],queue[1]);
+  }
+
+  function rotateCurrent(direction) {
+    if (state !== "aiming" || !current) return;
+    ensureAudio();
+    current.angle += direction * Math.PI / 12;
+    positionChairAtTop();
+    clampCurrentX();
+    playTick();
+  }
+
+  function pointerX(event) {
+    var r = canvas.getBoundingClientRect();
+    return event.clientX - r.left;
+  }
+
+  canvas.addEventListener("pointerdown",function (event) {
+    if (state !== "aiming" || !current) return;
+    ensureAudio();
+    dragging = true;
+    dragOffset = current.x - pointerX(event);
+    current.x = pointerX(event) + dragOffset;
+    clampCurrentX();
+    canvas.classList.add("dragging");
+    canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointermove",function (event) {
+    if (!dragging || state !== "aiming" || !current) return;
+    current.x = pointerX(event) + dragOffset;
+    clampCurrentX();
+    event.preventDefault();
+  });
+
+  function endDrag(event) {
+    dragging = false;
+    canvas.classList.remove("dragging");
+    if (event) event.preventDefault();
+  }
+
+  canvas.addEventListener("pointerup",endDrag);
+  canvas.addEventListener("pointercancel",endDrag);
+
+  function bindHold(button, direction) {
+    button.addEventListener("pointerdown",function (event) {
+      ensureAudio();
+      if (direction < 0) heldLeft = true;
+      else heldRight = true;
+      button.classList.add("active");
+      button.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+
+    function release(event) {
+      if (direction < 0) heldLeft = false;
+      else heldRight = false;
+      button.classList.remove("active");
+      if (event) event.preventDefault();
+    }
+
+    button.addEventListener("pointerup",release);
+    button.addEventListener("pointercancel",release);
+    button.addEventListener("lostpointercapture",release);
+  }
+
+  bindHold(document.getElementById("leftButton"),-1);
+  bindHold(document.getElementById("rightButton"),1);
+
+  document.getElementById("rotateLeftButton").addEventListener("click",function () {
+    rotateCurrent(-1);
+  });
+
+  document.getElementById("rotateRightButton").addEventListener("click",function () {
+    rotateCurrent(1);
+  });
+
+  dropButton.addEventListener("click",dropCurrent);
+  modalButton.addEventListener("click",retryOrContinue);
+
+  window.addEventListener("keydown",function (event) {
+    var key = event.key.toLowerCase();
+    if (key === "arrowleft") {
+      heldLeft = true;
+      event.preventDefault();
+    } else if (key === "arrowright") {
+      heldRight = true;
+      event.preventDefault();
+    } else if (key === "q") {
+      if (!event.repeat) rotateCurrent(-1);
+      event.preventDefault();
+    } else if (key === "e") {
+      if (!event.repeat) rotateCurrent(1);
+      event.preventDefault();
+    } else if (event.code === "Space") {
+      if (!event.repeat) dropCurrent();
+      event.preventDefault();
+    } else if (key === "enter" && (state === "failed" || state === "cleared")) {
+      retryOrContinue();
+      event.preventDefault();
+    }
+    ensureAudio();
+  });
+
+  window.addEventListener("keyup",function (event) {
+    if (event.key === "ArrowLeft") heldLeft = false;
+    if (event.key === "ArrowRight") heldRight = false;
+  });
+
+  function resizeCanvas() {
+    var rect = stage.getBoundingClientRect();
+    W = Math.max(1,rect.width);
+    H = Math.max(1,rect.height);
+    dpr = Math.min(2,window.devicePixelRatio || 1);
+    canvas.width = Math.round(W*dpr);
+    canvas.height = Math.round(H*dpr);
+    canvas.style.width = W+"px";
+    canvas.style.height = H+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    scale = clamp(Math.min(W/520,H/575),.46,1.18);
+    nominalChairHeight = 90 * scale;
+    drawPreviews();
+  }
+
+  window.addEventListener("resize",function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      var oldW = W;
+      var oldH = H;
+      resizeCanvas();
+      if (Math.abs(W-oldW)>18 || Math.abs(H-oldH)>18) {
+        beginRound(true);
+      }
+    },180);
+  });
+
+  function frame(now) {
+    var realDt = Math.min(.05,(now-lastTime)/1000);
+    lastTime = now;
+    var simDt = realDt * (slowMotion > 0 ? .66 : 1);
+    accumulator += simDt;
+    var fixed = 1/90;
+    var steps = 0;
+    while (accumulator >= fixed && steps < 6) {
+      if (bodies.length > 0) physicsStep(fixed);
+      accumulator -= fixed;
+      steps++;
+    }
+    updateGame(realDt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  resizeCanvas();
+  beginRound(false);
+  requestAnimationFrame(function (time) {
+    lastTime = time;
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

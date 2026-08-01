@@ -1,0 +1,11 @@
+{
+  "title": "Chair Committee",
+  "slug": "chair-committee",
+  "tagline": "Put bad design on top of itself.",
+  "concept": "Stack visibly ill-designed chairs into a surprisingly dignified tower, one deliberate drop at a time.",
+  "core_loop": "Study the next chair, move and rotate it over the tower, then drop it and watch it settle; each 5–15 second placement stays satisfying because strange silhouettes create new balancing choices and recoverable wobbles.",
+  "mechanics": "Controls: drag or use left/right arrows to position, tap large rotate buttons or press Q/E to turn, and tap Drop or press Space to release.; Win/lose: place six chairs without one falling off the platform to clear a round; a collapse ends the round with an instant retry.; Scoring: earn one point per secured chair plus clearly previewed height bonuses for crossing marked lines, with the longest clean tower saved.",
+  "feedback": "A successful chair lands with a solid thunk, briefly glows green, and raises the score; a failure produces a clattering collapse, red platform flash, and dry verdict; a near-miss creaks, wobbles in slow readable arcs, and flashes its strained contact points amber before either settling or falling.",
+  "difficulty": "The first round uses a wide platform, chunky symmetrical chairs, a landing shadow, and forgiving contact snapping; later rounds remain untimed but use narrower platforms, taller targets, and curated asymmetrical chairs while always previewing the next two pieces.",
+  "mobile": true
+}
