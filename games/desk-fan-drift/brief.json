@@ -1,0 +1,11 @@
+{
+  "title": "Desk Fan Drift",
+  "slug": "desk-fan-drift",
+  "tagline": "One fan. One sail cart. Questionable aerodynamics.",
+  "concept": "Aim measured gusts from a swiveling desk fan to push a tiny sail cart through tabletop obstacle courses.",
+  "core_loop": "Aim the fan, set its power, release a gust, and watch the cart skim, bank, or ricochet toward the goal; each five-second shot turns a simple prediction into a satisfying hit, funny miss, or tempting near-save.",
+  "mechanics": "Touch: drag from the fan to choose direction and power, then release to blow; keyboard: use left and right to aim, up and down to set power, and Space to blow.; Reach the striped parking pad within the visible gust limit to win; falling off the desk or spending the final gust short of the pad loses the round and offers an instant retry.; Earn one to three pennants for finishing under par, with optional desk bells placed along skillful routes adding bonus points.",
+  "feedback": "The aiming arc, power pips, remaining gusts, fixed vent currents, and airflow ribbons are always visible. A clean finish makes the cart's pennant snap upright, the pad glow, and a small bell ring; collisions produce a sharp wobble and clack, while a fall triggers an edge flash and immediate reset. Near-misses rattle the goal marker and leave a fading airflow trail showing exactly why the cart pass",
+  "difficulty": "The first courses have broad lanes, gentle bumpers, generous gust limits, and a short aiming guide. Later layouts add narrow gates, angled surfaces, fixed cross-breezes marked by fluttering streamers, and tighter gust budgets, demanding bank shots without adding a timer.",
+  "mobile": true
+}

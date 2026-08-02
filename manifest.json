@@ -237,6 +237,15 @@
       "path": "games/sunprint-shuffle/",
       "mobile": true,
       "thumbnail": "games/sunprint-shuffle/cover.webp"
+    },
+    {
+      "slug": "desk-fan-drift",
+      "title": "Desk Fan Drift",
+      "tagline": "One fan. One sail cart. Questionable aerodynamics.",
+      "date": "2026-08-02",
+      "path": "games/desk-fan-drift/",
+      "mobile": true,
+      "thumbnail": "games/desk-fan-drift/cover.webp"
     }
   ]
 }
