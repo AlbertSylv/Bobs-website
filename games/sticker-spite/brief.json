@@ -1,0 +1,11 @@
+{
+  "title": "Sticker Spite",
+  "slug": "sticker-spite",
+  "tagline": "Remove the label. Leave no grudge.",
+  "concept": "Carefully peel stubborn stickers from tiny objects without tearing them or leaving gummy scraps behind.",
+  "core_loop": "Grab the oversized tab, pull through the visible low-stress direction, and adjust or pause when the edge turns amber; each 5–15 second peel offers controlled risk followed by the satisfaction of a spotless reveal.",
+  "mechanics": "Controls: Drag the tab in any direction with touch or mouse and release to pause; on keyboard, use the arrow keys to aim and hold Space to pull.; Win/lose: Fully clean each object to advance; a tear leaves a new reachable tab but wrinkles one of three sticker icons, and the run ends when all three are wrinkled.; Scoring: Earn points for clean area and intact removals, with a growing combo for consecutive tear-free stickers; pauses never reduce the score.",
+  "feedback": "A clean peel curls into a neat roll with a soft zip, a bright shine across the object, and a crisp score burst. Dangerous tension turns the edge amber, stretches the sticker, and adds a faint crackle; releasing visibly relaxes it. A tear flashes a red split, leaves obvious residue, wrinkles a life icon, and makes a dry ripping sound, while a near-miss wobble and green directional chevrons show how",
+  "difficulty": "The first minute uses large tabs, flat objects, broad safe pulling angles, and slowly rising stress. Later stickers wrap around corners, contain visible brittle seams and darker glue islands, and require several deliberate direction changes, but stress increases only while the player is actively pul",
+  "mobile": true
+}

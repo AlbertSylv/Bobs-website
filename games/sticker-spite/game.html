@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sticker Spite</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+body {
+  overflow:hidden;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  background:#efe7d4;
+  color:#26312f;
+  font-family:Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+}
+#game {
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(255,255,255,.65) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 72%, rgba(74,94,88,.08) 0 2px, transparent 3px),
+    linear-gradient(145deg,#f5efdf,#e7dcc2);
+  background-size:43px 43px,57px 57px,100% 100%;
+}
+canvas {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  touch-action:none;
+}
+#hud {
+  position:absolute;
+  z-index:3;
+  top:0;
+  left:0;
+  width:100%;
+  padding:14px clamp(14px,3vw,34px);
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  pointer-events:none;
+}
+.brand h1 {
+  margin:0;
+  font-size:clamp(24px,4vw,42px);
+  line-height:.9;
+  letter-spacing:-1.5px;
+  color:#20302d;
+  text-shadow:0 2px 0 rgba(255,255,255,.7);
+}
+.tagline {
+  margin-top:7px;
+  color:#64716b;
+  font-size:clamp(11px,1.8vw,14px);
+  font-weight:750;
+  letter-spacing:.04em;
+}
+.hudRight {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.stat {
+  min-width:82px;
+  padding:8px 12px 9px;
+  border:2px solid rgba(42,57,53,.14);
+  border-radius:15px;
+  background:rgba(255,252,243,.86);
+  box-shadow:0 5px 14px rgba(48,45,33,.09);
+  text-align:center;
+  backdrop-filter:blur(4px);
+}
+.statLabel {
+  display:block;
+  color:#758079;
+  font-size:9px;
+  line-height:1;
+  letter-spacing:.16em;
+  font-weight:900;
+}
+.stat strong {
+  display:block;
+  margin-top:4px;
+  color:#26312f;
+  font-size:19px;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+#soundBtn {
+  pointer-events:auto;
+  width:42px;
+  height:42px;
+  border:2px solid rgba(42,57,53,.14);
+  border-radius:14px;
+  background:rgba(255,252,243,.9);
+  color:#34443f;
+  font-size:19px;
+  cursor:pointer;
+  box-shadow:0 5px 14px rgba(48,45,33,.09);
+}
+#lives {
+  position:absolute;
+  z-index:4;
+  top:91px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  pointer-events:none;
+}
+.life {
+  position:relative;
+  width:37px;
+  height:23px;
+  border:2px solid #33433f;
+  border-radius:7px 10px 8px 6px;
+  background:#fff9d6;
+  box-shadow:0 3px 0 rgba(42,50,45,.12);
+  transform:rotate(-2deg);
+  transition:transform .25s, background .25s, filter .25s;
+}
+.life:after {
+  content:"";
+  position:absolute;
+  right:3px;
+  top:3px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#69bd91;
+}
+.life:nth-child(2) { transform:rotate(2deg); }
+.life.wrinkled {
+  background:#d6a39b;
+  filter:saturate(.8);
+  transform:scale(.9) rotate(12deg) skewX(-10deg);
+}
+.life.wrinkled:before {
+  content:"";
+  position:absolute;
+  left:4px;
+  right:4px;
+  top:10px;
+  height:2px;
+  background:#994b48;
+  transform:rotate(-14deg);
+  box-shadow:4px -5px 0 -1px #994b48;
+}
+#bottom {
+  position:absolute;
+  z-index:3;
+  left:50%;
+  bottom:12px;
+  width:min(720px,calc(100% - 24px));
+  transform:translateX(-50%);
+  text-align:center;
+  pointer-events:none;
+}
+#status {
+  display:inline-block;
+  padding:6px 12px;
+  margin-bottom:7px;
+  border-radius:999px;
+  background:rgba(37,50,46,.9);
+  color:#f9f3e4;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  box-shadow:0 4px 12px rgba(30,35,31,.17);
+  transition:background .15s, transform .15s;
+}
+#status.amber { background:#c47828; transform:scale(1.04); }
+#status.danger { background:#b8423f; transform:scale(1.06); }
+.how {
+  color:#4d5a55;
+  font-size:clamp(11px,2vw,14px);
+  font-weight:750;
+  text-shadow:0 1px rgba(255,255,255,.7);
+}
+.how b { color:#267755; }
+#objectName {
+  margin-top:4px;
+  color:#849089;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+#overlay {
+  position:absolute;
+  z-index:10;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(31,43,39,.26);
+  backdrop-filter:blur(5px);
+}
+#overlay.hidden { display:none; }
+.panel {
+  width:min(520px,100%);
+  padding:clamp(23px,5vw,38px);
+  border:3px solid #31413d;
+  border-radius:28px 20px 30px 22px;
+  background:#fffaf0;
+  box-shadow:0 18px 0 rgba(42,52,47,.15), 0 28px 60px rgba(33,36,31,.22);
+  text-align:center;
+  transform:rotate(-.4deg);
+}
+.panel h2 {
+  margin:0;
+  color:#21332f;
+  font-size:clamp(38px,9vw,72px);
+  line-height:.86;
+  letter-spacing:-3px;
+}
+.panel .lead {
+  margin:13px 0 18px;
+  color:#69736e;
+  font-weight:800;
+  font-size:15px;
+}
+.ruleGrid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:16px 0 22px;
+  text-align:left;
+}
+.rule {
+  min-height:82px;
+  padding:11px 12px;
+  border-radius:14px;
+  background:#f1ead7;
+  color:#53605b;
+  font-size:12px;
+  line-height:1.35;
+  font-weight:700;
+}
+.rule strong {
+  display:block;
+  margin-bottom:3px;
+  color:#283934;
+  font-size:12px;
+  letter-spacing:.05em;
+}
+#startBtn {
+  border:0;
+  border-radius:15px 18px 14px 17px;
+  padding:13px 28px;
+  background:#2d8b64;
+  color:white;
+  font:900 15px/1 system-ui,sans-serif;
+  letter-spacing:.09em;
+  cursor:pointer;
+  box-shadow:0 6px 0 #1b6446;
+}
+#startBtn:active { transform:translateY(4px); box-shadow:0 2px 0 #1b6446; }
+#result {
+  margin:7px 0 16px;
+  color:#52625c;
+  font-weight:800;
+}
+@media (max-width:620px) {
+  #hud { padding:10px 10px; }
+  .tagline { display:none; }
+  .stat { min-width:66px; padding:7px 8px; }
+  .stat strong { font-size:16px; }
+  .stat:nth-child(2) { display:none; }
+  #lives { top:63px; }
+  .ruleGrid { grid-template-columns:1fr; }
+  .rule { min-height:0; }
+  .panel { padding:24px 19px; }
+}
+@media (max-height:510px) {
+  .brand h1 { font-size:24px; }
+  .tagline { display:none; }
+  #hud { padding-top:7px; }
+  #lives { top:52px; }
+  #bottom { bottom:5px; }
+  #objectName { display:none; }
+  .panel { padding:17px 22px; }
+  .panel h2 { font-size:39px; letter-spacing:-2px; }
+  .panel .lead { margin:8px 0; }
+  .ruleGrid { margin:8px 0 13px; grid-template-columns:1fr 1fr; }
+  .rule { min-height:0; padding:8px; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Sticker peeling play area"></canvas>
+
+  <div id="hud">
+    <div class="brand">
+      <h1>Sticker Spite</h1>
+      <div class="tagline">Remove the label. Leave no grudge.</div>
+    </div>
+    <div class="hudRight">
+      <div class="stat"><span class="statLabel">SCORE</span><strong id="score">0</strong></div>
+      <div class="stat"><span class="statLabel">COMBO</span><strong id="combo">×1</strong></div>
+      <button id="soundBtn" aria-label="Toggle sound">♪</button>
+    </div>
+  </div>
+
+  <div id="lives" aria-label="Three sticker lives">
+    <div class="life"></div>
+    <div class="life"></div>
+    <div class="life"></div>
+  </div>
+
+  <div id="bottom">
+    <div id="status">GRAB THE TAB</div>
+    <div class="how"><b>Drag the tab</b> toward the green chevrons; release to relax. Keyboard: arrows aim, hold Space to pull.</div>
+    <div id="objectName">Mint Tin · Sticker 1</div>
+  </div>
+
+  <div id="overlay">
+    <div class="panel">
+      <h2 id="panelTitle">Sticker<br>Spite</h2>
+      <div class="lead" id="panelLead">Remove the label. Leave no grudge.</div>
+      <div class="ruleGrid" id="rules">
+        <div class="rule"><strong>PEEL</strong>Grab the oversized tab and pull toward the green chevrons.</div>
+        <div class="rule"><strong>PAUSE</strong>When the edge turns amber, release. Stress relaxes and score never drops.</div>
+        <div class="rule"><strong>KEYBOARD</strong>Use arrow keys to aim. Hold Space to pull and release it to pause.</div>
+        <div class="rule"><strong>THREE CHANCES</strong>A tear makes residue and wrinkles a life. Clean every scrap to advance.</div>
+      </div>
+      <div id="result"></div>
+      <button id="startBtn">START PEELING</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var scoreEl = document.getElementById("score");
+  var comboEl = document.getElementById("combo");
+  var statusEl = document.getElementById("status");
+  var objectNameEl = document.getElementById("objectName");
+  var overlay = document.getElementById("overlay");
+  var startBtn = document.getElementById("startBtn");
+  var panelTitle = document.getElementById("panelTitle");
+  var panelLead = document.getElementById("panelLead");
+  var rulesEl = document.getElementById("rules");
+  var resultEl = document.getElementById("result");
+  var soundBtn = document.getElementById("soundBtn");
+  var lifeEls = document.querySelectorAll(".life");
+
+  var W = 0, H = 0, DPR = 1;
+  var running = false;
+  var level = 1;
+  var score = 0;
+  var combo = 0;
+  var lostLives = 0;
+  var cfg = null;
+  var mode = "main";
+  var progress = 0;
+  var maxProgress = 0;
+  var scrapProgress = 0;
+  var scrapBest = 0;
+  var activeResidue = -1;
+  var residues = [];
+  var stress = 0;
+  var tornThisLevel = false;
+  var pointerDragging = false;
+  var pointerId = -1;
+  var pointerStart = {x:0,y:0};
+  var pointerNow = {x:0,y:0};
+  var keys = {};
+  var keyboardAngle = Math.PI;
+  var requireSpaceRelease = false;
+  var lastTime = 0;
+  var tearCooldown = 0;
+  var flashRed = 0;
+  var splitFlash = 0;
+  var shine = -1;
+  var wobble = 0;
+  var feedback = [];
+  var particles = [];
+  var transitionTimer = 0;
+  var lastDesired = 0;
+  var soundOn = true;
+  var audio = null;
+  var lastZip = 0;
+  var lastCrackle = 0;
+  var seed = 1;
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function rnd() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+
+  function angleDiff(a, b) {
+    var d = a - b;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return Math.abs(d);
+  }
+
+  function roundedRectPath(x, y, w, h, r) {
+    r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function getLayout() {
+    var top = H < 510 ? 67 : 118;
+    var bottom = H < 510 ? 66 : 105;
+    var available = Math.max(145, H - top - bottom);
+    var oh = Math.min(360, available * 0.76);
+    var ow = Math.min(680, W * 0.84, oh * 2.05);
+    if (W < 400) ow = Math.min(ow, W * 0.9);
+    var cx = W / 2;
+    var cy = top + available / 2;
+    var ox = cx - ow / 2;
+    var oy = cy - oh / 2;
+    var wrap = cfg && cfg.wrap;
+    var sw = ow * (wrap ? 0.88 : 0.72);
+    var sh = Math.max(58, oh * 0.39);
+    if (sh > oh * 0.55) sh = oh * 0.55;
+    return {
+      cx:cx, cy:cy, ox:ox, oy:oy, ow:ow, oh:oh,
+      sx:cx - sw / 2, sy:cy - sh / 2, sw:sw, sh:sh
+    };
+  }
+
+  function buildConfig(n) {
+    var names = ["Mint Tin", "Pocket Radio", "Glass Jar", "Corner Box", "Toy Camera", "Tea Caddy", "Tiny Toolbox", "Spice Bottle"];
+    var colors = [
+      ["#8fc7b5","#315e55"],
+      ["#e8a56e","#744b37"],
+      ["#9bc8d2","#385b68"],
+      ["#d9bd69","#665622"],
+      ["#e18b91","#6e3d47"],
+      ["#9eae77","#465336"],
+      ["#83a1bf","#344b65"],
+      ["#c599c7","#64466a"]
+    ];
+    var patterns = [
+      [{p:0,a:Math.PI}],
+      [{p:0,a:-Math.PI*0.75},{p:.52,a:Math.PI}],
+      [{p:0,a:Math.PI*.75},{p:.48,a:-Math.PI*.75}],
+      [{p:0,a:Math.PI},{p:.36,a:-Math.PI/2},{p:.72,a:Math.PI*.75}],
+      [{p:0,a:-Math.PI*.75},{p:.28,a:Math.PI},{p:.62,a:Math.PI*.75}],
+      [{p:0,a:Math.PI*.75},{p:.3,a:Math.PI/2},{p:.58,a:Math.PI},{p:.82,a:-Math.PI*.75}]
+    ];
+    var i = (n - 1) % names.length;
+    var advanced = Math.max(0, n - 3);
+    var patternIndex = Math.min(patterns.length - 1, Math.floor((n - 1) / 1.3));
+    var safeDegrees = Math.max(32, 80 - (n - 1) * 7);
+    return {
+      name:names[i],
+      objectColor:colors[i][0],
+      dark:colors[i][1],
+      labelColor:n % 3 === 0 ? "#fff1b9" : (n % 3 === 1 ? "#fff8db" : "#eaf3e2"),
+      text:["FRESH!", "TUNE 88", "PANTRY", "HANDLE", "SNAP!", "TEA No. 4", "TOOLS", "CLOVE"][i],
+      points:patterns[patternIndex],
+      safe:safeDegrees * Math.PI / 180,
+      rate:Math.max(.083, .135 - advanced * .005),
+      stress:Math.min(1.05, .52 + advanced * .07),
+      seams:n >= 4 ? (n >= 6 ? [.28,.57,.81] : [.38,.72]) : [],
+      glue:n >= 4 ? [.2,.51,.76] : [],
+      wrap:n >= 4
+    };
+  }
+
+  function currentDesired() {
+    if (mode === "scrap") {
+      var scrapAngles = [Math.PI, -Math.PI/2, Math.PI*.75, -Math.PI*.75, Math.PI/2];
+      return scrapAngles[(activeResidue + level) % scrapAngles.length];
+    }
+    var a = cfg.points[0].a;
+    for (var i = 0; i < cfg.points.length; i++) {
+      if (progress >= cfg.points[i].p) a = cfg.points[i].a;
+    }
+    return a;
+  }
+
+  function currentTab() {
+    var l = getLayout();
+    if (mode === "scrap" && activeResidue >= 0 && residues[activeResidue]) {
+      var r = residues[activeResidue];
+      return {
+        x:l.sx + r.x * l.sw,
+        y:l.sy + r.y * l.sh,
+        radius:Math.max(27, Math.min(38, l.sh * .33))
+      };
+    }
+    return {
+      x:l.sx + progress * l.sw,
+      y:l.sy + l.sh / 2,
+      radius:Math.max(29, Math.min(42, l.sh * .35))
+    };
+  }
+
+  function updateLives() {
+    for (var i = 0; i < lifeEls.length; i++) {
+      lifeEls[i].className = i < lostLives ? "life wrinkled" : "life";
+    }
+  }
+
+  function showFeedback(text, color, life) {
+    feedback.push({
+      text:text,
+      color:color || "#263c36",
+      age:0,
+      life:life || 1.05
+    });
+    if (feedback.length > 4) feedback.shift();
+  }
+
+  function addBurst(x, y, color, count) {
+    for (var i = 0; i < count; i++) {
+      var a = rnd() * Math.PI * 2;
+      var sp = 28 + rnd() * 90;
+      particles.push({
+        x:x, y:y,
+        vx:Math.cos(a) * sp,
+        vy:Math.sin(a) * sp - 25,
+        age:0,
+        life:.45 + rnd() * .6,
+        color:color,
+        size:2 + rnd() * 4
+      });
+    }
+  }
+
+  function initAudio() {
+    if (!soundOn || audio) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      audio = new AC();
+    } catch (e) {
+      audio = null;
+    }
+  }
+
+  function tone(freq, duration, type, volume, slide) {
+    if (!soundOn || !audio) return;
+    if (audio.state === "suspended") audio.resume();
+    var now = audio.currentTime;
+    var osc = audio.createOscillator();
+    var gain = audio.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, now);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(30, slide), now + duration);
+    gain.gain.setValueAtTime(volume || .03, now);
+    gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(audio.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  }
+
+  function noise(duration, volume, highpass) {
+    if (!soundOn || !audio) return;
+    var length = Math.max(1, Math.floor(audio.sampleRate * duration));
+    var buffer = audio.createBuffer(1, length, audio.sampleRate);
+    var data = buffer.getChannelData(0);
+    for (var i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+    }
+    var src = audio.createBufferSource();
+    var gain = audio.createGain();
+    var filter = audio.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = highpass || 900;
+    gain.gain.value = volume || .03;
+    src.buffer = buffer;
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(audio.destination);
+    src.start();
+  }
+
+  function zipSound() {
+    var now = performance.now();
+    if (now - lastZip < 115) return;
+    lastZip = now;
+    tone(530 + rnd() * 80, .055, "sine", .012, 720);
+  }
+
+  function crackleSound() {
+    var now = performance.now();
+    if (now - lastCrackle < 260) return;
+    lastCrackle = now;
+    noise(.045, .012, 1800);
+  }
+
+  function ripSound() {
+    noise(.19, .11, 500);
+    tone(145, .16, "sawtooth", .035, 65);
+  }
+
+  function successSound() {
+    tone(520, .18, "sine", .045, 710);
+    setTimeout(function () { tone(790, .23, "sine", .04, 970); }, 100);
+  }
+
+  function loadLevel() {
+    clearTimeout(transitionTimer);
+    cfg = buildConfig(level);
+    seed = level * 9187 + 31;
+    mode = "main";
+    progress = 0;
+    maxProgress = 0;
+    scrapProgress = 0;
+    scrapBest = 0;
+    activeResidue = -1;
+    residues = [];
+    stress = 0;
+    tornThisLevel = false;
+    pointerDragging = false;
+    requireSpaceRelease = false;
+    tearCooldown = 0;
+    flashRed = 0;
+    splitFlash = 0;
+    shine = -1;
+    wobble = 0;
+    keyboardAngle = cfg.points[0].a;
+    lastDesired = currentDesired();
+    objectNameEl.textContent = cfg.name + " · Sticker " + level;
+    updateHUD();
+    showFeedback(level === 1 ? "FOLLOW THE GREEN" : "NEW OBJECT", "#277954", 1.25);
+  }
+
+  function startGame() {
+    initAudio();
+    clearTimeout(transitionTimer);
+    level = 1;
+    score = 0;
+    combo = 0;
+    lostLives = 0;
+    running = true;
+    feedback = [];
+    particles = [];
+    overlay.classList.add("hidden");
+    updateLives();
+    loadLevel();
+    lastTime = performance.now();
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = Math.floor(score).toLocaleString();
+    comboEl.textContent = "×" + Math.max(1, combo);
+  }
+
+  function addResidue() {
+    var x = Math.max(.055, Math.min(.91, progress - .04 - rnd() * .17));
+    residues.push({
+      x:x,
+      y:.22 + rnd() * .56,
+      size:.7 + rnd() * .5,
+      alive:true,
+      rot:rnd() * Math.PI
+    });
+  }
+
+  function tear() {
+    if (!running || tearCooldown > 0) return;
+    tornThisLevel = true;
+    lostLives++;
+    stress = .18;
+    tearCooldown = .72;
+    flashRed = .34;
+    splitFlash = .65;
+    wobble = .65;
+    pointerDragging = false;
+    requireSpaceRelease = !!keys.Space;
+    if (mode === "main") addResidue();
+    scrapProgress = mode === "scrap" ? Math.max(0, scrapProgress - .08) : scrapProgress;
+    showFeedback("RIP! REGRAB THE NEW TAB", "#b43836", 1.3);
+    var tab = currentTab();
+    addBurst(tab.x, tab.y, "#d24840", 17);
+    ripSound();
+    updateLives();
+    if (lostLives >= 3) {
+      running = false;
+      transitionTimer = setTimeout(showGameOver, 620);
+    }
+  }
+
+  function showGameOver() {
+    panelTitle.innerHTML = "All<br>Wrinkled";
+    panelLead.textContent = "The stickers held a grudge.";
+    rulesEl.style.display = "none";
+    resultEl.textContent = "Score " + Math.floor(score).toLocaleString() + " · Reached sticker " + level;
+    startBtn.textContent = "TRY AGAIN";
+    overlay.classList.remove("hidden");
+  }
+
+  function enterScraps() {
+    mode = "scrap";
+    activeResidue = -1;
+    for (var i = 0; i < residues.length; i++) {
+      if (residues[i].alive) {
+        activeResidue = i;
+        break;
+      }
+    }
+    scrapProgress = 0;
+    scrapBest = 0;
+    stress = 0;
+    keyboardAngle = currentDesired();
+    lastDesired = currentDesired();
+    showFeedback("LABEL OFF · CLEAN THE GUM", "#b06c24", 1.45);
+  }
+
+  function nextScrapOrFinish() {
+    if (activeResidue >= 0) {
+      residues[activeResidue].alive = false;
+      score += 130;
+      var tab = currentTab();
+      addBurst(tab.x, tab.y, "#75bf87", 10);
+      tone(680, .1, "sine", .025, 820);
+    }
+    activeResidue = -1;
+    for (var i = 0; i < residues.length; i++) {
+      if (residues[i].alive) {
+        activeResidue = i;
+        break;
+      }
+    }
+    if (activeResidue < 0) {
+      finishLevel();
+    } else {
+      scrapProgress = 0;
+      scrapBest = 0;
+      stress = 0;
+      keyboardAngle = currentDesired();
+      lastDesired = currentDesired();
+      showFeedback("ONE MORE SCRAP", "#a66d27", .9);
+    }
+  }
+
+  function finishLevel() {
+    running = false;
+    pointerDragging = false;
+    shine = 0;
+    var bonus = 250;
+    if (!tornThisLevel) {
+      combo++;
+      bonus = 400 + combo * 180;
+      showFeedback("INTACT! +" + bonus, "#198259", 1.5);
+    } else {
+      combo = 0;
+      showFeedback("OBJECT CLEAN +" + bonus, "#277954", 1.35);
+    }
+    score += bonus;
+    updateHUD();
+    successSound();
+    var l = getLayout();
+    addBurst(l.cx, l.cy, "#f8d85f", 34);
+    transitionTimer = setTimeout(function () {
+      level++;
+      running = true;
+      loadLevel();
+      lastTime = performance.now();
+    }, 1550);
+  }
+
+  function getInput() {
+    var angle = keyboardAngle;
+    var strength = 0;
+    var active = false;
+    var length = 0;
+
+    if (pointerDragging) {
+      var dx = pointerNow.x - pointerStart.x;
+      var dy = pointerNow.y - pointerStart.y;
+      length = Math.sqrt(dx * dx + dy * dy);
+      if (length > 5) angle = Math.atan2(dy, dx);
+      strength = Math.max(0, Math.min(1, (length - 10) / 105));
+      active = length > 14;
+    } else if (keys.Space && !requireSpaceRelease) {
+      angle = keyboardAngle;
+      strength = .78;
+      length = 88;
+      active = true;
+    }
+    return {angle:angle, strength:strength, active:active, length:length};
+  }
+
+  function seamHazard() {
+    if (mode !== "main") return 0;
+    for (var i = 0; i < cfg.seams.length; i++) {
+      if (Math.abs(progress - cfg.seams[i]) < .035) return 1;
+    }
+    return 0;
+  }
+
+  function glueHazard() {
+    if (mode !== "main") return 0;
+    for (var i = 0; i < cfg.glue.length; i++) {
+      if (Math.abs(progress - cfg.glue[i]) < .055) return 1;
+    }
+    return 0;
+  }
+
+  function update(dt) {
+    if (flashRed > 0) flashRed -= dt;
+    if (splitFlash > 0) splitFlash -= dt;
+    if (wobble > 0) wobble -= dt;
+    if (tearCooldown > 0) tearCooldown -= dt;
+    if (shine >= 0) {
+      shine += dt * .85;
+      if (shine > 1.3) shine = -1;
+    }
+
+    for (var f = feedback.length - 1; f >= 0; f--) {
+      feedback[f].age += dt;
+      if (feedback[f].age > feedback[f].life) feedback.splice(f, 1);
+    }
+    for (var p = particles.length - 1; p >= 0; p--) {
+      var q = particles[p];
+      q.age += dt;
+      q.x += q.vx * dt;
+      q.y += q.vy * dt;
+      q.vy += 115 * dt;
+      if (q.age > q.life) particles.splice(p, 1);
+    }
+
+    if (!running) {
+      stress = Math.max(0, stress - dt * .6);
+      updateStatus({active:false, angle:currentDesired(), strength:0});
+      return;
+    }
+
+    var desired = currentDesired();
+    if (angleDiff(desired, lastDesired) > .2) {
+      lastDesired = desired;
+      showFeedback("TURN WITH THE CHEVRONS", "#277954", 1.05);
+    }
+
+    var input = getInput();
+    var diff = angleDiff(input.angle, desired);
+    var ratio = diff / cfg.safe;
+
+    if (!input.active || tearCooldown > 0) {
+      stress = Math.max(0, stress - dt * .52);
+    } else {
+      var seam = seamHazard();
+      var glue = glueHazard();
+      if (ratio < .5) {
+        stress = Math.max(0, stress - dt * .22);
+      } else {
+        stress += cfg.stress * dt * (ratio - .38) * (.65 + input.strength * .75);
+      }
+      if (seam && ratio > .28) stress += dt * .22;
+      if (glue && ratio > .38) stress += dt * .13;
+      if (stress > .52 || ratio > .72) crackleSound();
+
+      if (stress >= 1) {
+        tear();
+        updateStatus(input);
+        return;
+      }
+
+      var quality = ratio <= 1 ? 1 - ratio * .3 : Math.max(.08, .4 - (ratio - 1) * .22);
+      var hazardSlow = glue ? .78 : 1;
+      var rate = mode === "scrap" ? .29 : cfg.rate;
+      var delta = rate * dt * (.48 + input.strength * .62) * quality * hazardSlow;
+      zipSound();
+
+      if (mode === "main") {
+        progress = Math.min(1, progress + delta);
+        if (progress > maxProgress) {
+          score += (progress - maxProgress) * 780;
+          maxProgress = progress;
+        }
+        if (progress >= 1) {
+          if (residues.some(function (r) { return r.alive; })) enterScraps();
+          else finishLevel();
+        }
+      } else {
+        scrapProgress = Math.min(1, scrapProgress + delta);
+        if (scrapProgress > scrapBest) {
+          score += (scrapProgress - scrapBest) * 130;
+          scrapBest = scrapProgress;
+        }
+        if (scrapProgress >= 1) nextScrapOrFinish();
+      }
+      updateHUD();
+    }
+
+    updateStatus(input);
+  }
+
+  function updateStatus(input) {
+    var desired = currentDesired();
+    var ratio = input ? angleDiff(input.angle, desired) / cfg.safe : 0;
+    statusEl.className = "";
+    if (!running && shine >= 0) {
+      statusEl.textContent = "SPOTLESS";
+      return;
+    }
+    if (tearCooldown > 0) {
+      statusEl.textContent = "RELEASE · REGRAB";
+      statusEl.className = "danger";
+    } else if (input && input.active && (stress > .72 || ratio > 1.05)) {
+      statusEl.textContent = "DANGER · RELEASE";
+      statusEl.className = "danger";
+    } else if (input && input.active && (stress > .38 || ratio > .62)) {
+      statusEl.textContent = "EDGE AMBER · EASE OFF";
+      statusEl.className = "amber";
+    } else if (input && input.active) {
+      statusEl.textContent = mode === "scrap" ? "LIFTING GUM" : "CLEAN PULL";
+    } else if (stress > .05) {
+      statusEl.textContent = "PAUSED · RELAXING";
+    } else {
+      statusEl.textContent = mode === "scrap" ? "GRAB THE SCRAP TAB" : "GRAB THE TAB";
+    }
+  }
+
+  function drawBackground() {
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "rgba(255,255,255,.13)");
+    grad.addColorStop(1, "rgba(95,74,39,.06)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    var l = getLayout();
+    ctx.save();
+    ctx.globalAlpha = .12;
+    ctx.fillStyle = "#4a493e";
+    ctx.beginPath();
+    ctx.ellipse(l.cx, l.oy + l.oh + 23, l.ow * .43, Math.max(8, l.oh * .07), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawObject(l) {
+    ctx.save();
+    var shakeX = wobble > 0 ? Math.sin(performance.now() * .065) * wobble * 3 : 0;
+    ctx.translate(shakeX, 0);
+
+    ctx.shadowColor = "rgba(35,39,34,.24)";
+    ctx.shadowBlur = 24;
+    ctx.shadowOffsetY = 12;
+    roundedRectPath(l.ox, l.oy, l.ow, l.oh, Math.max(20, l.oh * .12));
+    ctx.fillStyle = cfg.objectColor;
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+
+    var objectGrad = ctx.createLinearGradient(l.ox, l.oy, l.ox + l.ow, l.oy + l.oh);
+    objectGrad.addColorStop(0, "rgba(255,255,255,.4)");
+    objectGrad.addColorStop(.45, "rgba(255,255,255,.05)");
+    objectGrad.addColorStop(1, "rgba(20,35,30,.18)");
+    roundedRectPath(l.ox, l.oy, l.ow, l.oh, Math.max(20, l.oh * .12));
+    ctx.fillStyle = objectGrad;
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = cfg.dark;
+    ctx.globalAlpha = .72;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "rgba(255,255,255,.27)";
+    roundedRectPath(l.ox + 14, l.oy + 13, l.ow - 28, Math.max(8, l.oh * .055), 7);
+    ctx.fill();
+
+    if (cfg.wrap) {
+      ctx.strokeStyle = "rgba(38,49,43,.22)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(l.ox + l.ow * .16, l.oy + 8);
+      ctx.lineTo(l.ox + l.ow * .16, l.oy + l.oh - 8);
+      ctx.moveTo(l.ox + l.ow * .84, l.oy + 8);
+      ctx.lineTo(l.ox + l.ow * .84, l.oy + l.oh - 8);
+      ctx.stroke();
+    }
+
+    drawResidues(l);
+    drawSticker(l);
+
+    if (shine >= 0) {
+      ctx.save();
+      roundedRectPath(l.ox, l.oy, l.ow, l.oh, Math.max(20, l.oh * .12));
+      ctx.clip();
+      var sx = l.ox - l.ow * .4 + shine * l.ow * 1.7;
+      var sg = ctx.createLinearGradient(sx - 55, 0, sx + 55, 0);
+      sg.addColorStop(0, "rgba(255,255,255,0)");
+      sg.addColorStop(.5, "rgba(255,255,255,.8)");
+      sg.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = sg;
+      ctx.transform(1, 0, -.25, 1, 0, 0);
+      ctx.fillRect(sx, l.oy - 80, 105, l.oh + 160);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawResidueShape(x, y, size, rot, active, amount) {
+    var s = size * amount;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.beginPath();
+    ctx.moveTo(-13*s, -5*s);
+    ctx.quadraticCurveTo(-7*s, -16*s, 4*s, -10*s);
+    ctx.quadraticCurveTo(17*s, -8*s, 13*s, 4*s);
+    ctx.quadraticCurveTo(8*s, 14*s, -3*s, 10*s);
+    ctx.quadraticCurveTo(-18*s, 12*s, -13*s, -5*s);
+    ctx.closePath();
+    ctx.fillStyle = active ? "#b97b3c" : "#9a713e";
+    ctx.globalAlpha = active ? .88 : .62;
+    ctx.fill();
+    ctx.strokeStyle = active ? "#74431e" : "#735634";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawResidues(l) {
+    for (var i = 0; i < residues.length; i++) {
+      var r = residues[i];
+      if (!r.alive) continue;
+      var amount = i === activeResidue && mode === "scrap" ? Math.max(.14, 1 - scrapProgress * .86) : 1;
+      drawResidueShape(l.sx + r.x*l.sw, l.sy + r.y*l.sh, r.size, r.rot, i === activeResidue, amount);
+    }
+  }
+
+  function labelPath(l) {
+    roundedRectPath(l.sx, l.sy, l.sw, l.sh, Math.min(22, l.sh * .22));
+  }
+
+  function drawSticker(l) {
+    if (progress >= 1) return;
+    var peelX = l.sx + progress * l.sw;
+
+    ctx.save();
+    labelPath(l);
+    ctx.clip();
+    ctx.beginPath();
+    ctx.rect(peelX, l.sy - 4, l.sx + l.sw - peelX + 5, l.sh + 8);
+    ctx.clip();
+
+    ctx.shadowColor = "rgba(45,42,29,.23)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+    labelPath(l);
+    ctx.fillStyle = cfg.labelColor;
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+
+    var lg = ctx.createLinearGradient(l.sx, l.sy, l.sx, l.sy + l.sh);
+    lg.addColorStop(0, "rgba(255,255,255,.55)");
+    lg.addColorStop(.48, "rgba(255,255,255,0)");
+    lg.addColorStop(1, "rgba(120,90,38,.12)");
+    ctx.fillStyle = lg;
+    ctx.fillRect(l.sx, l.sy, l.sw, l.sh);
+
+    ctx.strokeStyle = "rgba(68,66,45,.21)";
+    ctx.lineWidth = 2;
+    labelPath(l);
+    ctx.stroke();
+
+    ctx.fillStyle = cfg.dark;
+    ctx.globalAlpha = .84;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 " + Math.max(16, Math.min(36, l.sh * .28)) + "px system-ui, sans-serif";
+    ctx.fillText(cfg.text, l.cx, l.cy - 4);
+    ctx.font = "800 " + Math.max(8, l.sh * .08) + "px system-ui, sans-serif";
+    ctx.letterSpacing = "2px";
+    ctx.fillText("DO NOT REMOVE", l.cx, l.cy + l.sh * .25);
+    ctx.letterSpacing = "0px";
+
+    for (var g = 0; g < cfg.glue.length; g++) {
+      var gx = l.sx + cfg.glue[g] * l.sw;
+      ctx.fillStyle = "rgba(101,67,31,.19)";
+      ctx.beginPath();
+      ctx.ellipse(gx, l.cy + Math.sin(g*3)*l.sh*.18, l.sh*.13, l.sh*.2, g*.7, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    ctx.setLineDash([5,4]);
+    for (var s = 0; s < cfg.seams.length; s++) {
+      var seamX = l.sx + cfg.seams[s] * l.sw;
+      ctx.strokeStyle = "rgba(153,69,52,.58)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(seamX, l.sy + 5);
+      ctx.lineTo(seamX, l.sy + l.sh - 5);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    var input = getInput();
+    var desired = currentDesired();
+    var ratio = input.active ? angleDiff(input.angle, desired) / cfg.safe : 0;
+    var amber = stress > .35 || ratio > .62;
+    var danger = stress > .75 || ratio > 1.08;
+
+    ctx.save();
+    ctx.strokeStyle = danger ? "#cf3d37" : (amber ? "#e49735" : "#f3e9c5");
+    ctx.lineWidth = 5 + stress * 4;
+    ctx.beginPath();
+    var wave = 3 + stress * 5;
+    ctx.moveTo(peelX, l.sy + 3);
+    ctx.bezierCurveTo(peelX-wave, l.sy+l.sh*.28, peelX+wave, l.sy+l.sh*.65, peelX, l.sy+l.sh-3);
+    ctx.stroke();
+
+    var curlW = Math.max(9, l.sh * (.09 + stress * .055));
+    var curlGrad = ctx.createLinearGradient(peelX-curlW,0,peelX+curlW,0);
+    curlGrad.addColorStop(0,"rgba(95,78,43,.24)");
+    curlGrad.addColorStop(.5,"#fffce9");
+    curlGrad.addColorStop(1,"rgba(114,83,40,.36)");
+    ctx.fillStyle = curlGrad;
+    ctx.beginPath();
+    ctx.ellipse(peelX + 2, l.cy, curlW, l.sh*.43, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = amber ? "#d88a2e" : "rgba(72,67,48,.25)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    if (splitFlash > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, splitFlash * 2);
+      ctx.strokeStyle = "#e43f39";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(peelX - 8, l.cy - l.sh*.42);
+      ctx.lineTo(peelX + 8, l.cy - l.sh*.2);
+      ctx.lineTo(peelX - 7, l.cy);
+      ctx.lineTo(peelX + 10, l.cy + l.sh*.2);
+      ctx.lineTo(peelX - 4, l.cy + l.sh*.43);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawChevrons(tab, desired) {
+    ctx.save();
+    ctx.translate(tab.x, tab.y);
+    ctx.rotate(desired);
+
+    var coneLength = Math.max(70, Math.min(120, W * .17));
+    ctx.fillStyle = "rgba(48,169,104,.10)";
+    ctx.beginPath();
+    ctx.moveTo(15, 0);
+    ctx.lineTo(coneLength, -30);
+    ctx.lineTo(coneLength, 30);
+    ctx.closePath();
+    ctx.fill();
+
+    for (var i = 0; i < 3; i++) {
+      var x = 47 + i * 23;
+      var pulse = .65 + .35 * Math.sin(performance.now() * .006 - i * .75);
+      ctx.globalAlpha = pulse;
+      ctx.strokeStyle = "#25a56e";
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x - 10, -10);
+      ctx.lineTo(x, 0);
+      ctx.lineTo(x - 10, 10);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTab() {
+    if (!cfg || progress >= 1 && mode !== "scrap") return;
+    var tab = currentTab();
+    var desired = currentDesired();
+    var input = getInput();
+    var shake = wobble > 0 ? Math.sin(performance.now() * .07) * wobble * 7 : 0;
+
+    drawChevrons(tab, desired);
+
+    ctx.save();
+    ctx.translate(tab.x + shake, tab.y);
+    if (input.active) ctx.rotate(input.angle);
+    else ctx.rotate(desired);
+
+    if (input.active) {
+      var stretch = 44 + input.strength * 58;
+      ctx.strokeStyle = stress > .7 ? "rgba(200,55,49,.65)" : (stress > .35 ? "rgba(221,139,39,.62)" : "rgba(58,122,88,.34)");
+      ctx.lineWidth = 13 + stress * 6;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(stretch,0);
+      ctx.stroke();
+    }
+
+    var r = tab.radius;
+    ctx.shadowColor = "rgba(38,39,32,.24)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 5;
+    roundedRectPath(-r*.7, -r*.42, r*1.4, r*.84, r*.3);
+    ctx.fillStyle = stress > .72 ? "#e79a77" : (stress > .35 ? "#f3bd69" : "#fff7cf");
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = stress > .72 ? "#b8483d" : "#40534c";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = stress > .72 ? "#a53b36" : "#2b7858";
+    ctx.beginPath();
+    ctx.moveTo(r*.05, -8);
+    ctx.lineTo(r*.3, 0);
+    ctx.lineTo(r*.05, 8);
+    ctx.lineTo(r*.1, 2);
+    ctx.lineTo(-r*.25, 2);
+    ctx.lineTo(-r*.25, -2);
+    ctx.lineTo(r*.1, -2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    if (stress > .02) {
+      ctx.save();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(47,54,49,.13)";
+      ctx.beginPath();
+      ctx.arc(tab.x, tab.y, tab.radius + 9, -Math.PI/2, Math.PI*1.5);
+      ctx.stroke();
+      ctx.strokeStyle = stress > .72 ? "#cf413c" : "#dc8b2d";
+      ctx.beginPath();
+      ctx.arc(tab.x, tab.y, tab.radius + 9, -Math.PI/2, -Math.PI/2 + Math.PI*2*Math.min(1,stress));
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawFeedback() {
+    for (var i = 0; i < feedback.length; i++) {
+      var f = feedback[i];
+      var t = f.age / f.life;
+      var alpha = Math.min(1, f.age * 7) * Math.min(1, (1-t) * 4);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "900 " + Math.max(16, Math.min(28, W*.045)) + "px system-ui, sans-serif";
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "rgba(255,250,236,.9)";
+      ctx.strokeText(f.text, W/2, H*.29 - t*31 - i*5);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, W/2, H*.29 - t*31 - i*5);
+      ctx.restore();
+    }
+
+    for (var p = 0; p < particles.length; p++) {
+      var q = particles[p];
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - q.age/q.life);
+      ctx.fillStyle = q.color;
+      ctx.translate(q.x,q.y);
+      ctx.rotate(q.age*5);
+      ctx.fillRect(-q.size/2,-q.size/2,q.size,q.size);
+      ctx.restore();
+    }
+  }
+
+  function draw() {
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,W,H);
+    if (!cfg) cfg = buildConfig(1);
+    drawBackground();
+    drawObject(getLayout());
+    if (running || tearCooldown > 0) drawTab();
+    drawFeedback();
+    if (flashRed > 0) {
+      ctx.fillStyle = "rgba(205,42,37," + Math.max(0,flashRed*.45) + ")";
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function loop(now) {
+    var dt = Math.min(.034, Math.max(.001, (now-lastTime)/1000 || .016));
+    lastTime = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function pointerPosition(e) {
+    var r = canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+
+  canvas.addEventListener("pointerdown", function (e) {
+    if (!running || tearCooldown > 0) return;
+    initAudio();
+    var pos = pointerPosition(e);
+    var tab = currentTab();
+    var dx = pos.x-tab.x, dy = pos.y-tab.y;
+    if (dx*dx+dy*dy <= Math.pow(tab.radius+18,2)) {
+      pointerDragging = true;
+      pointerId = e.pointerId;
+      pointerStart.x = pos.x;
+      pointerStart.y = pos.y;
+      pointerNow.x = pos.x;
+      pointerNow.y = pos.y;
+      canvas.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    } else {
+      wobble = .22;
+      showFeedback("GRAB THE BIG TAB", "#596861", .7);
+    }
+  });
+
+  canvas.addEventListener("pointermove", function (e) {
+    if (!pointerDragging || e.pointerId !== pointerId) return;
+    var pos = pointerPosition(e);
+    pointerNow.x = pos.x;
+    pointerNow.y = pos.y;
+    e.preventDefault();
+  });
+
+  function endPointer(e) {
+    if (!pointerDragging || e.pointerId !== pointerId) return;
+    pointerDragging = false;
+    if (stress > .52) {
+      wobble = .38;
+      showFeedback("GOOD PAUSE · TENSION DOWN", "#287b58", .9);
+      tone(330,.09,"sine",.018,260);
+    }
+    e.preventDefault();
+  }
+
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("lostpointercapture", function () { pointerDragging = false; });
+
+  window.addEventListener("keydown", function (e) {
+    if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].indexOf(e.code) >= 0) e.preventDefault();
+    keys[e.code] = true;
+    if (!running) return;
+    initAudio();
+
+    var x = 0, y = 0;
+    if (keys.ArrowLeft) x -= 1;
+    if (keys.ArrowRight) x += 1;
+    if (keys.ArrowUp) y -= 1;
+    if (keys.ArrowDown) y += 1;
+    if (x !== 0 || y !== 0) keyboardAngle = Math.atan2(y,x);
+  }, {passive:false});
+
+  window.addEventListener("keyup", function (e) {
+    if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].indexOf(e.code) >= 0) e.preventDefault();
+    if (e.code === "Space") {
+      if (stress > .52 && running) {
+        wobble = .38;
+        showFeedback("GOOD PAUSE · TENSION DOWN", "#287b58", .9);
+      }
+      requireSpaceRelease = false;
+    }
+    keys[e.code] = false;
+
+    var x = 0, y = 0;
+    if (keys.ArrowLeft) x -= 1;
+    if (keys.ArrowRight) x += 1;
+    if (keys.ArrowUp) y -= 1;
+    if (keys.ArrowDown) y += 1;
+    if (x !== 0 || y !== 0) keyboardAngle = Math.atan2(y,x);
+  }, {passive:false});
+
+  startBtn.addEventListener("click", function () {
+    rulesEl.style.display = "grid";
+    panelTitle.innerHTML = "Sticker<br>Spite";
+    panelLead.textContent = "Remove the label. Leave no grudge.";
+    resultEl.textContent = "";
+    startBtn.textContent = "START PEELING";
+    startGame();
+  });
+
+  soundBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? "♪" : "×";
+    soundBtn.setAttribute("aria-label", soundOn ? "Mute sound" : "Enable sound");
+    if (soundOn) {
+      initAudio();
+      tone(620,.09,"sine",.025,760);
+    }
+  });
+
+  window.addEventListener("resize", resize);
+  document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  resize();
+  cfg = buildConfig(1);
+  lastDesired = currentDesired();
+  updateLives();
+  updateHUD();
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}());
+</script>
+</body>
+</html>

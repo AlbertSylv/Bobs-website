@@ -246,6 +246,15 @@
       "path": "games/desk-fan-drift/",
       "mobile": true,
       "thumbnail": "games/desk-fan-drift/cover.webp"
+    },
+    {
+      "slug": "sticker-spite",
+      "title": "Sticker Spite",
+      "tagline": "Remove the label. Leave no grudge.",
+      "date": "2026-08-02",
+      "path": "games/sticker-spite/",
+      "mobile": true,
+      "thumbnail": "games/sticker-spite/cover.webp"
     }
   ]
 }
