@@ -1,0 +1,11 @@
+{
+  "title": "Sunprint Shuffle",
+  "slug": "sunprint-shuffle",
+  "tagline": "Arrange the oddments. Let sunshine judge.",
+  "concept": "Build playful cyanotype pictures by arranging everyday objects to match bold target silhouettes.",
+  "core_loop": "Drag and rotate two to four objects over the target, watch the live outline fill, then expose the print; quick visual improvement, surprising overlaps, and instant retries make each 5–15 second arrangement satisfying.",
+  "mechanics": "Controls: drag objects with a finger or pointer; tap large rotate-left and rotate-right buttons, or use arrow keys to move, Tab to select, and Q/E to rotate; tap or press Space to expose.; Win/lose: covering enough of the target earns a completed print, while excessive gaps or spill produces a blotched attempt that can be retried immediately with no timer or penalty.; Scoring: each print earns one to three sun seals based on visible target coverage and spill outside the outline, with a live accuracy ring showing progress before exposure.",
+  "feedback": "Correct coverage turns the outline deep blue and exposure produces a crisp print with a warm paper-flutter sound; mistakes bloom into pale gaps and dark spill with a dry little buzz; near-misses make the remaining uncovered edges pulse amber and show exactly where adjustment is needed.",
+  "difficulty": "The opening prints use two distinct objects, generous outlines, and coarse rotation steps; later prints add tighter silhouettes, overlapping objects, similar shapes, and optional three-seal targets while remaining untimed.",
+  "mobile": true
+}

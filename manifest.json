@@ -228,6 +228,15 @@
       "path": "games/chair-committee/",
       "mobile": true,
       "thumbnail": "games/chair-committee/cover.webp"
+    },
+    {
+      "slug": "sunprint-shuffle",
+      "title": "Sunprint Shuffle",
+      "tagline": "Arrange the oddments. Let sunshine judge.",
+      "date": "2026-08-02",
+      "path": "games/sunprint-shuffle/",
+      "mobile": true,
+      "thumbnail": "games/sunprint-shuffle/cover.webp"
     }
   ]
 }
