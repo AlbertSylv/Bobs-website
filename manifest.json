@@ -269,6 +269,15 @@
       "path": "games/sticker-spite/",
       "mobile": true,
       "thumbnail": "games/sticker-spite/cover.webp"
+    },
+    {
+      "slug": "act-normal",
+      "title": "Act Normal",
+      "tagline": "One thing in this room is doing a bad job of it.",
+      "date": "2026-08-06",
+      "path": "games/act-normal/",
+      "mobile": true,
+      "thumbnail": "games/act-normal/cover.webp"
     }
   ]
 }

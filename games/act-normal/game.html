@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Act Normal</title>
+<style>
+  :root {
+    --ink: #f6f4e9;
+    --muted: #aeb7c5;
+    --panel: rgba(15, 20, 31, 0.92);
+    --line: rgba(255,255,255,0.12);
+    --cyan: #6ce5ff;
+    --green: #66f59a;
+    --red: #ff6070;
+    --orange: #ffad42;
+    --gold: #ffd66b;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    color: var(--ink);
+    background: #111724;
+    font-family: ui-rounded, "Trebuchet MS", Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  #app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% -15%, rgba(108,229,255,0.1), transparent 40%),
+      #111724;
+  }
+
+  header {
+    flex: 0 0 auto;
+    min-height: 70px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(10, 14, 23, 0.94);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    z-index: 3;
+  }
+
+  .brand {
+    min-width: 180px;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: clamp(22px, 3.1vw, 36px);
+    line-height: 0.95;
+    letter-spacing: -1px;
+    text-transform: uppercase;
+  }
+
+  .tagline {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: clamp(10px, 1.35vw, 13px);
+    white-space: nowrap;
+  }
+
+  .hud {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    min-width: 67px;
+    padding: 6px 9px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.045);
+    text-align: center;
+    line-height: 1.05;
+  }
+
+  .stat-label {
+    display: block;
+    color: #8f9baa;
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    display: block;
+    margin-top: 3px;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  #streakValue {
+    color: var(--gold);
+  }
+
+  #hearts {
+    min-width: 88px;
+    white-space: nowrap;
+  }
+
+  .heart {
+    display: inline-block;
+    color: var(--red);
+    margin: 0 1px;
+    font-size: 19px;
+    filter: drop-shadow(0 0 6px rgba(255,96,112,0.35));
+    transition: transform 0.2s, opacity 0.2s, color 0.2s;
+  }
+
+  .heart.lost {
+    color: #455061;
+    opacity: 0.45;
+    transform: scale(0.8);
+    filter: none;
+  }
+
+  #stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+  }
+
+  #toast {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    max-width: calc(100% - 24px);
+    padding: 7px 13px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 999px;
+    background: rgba(9,13,22,0.82);
+    color: #e8edf3;
+    box-shadow: 0 7px 22px rgba(0,0,0,0.25);
+    font-size: clamp(10px, 1.7vw, 13px);
+    font-weight: 900;
+    letter-spacing: 0.7px;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  #toast.good {
+    color: var(--green);
+    border-color: rgba(102,245,154,0.45);
+  }
+
+  #toast.bad {
+    color: var(--red);
+    border-color: rgba(255,96,112,0.5);
+  }
+
+  #toast.warm {
+    color: var(--orange);
+    border-color: rgba(255,173,66,0.5);
+  }
+
+  footer {
+    flex: 0 0 auto;
+    min-height: 64px;
+    padding: 7px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid var(--line);
+    background: rgba(10,14,23,0.97);
+    z-index: 3;
+  }
+
+  .help {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .how {
+    color: #dce2ea;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .scoring {
+    margin-top: 3px;
+    color: #7f8b9b;
+    font-size: 10px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .control-button {
+    height: 46px;
+    min-width: 46px;
+    min-height: 46px;
+    padding: 0 10px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 10px;
+    color: var(--ink);
+    background: linear-gradient(#293244, #1b2331);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 3px 8px rgba(0,0,0,0.25);
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .control-button:focus-visible {
+    outline: 3px solid var(--cyan);
+    outline-offset: 2px;
+  }
+
+  .control-button:active {
+    transform: translateY(2px);
+    background: #151c28;
+  }
+
+  .control-button.select {
+    min-width: 76px;
+    border-color: rgba(108,229,255,0.45);
+    color: var(--cyan);
+  }
+
+  .dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(2, 46px);
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+
+  .dpad .control-button {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    min-height: 46px;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  #upButton {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  #leftButton {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  #downButton {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  #rightButton {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(5,8,14,0.72);
+    backdrop-filter: blur(5px);
+  }
+
+  #overlay.hidden {
+    display: none;
+  }
+
+  .modal {
+    width: min(420px, 100%);
+    padding: 25px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 18px;
+    background: linear-gradient(160deg, #202a3b, #121824);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.55);
+    text-align: center;
+  }
+
+  .modal .eyebrow {
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .modal h2 {
+    margin: 8px 0 5px;
+    font-size: clamp(28px, 7vw, 44px);
+    text-transform: uppercase;
+  }
+
+  .modal p {
+    margin: 8px 0;
+    color: #b9c3d0;
+    line-height: 1.45;
+  }
+
+  .final-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 18px 0;
+  }
+
+  .final-box {
+    min-width: 100px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .final-box strong {
+    display: block;
+    font-size: 27px;
+  }
+
+  .final-box span {
+    color: #8e9baa;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  #restartModal {
+    width: 100%;
+    height: 48px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--green);
+    color: #102018;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  @media (max-width: 650px), (hover: none) and (pointer: coarse) {
+    header {
+      min-height: 64px;
+      padding: 8px 9px;
+      gap: 7px;
+    }
+
+    .brand {
+      min-width: 126px;
+      flex: 1;
+    }
+
+    .brand h1 {
+      font-size: 23px;
+    }
+
+    .tagline {
+      max-width: 175px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 9px;
+    }
+
+    .hud {
+      gap: 4px;
+      flex-wrap: nowrap;
+    }
+
+    .stat {
+      min-width: 48px;
+      padding: 5px;
+    }
+
+    .stat-label {
+      font-size: 7px;
+    }
+
+    .stat-value {
+      font-size: 15px;
+    }
+
+    #hearts {
+      min-width: 66px;
+    }
+
+    .heart {
+      font-size: 15px;
+    }
+
+    footer {
+      min-height: 0;
+      padding: 6px 8px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+    }
+
+    .help {
+      flex: 0 0 auto;
+      text-align: center;
+    }
+
+    .how {
+      font-size: 10px;
+    }
+
+    .scoring {
+      font-size: 8px;
+    }
+
+    .controls {
+      width: 100%;
+      gap: 5px;
+    }
+
+    .control-button.select {
+      min-width: 64px;
+      padding: 0 7px;
+      font-size: 11px;
+    }
+
+    .control-button.restart {
+      width: 46px;
+      min-width: 46px;
+      padding: 0;
+    }
+  }
+
+  @media (max-width: 390px) {
+    header {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    .brand {
+      min-width: 105px;
+    }
+
+    .brand h1 {
+      font-size: 20px;
+    }
+
+    .tagline {
+      max-width: 125px;
+    }
+
+    .stat {
+      min-width: 43px;
+      padding-left: 3px;
+      padding-right: 3px;
+    }
+
+    #hearts {
+      min-width: 58px;
+    }
+
+    .heart {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .controls {
+      gap: 4px;
+    }
+
+    .control-button.select {
+      min-width: 58px;
+      padding: 0 5px;
+      font-size: 10px;
+    }
+  }
+
+  @media (max-height: 520px) {
+    header {
+      min-height: 53px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+
+    .tagline {
+      margin-top: 2px;
+    }
+
+    .scoring {
+      display: none;
+    }
+
+    .control-button {
+      height: 46px;
+      min-height: 46px;
+    }
+  }
+
+  @media (max-height: 520px) and (min-width: 540px) {
+    footer {
+      min-height: 54px;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .help {
+      text-align: left;
+    }
+
+    .dpad {
+      display: flex;
+      gap: 3px;
+    }
+
+    .dpad .control-button {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    #upButton,
+    #leftButton,
+    #downButton,
+    #rightButton {
+      grid-column: auto;
+      grid-row: auto;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>Act Normal</h1>
+      <div class="tagline">One thing in this room is doing a bad job of it.</div>
+    </div>
+    <div class="hud" aria-label="Game status">
+      <div class="stat">
+        <span class="stat-label">Room</span>
+        <span class="stat-value" id="roomValue">1</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Score</span>
+        <span class="stat-value" id="scoreValue">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value" id="streakValue">×0</span>
+      </div>
+      <div class="stat" id="hearts" aria-label="Three hearts"></div>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="gameCanvas" tabindex="0" aria-label="Room containing selectable everyday objects"></canvas>
+    <div id="toast" role="status" aria-live="polite">Room 01 · Take your time.</div>
+    <div id="overlay" class="hidden">
+      <div class="modal">
+        <div class="eyebrow">The room noticed</div>
+        <h2>Not Normal</h2>
+        <p id="culpritText">The mug was the odd one.</p>
+        <div class="final-row">
+          <div class="final-box"><strong id="finalScore">0</strong><span>Score</span></div>
+          <div class="final-box"><strong id="finalRooms">0</strong><span>Rooms cleared</span></div>
+        </div>
+        <button id="restartModal" type="button">Try Another Run</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="help">
+      <div class="how"><strong>How to play:</strong> tap an object, or use arrows + Space. Find the one acting wrong. R restarts.</div>
+      <div class="scoring">+1 per room · +1 first try · three wrong picks end the run</div>
+    </div>
+    <div class="controls" aria-label="Touch controls">
+      <div class="dpad" role="group" aria-label="Object navigation">
+        <button class="control-button" id="upButton" type="button" aria-label="Move selection up">▲</button>
+        <button class="control-button" id="leftButton" type="button" aria-label="Move selection left">◀</button>
+        <button class="control-button" id="downButton" type="button" aria-label="Move selection down">▼</button>
+        <button class="control-button" id="rightButton" type="button" aria-label="Move selection right">▶</button>
+      </div>
+      <button class="control-button select" id="selectButton" type="button">SELECT</button>
+      <button class="control-button restart" id="restartButton" type="button" aria-label="Restart game">↻</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("gameCanvas");
+  var ctx = canvas.getContext("2d");
+  var stage = document.getElementById("stage");
+  var toast = document.getElementById("toast");
+  var overlay = document.getElementById("overlay");
+  var roomValue = document.getElementById("roomValue");
+  var scoreValue = document.getElementById("scoreValue");
+  var streakValue = document.getElementById("streakValue");
+  var heartsNode = document.getElementById("hearts");
+  var finalScore = document.getElementById("finalScore");
+  var finalRooms = document.getElementById("finalRooms");
+  var culpritText = document.getElementById("culpritText");
+
+  var W = 0;
+  var H = 0;
+  var DPR = 1;
+  var audioContext = null;
+  var runToken = 0;
+
+  var typeNames = {
+    mug: "mug",
+    clock: "clock",
+    lamp: "lamp",
+    plant: "plant",
+    frame: "picture frame",
+    chair: "chair",
+    vase: "vase",
+    books: "books",
+    shoe: "shoe",
+    pillow: "pillow",
+    kettle: "kettle",
+    umbrella: "umbrella"
+  };
+
+  var allTypes = [
+    "mug", "clock", "lamp", "plant", "frame", "chair",
+    "vase", "books", "shoe", "pillow", "kettle", "umbrella"
+  ];
+
+  var state = {
+    room: 1,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    lives: 3,
+    cleared: 0,
+    mistakesRoom: 0,
+    objects: [],
+    focusIndex: 0,
+    keyboardFocus: false,
+    found: false,
+    processing: false,
+    gameOver: false,
+    revealLose: false,
+    culpritType: "",
+    previousCulprit: "",
+    pop: null
+  };
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function shuffle(array) {
+    var copy = array.slice();
+    var i;
+    for (i = copy.length - 1; i > 0; i -= 1) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = temp;
+    }
+    return copy;
+  }
+
+  function roundedRectPath(c, x, y, width, height, radius) {
+    var r = Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2);
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + width - r, y);
+    c.quadraticCurveTo(x + width, y, x + width, y + r);
+    c.lineTo(x + width, y + height - r);
+    c.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    c.lineTo(x + r, y + height);
+    c.quadraticCurveTo(x, y + height, x, y + height - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.closePath();
+  }
+
+  function ellipse(c, x, y, rx, ry) {
+    c.beginPath();
+    c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  }
+
+  function resizeCanvas() {
+    var rect = stage.getBoundingClientRect();
+    W = Math.max(1, rect.width);
+    H = Math.max(1, rect.height);
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    layoutObjects();
+  }
+
+  function layoutObjects() {
+    var n = state.objects.length;
+    if (!n || !W || !H) {
+      return;
+    }
+
+    var topCount = Math.ceil(n / 2);
+    var bottomCount = n - topCount;
+    var maxCols = Math.max(topCount, bottomCount);
+    var usableHeight = Math.max(180, H - 35);
+    var scale = clamp(Math.min(W / (maxCols * 138), usableHeight / 285), 0.42, 1.22);
+    var topY = H * 0.34;
+    var bottomY = H * 0.72;
+    var index = 0;
+    var row;
+    var count;
+    var col;
+
+    for (row = 0; row < 2; row += 1) {
+      count = row === 0 ? topCount : bottomCount;
+      if (count <= 0) {
+        continue;
+      }
+
+      for (col = 0; col < count; col += 1) {
+        var object = state.objects[index];
+        object.x = (col + 1) * W / (count + 1);
+        object.y = row === 0 ? topY : bottomY;
+        object.s = scale;
+        object.row = row;
+        index += 1;
+      }
+    }
+  }
+
+  function updateHud() {
+    roomValue.textContent = String(state.room);
+    scoreValue.textContent = String(state.score);
+    streakValue.textContent = "×" + state.streak;
+
+    var hearts = "";
+    var i;
+    for (i = 0; i < 3; i += 1) {
+      hearts += '<span class="heart' + (i >= state.lives ? " lost" : "") + '">♥</span>';
+    }
+
+    heartsNode.innerHTML = hearts;
+    heartsNode.setAttribute("aria-label", state.lives + " hearts remaining");
+  }
+
+  function setToast(text, kind) {
+    toast.textContent = text;
+    toast.className = kind || "";
+  }
+
+  function ensureAudio() {
+    if (!audioContext) {
+      var AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtor) {
+        audioContext = new AudioCtor();
+      }
+    }
+
+    if (audioContext && audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }
+
+  function tone(frequency, duration, type, volume, delay, endFrequency) {
+    if (!audioContext) {
+      return;
+    }
+
+    var now = audioContext.currentTime + (delay || 0);
+    var osc = audioContext.createOscillator();
+    var gain = audioContext.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(frequency, now);
+
+    if (endFrequency) {
+      osc.frequency.exponentialRampToValueAtTime(endFrequency, now + duration);
+    }
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume || 0.08, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.03);
+  }
+
+  function playCorrect() {
+    tone(410, 0.1, "triangle", 0.09, 0, 480);
+    tone(660, 0.13, "triangle", 0.075, 0.095, 700);
+  }
+
+  function playWrong(close) {
+    tone(close ? 145 : 105, 0.18, "sine", 0.11, 0, close ? 90 : 55);
+    tone(close ? 215 : 72, 0.09, "square", 0.025, 0.015, 65);
+  }
+
+  function createObject(type, culprit, index) {
+    return {
+      id: state.room + "-" + index + "-" + type,
+      type: type,
+      culprit: culprit,
+      picked: false,
+      x: 0,
+      y: 0,
+      s: 1,
+      row: 0,
+      ring: null,
+      shakeUntil: 0,
+      hintUntil: 0
+    };
+  }
+
+  function generateRoom() {
+    state.found = false;
+    state.processing = false;
+    state.revealLose = false;
+    state.mistakesRoom = 0;
+    state.pop = null;
+
+    var count = Math.min(9, 4 + Math.floor((state.room - 1) / 2));
+    var types;
+    var culprit;
+
+    if (state.room === 1) {
+      types = shuffle(["mug", "plant", "clock", "lamp"]);
+      culprit = "mug";
+    } else if (state.room === 2) {
+      types = shuffle(["vase", "chair", "frame", "books"]);
+      culprit = "vase";
+    } else {
+      types = shuffle(allTypes).slice(0, count);
+      var eligible = types.filter(function (type) {
+        return type !== state.previousCulprit;
+      });
+      culprit = eligible[Math.floor(Math.random() * eligible.length)];
+    }
+
+    state.previousCulprit = culprit;
+    state.culpritType = culprit;
+    state.objects = types.map(function (type, index) {
+      return createObject(type, type === culprit, index);
+    });
+    state.focusIndex = 0;
+    layoutObjects();
+    updateHud();
+    setToast("Room " + String(state.room).padStart(2, "0") + " · Take your time.", "");
+  }
+
+  function restartGame() {
+    runToken += 1;
+    state.room = 1;
+    state.score = 0;
+    state.streak = 0;
+    state.bestStreak = 0;
+    state.lives = 3;
+    state.cleared = 0;
+    state.objects = [];
+    state.focusIndex = 0;
+    state.keyboardFocus = false;
+    state.found = false;
+    state.processing = false;
+    state.gameOver = false;
+    state.revealLose = false;
+    state.previousCulprit = "";
+    overlay.classList.add("hidden");
+    generateRoom();
+  }
+
+  function getCulprit() {
+    var i;
+    for (i = 0; i < state.objects.length; i += 1) {
+      if (state.objects[i].culprit) {
+        return state.objects[i];
+      }
+    }
+    return null;
+  }
+
+  function isClosePick(object, culprit) {
+    var nearest = Infinity;
+    var chosenDistance = Math.hypot(object.x - culprit.x, object.y - culprit.y);
+    var i;
+
+    for (i = 0; i < state.objects.length; i += 1) {
+      var other = state.objects[i];
+      if (other === culprit) {
+        continue;
+      }
+      nearest = Math.min(nearest, Math.hypot(other.x - culprit.x, other.y - culprit.y));
+    }
+
+    return chosenDistance <= nearest * 1.12;
+  }
+
+  function pickObject(index) {
+    if (state.processing || state.gameOver || index < 0 || index >= state.objects.length) {
+      return;
+    }
+
+    ensureAudio();
+    state.focusIndex = index;
+    var object = state.objects[index];
+    var culprit = getCulprit();
+    var now = performance.now();
+
+    if (object.picked && !object.culprit) {
+      object.shakeUntil = now + 180;
+      setToast("Already checked. Still ordinary.", "");
+      return;
+    }
+
+    if (object.culprit) {
+      state.processing = true;
+      state.found = true;
+      object.ring = {
+        type: "correct",
+        color: "#66f59a",
+        until: now + 1150
+      };
+
+      var firstTry = state.mistakesRoom === 0;
+      var gained = firstTry ? 2 : 1;
+      state.score += gained;
+      state.cleared += 1;
+
+      if (firstTry) {
+        state.streak += 1;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+      }
+
+      state.pop = {
+        x: object.x,
+        y: object.y - 54 * object.s,
+        text: "+" + gained,
+        subtitle: firstTry ? "FIRST TRY" : "ROOM CLEAR",
+        start: now,
+        until: now + 1000
+      };
+
+      updateHud();
+      playCorrect();
+      setToast(firstTry ? "Normal enough · +2 first try." : "Found it · +1.", "good");
+
+      var correctToken = runToken;
+      window.setTimeout(function () {
+        if (correctToken !== runToken || state.gameOver) {
+          return;
+        }
+
+        state.room += 1;
+        generateRoom();
+      }, 1150);
+      return;
+    }
+
+    object.picked = true;
+    state.mistakesRoom += 1;
+    state.lives -= 1;
+    state.streak = 0;
+    state.processing = true;
+    object.shakeUntil = now + 480;
+
+    var close = isClosePick(object, culprit);
+    object.ring = {
+      type: close ? "close" : "wrong",
+      color: close ? "#ffad42" : "#ff6070",
+      until: now + 1050
+    };
+    culprit.hintUntil = now + (close ? 1050 : 650);
+
+    updateHud();
+    playWrong(close);
+
+    if (state.lives <= 0) {
+      state.revealLose = true;
+      culprit.hintUntil = now + 1500;
+      culprit.ring = {
+        type: "reveal",
+        color: "#ffd66b",
+        until: now + 1600
+      };
+      setToast("Three bad guesses. The room wins.", "bad");
+
+      var loseToken = runToken;
+      window.setTimeout(function () {
+        if (loseToken !== runToken) {
+          return;
+        }
+        showGameOver();
+      }, 950);
+    } else {
+      if (close) {
+        setToast("Warm. Something nearby twitched.", "warm");
+      } else {
+        setToast("Nope. That one is merely disappointing.", "bad");
+      }
+
+      var wrongToken = runToken;
+      window.setTimeout(function () {
+        if (wrongToken === runToken && !state.gameOver) {
+          state.processing = false;
+        }
+      }, 480);
+    }
+  }
+
+  function showGameOver() {
+    state.gameOver = true;
+    state.processing = true;
+    finalScore.textContent = String(state.score);
+    finalRooms.textContent = String(state.cleared);
+    culpritText.textContent = "The " + typeNames[state.culpritType] + " was the odd one.";
+    overlay.classList.remove("hidden");
+  }
+
+  function moveFocus(direction) {
+    if (state.gameOver || !state.objects.length) {
+      return;
+    }
+
+    state.keyboardFocus = true;
+    var current = state.objects[state.focusIndex];
+    var bestIndex = -1;
+    var bestScore = Infinity;
+    var i;
+
+    for (i = 0; i < state.objects.length; i += 1) {
+      if (i === state.focusIndex) {
+        continue;
+      }
+
+      var candidate = state.objects[i];
+      var dx = candidate.x - current.x;
+      var dy = candidate.y - current.y;
+      var valid = false;
+      var directional = 0;
+      var side = 0;
+
+      if (direction === "left" && dx < -2) {
+        valid = true;
+        directional = -dx;
+        side = Math.abs(dy);
+      } else if (direction === "right" && dx > 2) {
+        valid = true;
+        directional = dx;
+        side = Math.abs(dy);
+      } else if (direction === "up" && dy < -2) {
+        valid = true;
+        directional = -dy;
+        side = Math.abs(dx);
+      } else if (direction === "down" && dy > 2) {
+        valid = true;
+        directional = dy;
+        side = Math.abs(dx);
+      }
+
+      if (valid) {
+        var score = directional + side * 1.7;
+        if (score < bestScore) {
+          bestScore = score;
+          bestIndex = i;
+        }
+      }
+    }
+
+    if (bestIndex < 0) {
+      var extreme = direction === "left" || direction === "up" ? -Infinity : Infinity;
+
+      for (i = 0; i < state.objects.length; i += 1) {
+        var value = direction === "left" || direction === "right" ? state.objects[i].x : state.objects[i].y;
+
+        if ((direction === "left" || direction === "up") && value > extreme) {
+          extreme = value;
+          bestIndex = i;
+        }
+
+        if ((direction === "right" || direction === "down") && value < extreme) {
+          extreme = value;
+          bestIndex = i;
+        }
+      }
+    }
+
+    if (bestIndex >= 0) {
+      state.focusIndex = bestIndex;
+    }
+  }
+
+  function canvasPoint(event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  }
+
+  canvas.addEventListener("pointerdown", function (event) {
+    if (state.gameOver) {
+      return;
+    }
+
+    event.preventDefault();
+    canvas.focus();
+    ensureAudio();
+
+    var point = canvasPoint(event);
+    var best = -1;
+    var bestDistance = Infinity;
+    var i;
+
+    for (i = 0; i < state.objects.length; i += 1) {
+      var object = state.objects[i];
+      var dx = point.x - object.x;
+      var dy = point.y - object.y;
+      var hitX = 58 * object.s + 12;
+      var hitY = 66 * object.s + 12;
+
+      if (Math.abs(dx) <= hitX && Math.abs(dy) <= hitY) {
+        var distance = Math.hypot(dx / hitX, dy / hitY);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = i;
+        }
+      }
+    }
+
+    if (best >= 0) {
+      state.keyboardFocus = true;
+      pickObject(best);
+    } else if (!state.processing) {
+      setToast("That is the room. It seems innocent.", "");
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var key = event.key;
+
+    if (key === "r" || key === "R") {
+      event.preventDefault();
+      restartGame();
+      return;
+    }
+
+    if (
+      key === "ArrowLeft" ||
+      key === "ArrowRight" ||
+      key === "ArrowUp" ||
+      key === "ArrowDown" ||
+      key === " " ||
+      key === "Enter"
+    ) {
+      event.preventDefault();
+    }
+
+    if (event.repeat && (key === " " || key === "Enter")) {
+      return;
+    }
+
+    if (key === "ArrowLeft") {
+      moveFocus("left");
+    } else if (key === "ArrowRight") {
+      moveFocus("right");
+    } else if (key === "ArrowUp") {
+      moveFocus("up");
+    } else if (key === "ArrowDown") {
+      moveFocus("down");
+    } else if (key === " " || key === "Enter") {
+      state.keyboardFocus = true;
+      pickObject(state.focusIndex);
+    }
+  });
+
+  function bindControl(id, action) {
+    document.getElementById(id).addEventListener("click", function (event) {
+      event.preventDefault();
+      ensureAudio();
+      action();
+      canvas.focus();
+    });
+  }
+
+  bindControl("leftButton", function () {
+    moveFocus("left");
+  });
+
+  bindControl("rightButton", function () {
+    moveFocus("right");
+  });
+
+  bindControl("upButton", function () {
+    moveFocus("up");
+  });
+
+  bindControl("downButton", function () {
+    moveFocus("down");
+  });
+
+  bindControl("selectButton", function () {
+    state.keyboardFocus = true;
+    pickObject(state.focusIndex);
+  });
+
+  bindControl("restartButton", restartGame);
+  bindControl("restartModal", restartGame);
+
+  function drawBackground() {
+    var wall = ctx.createLinearGradient(0, 0, 0, H);
+    wall.addColorStop(0, "#263348");
+    wall.addColorStop(0.76, "#1b2637");
+    wall.addColorStop(0.761, "#182131");
+    wall.addColorStop(1, "#101722");
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    ctx.globalAlpha = 0.13;
+    ctx.strokeStyle = "#a8c0d7";
+    ctx.lineWidth = 1;
+
+    var x;
+    for (x = 26; x < W; x += 58) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H * 0.77);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    var floorY = H * 0.79;
+    ctx.fillStyle = "rgba(7,11,18,0.23)";
+    ctx.fillRect(0, floorY, W, H - floorY);
+    ctx.fillStyle = "rgba(218,231,238,0.15)";
+    ctx.fillRect(0, floorY, W, 3);
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.055)";
+    ctx.lineWidth = 1;
+
+    var fy;
+    for (fy = floorY + 22; fy < H; fy += 28) {
+      ctx.beginPath();
+      ctx.moveTo(0, fy);
+      ctx.lineTo(W, fy);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    if (state.objects.length) {
+      var scale = state.objects[0].s;
+      var shelf1 = H * 0.34 + 52 * scale;
+      var shelf2 = H * 0.72 + 52 * scale;
+      drawShelf(shelf1);
+      drawShelf(shelf2);
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 " + clamp(W * 0.045, 16, 40) + "px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("PLEASE BEHAVE", W / 2, H * 0.12);
+    ctx.restore();
+  }
+
+  function drawShelf(y) {
+    ctx.save();
+    ctx.fillStyle = "rgba(7,10,16,0.28)";
+    ctx.fillRect(W * 0.035 + 4, y + 8, W * 0.93, 7);
+    ctx.fillStyle = "#735d4b";
+    ctx.fillRect(W * 0.035, y, W * 0.93, 9);
+    ctx.fillStyle = "#9b7a5d";
+    ctx.fillRect(W * 0.035, y, W * 0.93, 3);
+    ctx.restore();
+  }
+
+  function drawShadow(x, y, rx, ry, alpha) {
+    ctx.save();
+    ctx.fillStyle = "rgba(4,7,12," + alpha + ")";
+    ellipse(ctx, x, y, rx, ry);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawMug(odd, t, a) {
+    var lift = odd ? -10 * a + Math.sin(t * 0.006) * 4.5 * a : 0;
+    drawShadow(0, 41, odd ? 12 : 24, odd ? 3 : 6, odd ? 0.25 : 0.32);
+
+    ctx.save();
+    ctx.translate(0, lift);
+    ctx.fillStyle = "#efb45d";
+    ctx.strokeStyle = "#513a2a";
+    ctx.lineWidth = 3;
+    roundedRectPath(ctx, -25, -13, 43, 45, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(18, 4, 18, -Math.PI / 2, Math.PI / 2);
+    ctx.arc(18, 4, 10, Math.PI / 2, -Math.PI / 2, true);
+    ctx.closePath();
+    ctx.fillStyle = "#efb45d";
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#62442d";
+    ellipse(ctx, -3.5, -12, 19, 5);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawClock(odd, t) {
+    drawShadow(0, 44, 29, 5, 0.25);
+    ctx.fillStyle = "#e9edf1";
+    ctx.strokeStyle = "#536276";
+    ctx.lineWidth = 5;
+    ellipse(ctx, 0, -2, 35, 35);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#313b49";
+    var i;
+
+    for (i = 0; i < 12; i += 1) {
+      var angle = i * Math.PI / 6;
+      ellipse(ctx, Math.sin(angle) * 27, -2 - Math.cos(angle) * 27, 1.5, 1.5);
+      ctx.fill();
+    }
+
+    var minute = odd ? -t * 0.003 : 1.18;
+    var hour = odd ? -t * 0.00075 : -0.72;
+    ctx.strokeStyle = odd ? "#e95668" : "#28313c";
+    ctx.lineCap = "round";
+
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -2);
+    ctx.lineTo(Math.sin(minute) * 25, -2 - Math.cos(minute) * 25);
+    ctx.stroke();
+
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, -2);
+    ctx.lineTo(Math.sin(hour) * 17, -2 - Math.cos(hour) * 17);
+    ctx.stroke();
+
+    ctx.fillStyle = "#28313c";
+    ellipse(ctx, 0, -2, 4, 4);
+    ctx.fill();
+  }
+
+  function drawLamp(odd, t, a) {
+    drawShadow(0, 44, 31, 6, 0.3);
+
+    if (odd) {
+      ctx.save();
+      ctx.globalAlpha = 0.12 + Math.sin(t * 0.006) * 0.03;
+      ctx.fillStyle = "#ffe68c";
+      ctx.beginPath();
+      ctx.moveTo(7, -12);
+      ctx.lineTo(55, 37);
+      ctx.lineTo(-5, 37);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.strokeStyle = "#4e596a";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, 33);
+    ctx.lineTo(0, -17);
+    ctx.stroke();
+
+    ctx.fillStyle = "#788497";
+    ellipse(ctx, 0, 37, 28, 7);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(0, -17);
+
+    if (odd) {
+      ctx.rotate(Math.sin(t * 0.005) * 0.15 * a + 0.08 * a);
+    }
+
+    ctx.fillStyle = "#e58067";
+    ctx.strokeStyle = "#70483f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-17, -24);
+    ctx.lineTo(18, -24);
+    ctx.lineTo(28, 12);
+    ctx.lineTo(-29, 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function leaf(x, y, rotation, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-22, -10, -25, -30, 0, -31);
+    ctx.bezierCurveTo(17, -22, 17, -7, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPlant(odd, t, a) {
+    drawShadow(0, 44, 31, 6, 0.28);
+    ctx.strokeStyle = "#527558";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 14);
+    ctx.lineTo(-4, -39);
+    ctx.moveTo(-2, -13);
+    ctx.lineTo(-24, -27);
+    ctx.moveTo(-1, -23);
+    ctx.lineTo(22, -37);
+    ctx.stroke();
+
+    leaf(-20, -27, -0.75, "#70b873");
+    var rightRotation = 0.65;
+
+    if (odd) {
+      rightRotation += Math.sin(t * 0.01) * 0.75 * a;
+    }
+
+    leaf(21, -37, rightRotation, "#58a866");
+    leaf(-4, -39, -0.06, "#84c979");
+
+    ctx.fillStyle = "#c87557";
+    ctx.strokeStyle = "#70483e";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-25, 10);
+    ctx.lineTo(25, 10);
+    ctx.lineTo(18, 42);
+    ctx.lineTo(-17, 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function drawFrame(odd, t, a) {
+    drawShadow(0, 45, 34, 5, 0.2);
+    ctx.fillStyle = "#835f42";
+    ctx.strokeStyle = "#4e392d";
+    ctx.lineWidth = 4;
+    roundedRectPath(ctx, -38, -42, 76, 78, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.save();
+    roundedRectPath(ctx, -30, -34, 60, 62, 1);
+    ctx.clip();
+    ctx.fillStyle = "#9ed4df";
+    ctx.fillRect(-30, -34, 60, 62);
+
+    var sunY = odd ? -19 + Math.sin(t * 0.006) * 19 * a : -19;
+    ctx.fillStyle = "#ffd668";
+    ellipse(ctx, 15, sunY, 8, 8);
+    ctx.fill();
+
+    ctx.fillStyle = "#728f68";
+    ctx.beginPath();
+    ctx.moveTo(-34, 26);
+    ctx.lineTo(-7, -5);
+    ctx.lineTo(8, 11);
+    ctx.lineTo(28, -8);
+    ctx.lineTo(35, 28);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#d3bb7d";
+    ctx.fillRect(-30, 18, 60, 13);
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-29, -33, 58, 60);
+  }
+
+  function drawChair(odd, t, a) {
+    drawShadow(0, 46, 35, 6, 0.3);
+    var bend = odd ? Math.sin(t * 0.006) * 8 * a : 0;
+
+    ctx.strokeStyle = "#564537";
+    ctx.lineWidth = 7;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-25, -33);
+    ctx.lineTo(-25, 38);
+    ctx.moveTo(25, -33);
+    ctx.lineTo(25, 10);
+    ctx.moveTo(-20, 9);
+    ctx.quadraticCurveTo(-22 + bend, 26, -17 + bend, 43);
+    ctx.moveTo(20, 9);
+    ctx.lineTo(17, 43);
+    ctx.stroke();
+
+    ctx.fillStyle = "#b67a51";
+    ctx.strokeStyle = "#664832";
+    ctx.lineWidth = 3;
+    roundedRectPath(ctx, -31, -39, 62, 39, 7);
+    ctx.fill();
+    ctx.stroke();
+    roundedRectPath(ctx, -33, -3, 66, 17, 6);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function drawVase(odd, t, a) {
+    if (odd) {
+      var shadowX = -25 * a + Math.sin(t * 0.004) * 7;
+      drawShadow(shadowX, 34 - 12 * a, 31, 7, 0.34);
+    } else {
+      drawShadow(0, 42, 28, 6, 0.3);
+    }
+
+    var grad = ctx.createLinearGradient(-25, 0, 25, 0);
+    grad.addColorStop(0, "#6178bb");
+    grad.addColorStop(0.5, "#91a7e2");
+    grad.addColorStop(1, "#5369a9");
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = "#394873";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.moveTo(-13, -38);
+    ctx.lineTo(13, -38);
+    ctx.bezierCurveTo(9, -20, 29, -7, 25, 18);
+    ctx.bezierCurveTo(23, 37, 13, 41, 0, 41);
+    ctx.bezierCurveTo(-13, 41, -23, 37, -25, 18);
+    ctx.bezierCurveTo(-29, -7, -9, -20, -13, -38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#34446f";
+    ellipse(ctx, 0, -38, 13, 4);
+    ctx.fill();
+  }
+
+  function drawBooks(odd, t, a) {
+    drawShadow(0, 43, 38, 5, 0.28);
+    var slide = odd ? Math.sin(t * 0.005) * 14 * a + 7 * a : 0;
+
+    ctx.fillStyle = "#65a785";
+    ctx.strokeStyle = "#385b4a";
+    ctx.lineWidth = 2;
+    roundedRectPath(ctx, -37, 19, 74, 18, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(slide, 0);
+    ctx.fillStyle = "#e1b95d";
+    ctx.strokeStyle = "#705d31";
+    roundedRectPath(ctx, -32, 0, 64, 17, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = "#d56b72";
+    ctx.strokeStyle = "#703b42";
+    roundedRectPath(ctx, -36, -19, 72, 17, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.42)";
+    ctx.beginPath();
+    ctx.moveTo(-27, -11);
+    ctx.lineTo(22, -11);
+    ctx.moveTo(-26, 28);
+    ctx.lineTo(17, 28);
+    ctx.stroke();
+  }
+
+  function drawShoe(odd, t, a) {
+    drawShadow(0, 38, 41, 7, 0.3);
+    ctx.fillStyle = "#d5d8df";
+    ctx.strokeStyle = "#4d5867";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-34, 8);
+    ctx.quadraticCurveTo(-27, -24, -8, -20);
+    ctx.quadraticCurveTo(3, 0, 22, 7);
+    ctx.quadraticCurveTo(39, 13, 42, 26);
+    ctx.lineTo(42, 33);
+    ctx.lineTo(-39, 33);
+    ctx.quadraticCurveTo(-42, 18, -34, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#61758e";
+    ctx.fillRect(-38, 28, 80, 8);
+
+    ctx.strokeStyle = "#d76d62";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+
+    var i;
+    for (i = 0; i < 4; i += 1) {
+      ctx.moveTo(-16 + i * 8, -5 + i * 3);
+      ctx.lineTo(3 + i * 6, 4 + i * 2);
+    }
+
+    ctx.stroke();
+
+    var wag = odd ? Math.sin(t * 0.012) * 18 * a : 0;
+    ctx.beginPath();
+    ctx.moveTo(11, 8);
+    ctx.quadraticCurveTo(22 + wag, -1, 31 + wag, 10);
+    ctx.stroke();
+  }
+
+  function drawPillow(odd, t, a) {
+    drawShadow(0, 43, 39, 6, 0.25);
+    var pulse = odd ? (Math.sin(t * 0.006) + 1) * 6 * a : 0;
+
+    ctx.fillStyle = "#9c79bb";
+    ctx.strokeStyle = "#594469";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-39, -29);
+    ctx.quadraticCurveTo(-12, -37, 34 + pulse, -28 - pulse * 0.25);
+    ctx.quadraticCurveTo(43 + pulse, 0, 35, 34);
+    ctx.quadraticCurveTo(0, 26 + pulse * 0.3, -38, 35);
+    ctx.quadraticCurveTo(-30, 0, -39, -29);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.34)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-30, -21);
+    ctx.quadraticCurveTo(0, -28, 28 + pulse, -21);
+    ctx.stroke();
+  }
+
+  function drawKettle(odd, t, a) {
+    drawShadow(0, 43, 35, 6, 0.3);
+    ctx.fillStyle = "#79a7aa";
+    ctx.strokeStyle = "#3e5c62";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.moveTo(-24, -10);
+    ctx.quadraticCurveTo(-35, 7, -28, 31);
+    ctx.quadraticCurveTo(0, 43, 28, 31);
+    ctx.quadraticCurveTo(35, 7, 24, -10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(24, -5);
+    ctx.quadraticCurveTo(47, -10, 45, 5);
+    ctx.lineTo(27, 15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#334950";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, -7, 25, Math.PI, 0);
+    ctx.stroke();
+
+    var lidLift = odd ? -14 * a + Math.sin(t * 0.008) * 5 * a : 0;
+    ctx.save();
+    ctx.translate(0, lidLift);
+    ctx.fillStyle = "#526f74";
+    ellipse(ctx, 0, -12, 20, 5);
+    ctx.fill();
+    ctx.strokeStyle = "#334950";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#334950";
+    ellipse(ctx, 0, -19, 5, 4);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawUmbrella(odd, t, a) {
+    drawShadow(0, 44, 25, 5, 0.25);
+    ctx.save();
+    ctx.rotate(-0.18);
+
+    ctx.fillStyle = "#df6d77";
+    ctx.strokeStyle = "#6f3b43";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -43);
+    ctx.quadraticCurveTo(-26, -31, -22, -3);
+    ctx.quadraticCurveTo(-11, -11, 0, -3);
+    ctx.quadraticCurveTo(11, -11, 22, -3);
+    ctx.quadraticCurveTo(26, -31, 0, -43);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#596471";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, -42);
+    ctx.lineTo(0, 31);
+    ctx.stroke();
+
+    var hook = odd ? Math.sin(t * 0.007) * 16 * a : 0;
+    ctx.beginPath();
+    ctx.moveTo(0, 30);
+    ctx.quadraticCurveTo(hook, 51, 18 + hook, 34);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawObjectShape(object, odd, t, strength) {
+    if (object.type === "mug") {
+      drawMug(odd, t, strength);
+    } else if (object.type === "clock") {
+      drawClock(odd, t, strength);
+    } else if (object.type === "lamp") {
+      drawLamp(odd, t, strength);
+    } else if (object.type === "plant") {
+      drawPlant(odd, t, strength);
+    } else if (object.type === "frame") {
+      drawFrame(odd, t, strength);
+    } else if (object.type === "chair") {
+      drawChair(odd, t, strength);
+    } else if (object.type === "vase") {
+      drawVase(odd, t, strength);
+    } else if (object.type === "books") {
+      drawBooks(odd, t, strength);
+    } else if (object.type === "shoe") {
+      drawShoe(odd, t, strength);
+    } else if (object.type === "pillow") {
+      drawPillow(odd, t, strength);
+    } else if (object.type === "kettle") {
+      drawKettle(odd, t, strength);
+    } else if (object.type === "umbrella") {
+      drawUmbrella(odd, t, strength);
+    }
+  }
+
+  function drawFocus(object, t) {
+    if (!state.keyboardFocus || state.gameOver) {
+      return;
+    }
+
+    var pulse = 0.65 + Math.sin(t * 0.006) * 0.25;
+    ctx.save();
+    ctx.strokeStyle = "rgba(108,229,255," + pulse + ")";
+    ctx.lineWidth = Math.max(2, 3 * object.s);
+    ctx.setLineDash([8 * object.s, 5 * object.s]);
+    ctx.shadowColor = "#6ce5ff";
+    ctx.shadowBlur = 9;
+    roundedRectPath(
+      ctx,
+      object.x - 56 * object.s,
+      object.y - 63 * object.s,
+      112 * object.s,
+      119 * object.s,
+      13 * object.s
+    );
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRing(object, t) {
+    if (!object.ring || object.ring.until < t) {
+      return;
+    }
+
+    var remaining = clamp((object.ring.until - t) / 900, 0, 1);
+    var radius = (56 + (1 - remaining) * 8) * object.s;
+    ctx.save();
+    ctx.strokeStyle = object.ring.color;
+    ctx.lineWidth = Math.max(3, 5 * object.s);
+    ctx.globalAlpha = 0.55 + remaining * 0.45;
+    ctx.shadowColor = object.ring.color;
+    ctx.shadowBlur = 18;
+    ellipse(ctx, object.x, object.y - 3 * object.s, radius, radius * 1.03);
+    ctx.stroke();
+    ctx.restore();
+
+    if (object.ring.type === "close") {
+      var culprit = getCulprit();
+
+      if (culprit) {
+        var dx = culprit.x - object.x;
+        var dy = culprit.y - object.y;
+        var dist = Math.max(1, Math.hypot(dx, dy));
+        var ux = dx / dist;
+        var uy = dy / dist;
+        var startX = object.x + ux * radius;
+        var startY = object.y + uy * radius;
+        var length = Math.min(88, dist * 0.34);
+        var endX = startX + ux * length;
+        var endY = startY + uy * length;
+
+        ctx.save();
+        ctx.strokeStyle = "#ffad42";
+        ctx.fillStyle = "#ffad42";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "#ffad42";
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - ux * 14 - uy * 7, endY - uy * 14 + ux * 7);
+        ctx.lineTo(endX - ux * 14 + uy * 7, endY - uy * 14 - ux * 7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    if (object.ring.type === "correct" || object.ring.type === "reveal") {
+      ctx.save();
+      ctx.fillStyle = object.ring.color;
+      ctx.font = "900 " + clamp(12 * object.s, 10, 16) + "px Arial";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#0b1018";
+      ctx.shadowBlur = 5;
+
+      var label = object.ring.type === "correct" ? "NORMAL NOW" : "IT WAS THIS";
+      ctx.fillText(label, object.x, object.y + radius + 20);
+      ctx.restore();
+    }
+  }
+
+  function drawObjects(t) {
+    var strength = Math.max(0.48, 1.18 - (state.room - 1) * 0.065);
+    var i;
+
+    for (i = 0; i < state.objects.length; i += 1) {
+      var object = state.objects[i];
+
+      if (i === state.focusIndex) {
+        drawFocus(object, t);
+      }
+
+      var shake = 0;
+      var rotation = 0;
+
+      if (object.shakeUntil > t) {
+        var shakeFade = clamp((object.shakeUntil - t) / 480, 0, 1);
+        shake = Math.sin(t * 0.085) * 7 * shakeFade;
+      }
+
+      if (object.hintUntil > t) {
+        var hintFade = clamp((object.hintUntil - t) / 900, 0, 1);
+        rotation = Math.sin(t * 0.045) * 0.09 * hintFade;
+
+        if (state.revealLose && object.culprit) {
+          shake += Math.sin(t * 0.065) * 5;
+        }
+      }
+
+      ctx.save();
+      ctx.translate(object.x + shake, object.y);
+      ctx.scale(object.s, object.s);
+      ctx.rotate(rotation);
+
+      var odd = object.culprit && !state.found;
+      drawObjectShape(object, odd, t, strength);
+      ctx.restore();
+    }
+
+    for (i = 0; i < state.objects.length; i += 1) {
+      drawRing(state.objects[i], t);
+    }
+  }
+
+  function drawPop(t) {
+    if (!state.pop || t > state.pop.until) {
+      return;
+    }
+
+    var progress = clamp((t - state.pop.start) / (state.pop.until - state.pop.start), 0, 1);
+    var y = state.pop.y - progress * 30;
+    var alpha = progress < 0.72 ? 1 : 1 - (progress - 0.72) / 0.28;
+    var scale = 0.85 + Math.sin(Math.min(1, progress * 2.4) * Math.PI) * 0.22;
+
+    ctx.save();
+    ctx.translate(state.pop.x, y);
+    ctx.scale(scale, scale);
+    ctx.globalAlpha = clamp(alpha, 0, 1);
+    ctx.textAlign = "center";
+    ctx.shadowColor = "#102018";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#66f59a";
+    ctx.font = "900 32px Arial";
+    ctx.fillText(state.pop.text, 0, 0);
+    ctx.fillStyle = "#eafef0";
+    ctx.font = "900 10px Arial";
+    ctx.fillText(state.pop.subtitle, 0, 15);
+    ctx.restore();
+  }
+
+  function render(t) {
+    if (
+      canvas.width !== Math.round(stage.clientWidth * DPR) ||
+      canvas.height !== Math.round(stage.clientHeight * DPR)
+    ) {
+      resizeCanvas();
+    }
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+    drawObjects(t);
+    drawPop(t);
+    window.requestAnimationFrame(render);
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+
+  window.addEventListener("orientationchange", function () {
+    window.setTimeout(resizeCanvas, 120);
+  });
+
+  resizeCanvas();
+  restartGame();
+  window.requestAnimationFrame(render);
+}());
+</script>
+</body>
+</html>

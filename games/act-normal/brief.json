@@ -1,0 +1,11 @@
+{
+  "title": "Act Normal",
+  "slug": "act-normal",
+  "tagline": "One thing in this room is doing a bad job of it.",
+  "concept": "Spot the everyday object that is moving, shaped, or behaving slightly wrong.",
+  "core_loop": "Scan a small room for 5 to 15 seconds, pick the odd object, then get a fresh room with a new visual joke; quick reveals and a growing streak make one more round hard to resist.",
+  "mechanics": "Controls: Tap or click an object to pick it; arrow keys move a clear outline between objects and Space selects; R restarts.; Win or lose: Picking the odd object clears the room, while three wrong picks end the run; there is no timer.; Scoring: Each cleared room gives one point, a first-try pick adds a bonus point, and the visible streak resets after a mistake.",
+  "feedback": "A correct object snaps back to normal with a bright green ring, a dry little chime, and a score pop. A wrong object shakes under a red ring, makes a dull knock, and removes one visible heart. A pick close to the culprit gets an orange ring pointing toward it, while the culprit gives one stronger twitch as a hint.",
+  "difficulty": "The first rooms have four large objects and loud mistakes such as a floating mug or a shadow facing the wrong way. Later rooms add more objects and use smaller but still clear oddities, while three visible hearts and a valuable streak create tension without rushing the player.",
+  "mobile": true
+}
