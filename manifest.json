@@ -318,6 +318,15 @@
       "path": "games/reef-shift/",
       "mobile": true,
       "thumbnail": "games/reef-shift/cover.webp"
+    },
+    {
+      "slug": "earth-hold-still",
+      "title": "Earth, Hold Still",
+      "tagline": "Take one decent picture from a wobbly satellite.",
+      "date": "2026-08-07",
+      "path": "games/earth-hold-still/",
+      "mobile": true,
+      "thumbnail": "games/earth-hold-still/cover.webp"
     }
   ]
 }

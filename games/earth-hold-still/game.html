@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Earth, Hold Still</title>
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  overflow: hidden;
+  background: #050914;
+  color: #f4f8ff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button {
+  font: inherit;
+}
+#app {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 45% 15%, rgba(38, 83, 125, 0.16), transparent 32%),
+    linear-gradient(180deg, #080d18 0%, #040711 100%);
+}
+header {
+  flex: 0 0 auto;
+  min-height: 62px;
+  padding: 10px 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid rgba(151, 204, 230, 0.14);
+  background: rgba(5, 9, 19, 0.88);
+}
+.brand {
+  min-width: 0;
+}
+.brand h1 {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 850;
+}
+.tagline {
+  margin-top: 5px;
+  color: #9badbd;
+  font-size: clamp(11px, 1.5vw, 13px);
+  white-space: nowrap;
+}
+.scoreBox {
+  flex: 0 0 auto;
+  text-align: right;
+}
+.scoreLabel {
+  color: #7f93a7;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+#score {
+  margin-top: 1px;
+  font-size: clamp(22px, 3.5vw, 30px);
+  line-height: 1;
+  font-weight: 900;
+  color: #e7fbff;
+  font-variant-numeric: tabular-nums;
+}
+#hud {
+  flex: 0 0 45px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) auto minmax(92px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 5px 16px;
+  background: rgba(9, 15, 27, 0.92);
+  border-bottom: 1px solid rgba(151, 204, 230, 0.12);
+}
+.assignment {
+  min-width: 0;
+}
+#photoNumber {
+  color: #79ddec;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+#photoName {
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e8f1f7;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.frames {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.frameDot {
+  width: 13px;
+  height: 13px;
+  border: 1px solid #486075;
+  background: #111c2a;
+  transform: rotate(45deg);
+  transition: background 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.frameDot.clean {
+  background: #a9f7ff;
+  border-color: #e8fdff;
+  box-shadow: 0 0 10px rgba(91, 231, 248, 0.75);
+}
+.frameDot.near {
+  background: #f1bd5a;
+  border-color: #ffe2a1;
+  box-shadow: 0 0 10px rgba(241, 189, 90, 0.65);
+}
+.filmArea {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.filmLabel {
+  color: #8296a9;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+.filmCards {
+  display: flex;
+  gap: 5px;
+}
+.filmCard {
+  position: relative;
+  width: 21px;
+  height: 27px;
+  border-radius: 3px;
+  border: 2px solid #dce7ee;
+  background: linear-gradient(145deg, #405160, #162331);
+  box-shadow: 0 0 7px rgba(194, 228, 240, 0.16);
+  transition: opacity 180ms ease, transform 180ms ease, filter 180ms ease;
+}
+.filmCard:before,
+.filmCard:after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #06101a 0 3px, transparent 3px 6px);
+}
+.filmCard:before {
+  top: 2px;
+}
+.filmCard:after {
+  bottom: 2px;
+}
+.filmCard.spent {
+  opacity: 0.2;
+  filter: grayscale(1);
+  transform: translateY(3px) rotate(7deg);
+}
+#stageWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+#gameCanvas.dragging {
+  cursor: grabbing;
+}
+#flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: #fff;
+  mix-blend-mode: screen;
+}
+#flash.white {
+  animation: flashWhite 460ms ease-out;
+}
+#flash.gold {
+  animation: flashGold 520ms ease-out;
+}
+#flash.red {
+  animation: flashRed 420ms ease-out;
+}
+@keyframes flashWhite {
+  0% { opacity: 0.94; }
+  28% { opacity: 0.28; }
+  100% { opacity: 0; }
+}
+@keyframes flashGold {
+  0% { opacity: 0.52; background: #ffd77b; }
+  100% { opacity: 0; background: #ffd77b; }
+}
+@keyframes flashRed {
+  0% { opacity: 0.28; background: #ff435d; }
+  100% { opacity: 0; background: #ff435d; }
+}
+#stageWrap.softWobble {
+  animation: softWobble 480ms ease-in-out;
+}
+#stageWrap.bump {
+  animation: bump 300ms ease-out;
+}
+@keyframes softWobble {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  30% { transform: translate(-3px, 1px) rotate(-0.25deg); }
+  65% { transform: translate(3px, -1px) rotate(0.22deg); }
+}
+@keyframes bump {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(5px, 1px); }
+  58% { transform: translate(-4px, 0); }
+}
+#toast {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 4;
+  max-width: calc(100% - 32px);
+  padding: 9px 14px;
+  border: 1px solid rgba(204, 239, 246, 0.35);
+  border-radius: 999px;
+  background: rgba(7, 14, 25, 0.9);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  color: #eafcff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.075em;
+  text-align: center;
+  white-space: nowrap;
+  transform: translate(-50%, -12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+#toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+#toast.clean {
+  border-color: #9af4ff;
+  color: #c9fbff;
+}
+#toast.near {
+  border-color: #f3c467;
+  color: #ffe0a1;
+}
+#toast.bad {
+  border-color: #ff6473;
+  color: #ffadb5;
+}
+#modal {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(2, 5, 11, 0.72);
+  backdrop-filter: blur(5px);
+}
+#modal.open {
+  display: flex;
+}
+.modalCard {
+  width: min(430px, 100%);
+  padding: 24px;
+  border: 1px solid rgba(147, 231, 242, 0.4);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(66, 153, 177, 0.18), transparent 45%),
+    #0b1421;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.52);
+  text-align: center;
+}
+.modalKicker {
+  color: #7eddec;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.19em;
+}
+#modalTitle {
+  margin: 8px 0 8px;
+  font-size: clamp(25px, 6vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+#modalBody {
+  margin: 0 auto 19px;
+  max-width: 340px;
+  color: #aebdca;
+  font-size: 13px;
+  line-height: 1.55;
+}
+#modalButton {
+  min-width: 190px;
+  min-height: 50px;
+  padding: 0 22px;
+  border: 1px solid #b5f5ff;
+  border-radius: 999px;
+  background: #baf5fc;
+  color: #06111b;
+  box-shadow: 0 0 24px rgba(87, 221, 238, 0.22);
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#how {
+  flex: 0 0 auto;
+  min-height: 29px;
+  padding: 6px 12px;
+  color: #899baa;
+  background: #070c16;
+  border-top: 1px solid rgba(148, 200, 221, 0.1);
+  text-align: center;
+  font-size: 11px;
+  line-height: 17px;
+}
+#controls {
+  flex: 0 0 88px;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(9px, 2.5vw, 20px);
+  padding: 9px 12px;
+  border-top: 1px solid rgba(151, 204, 230, 0.15);
+  background: rgba(7, 12, 22, 0.97);
+}
+.controlButton {
+  height: 60px;
+  border: 1px solid #61798d;
+  background: linear-gradient(180deg, #172536, #0d1724);
+  color: #f1f8fb;
+  box-shadow: inset 0 1px rgba(255,255,255,0.05), 0 7px 17px rgba(0,0,0,0.24);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.controlButton:active {
+  transform: translateY(2px);
+  filter: brightness(1.25);
+}
+.zoomButton {
+  width: clamp(58px, 14vw, 78px);
+  border-radius: 15px;
+  font-size: 31px;
+  font-weight: 400;
+}
+.zoomReadout {
+  width: clamp(52px, 12vw, 72px);
+  color: #7f94a6;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+#zoomValue {
+  display: block;
+  margin-top: 4px;
+  color: #dce9ef;
+  font-size: 14px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+#shutter {
+  position: relative;
+  width: clamp(118px, 31vw, 184px);
+  border: 2px solid #f3fbff;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f2f7f8, #b9c8cc);
+  color: #09111a;
+  font-size: clamp(12px, 2vw, 15px);
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  box-shadow: 0 0 0 5px rgba(202, 238, 243, 0.1), 0 9px 25px rgba(0,0,0,0.32);
+}
+#shutter:before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 9px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  background: #101923;
+  box-shadow: inset 0 0 0 3px #87979e;
+}
+#shutter.cooling {
+  opacity: 0.62;
+}
+@media (max-width: 580px) {
+  header {
+    min-height: 56px;
+    padding: 8px 11px 7px;
+  }
+  .tagline {
+    display: none;
+  }
+  #hud {
+    grid-template-columns: minmax(86px, 1fr) auto minmax(80px, 1fr);
+    gap: 7px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .filmLabel {
+    display: none;
+  }
+  .filmCard {
+    width: 18px;
+    height: 24px;
+  }
+  .frameDot {
+    width: 11px;
+    height: 11px;
+  }
+  #how {
+    font-size: 10px;
+  }
+}
+@media (max-height: 520px) {
+  header {
+    min-height: 45px;
+    padding-top: 6px;
+    padding-bottom: 5px;
+  }
+  .tagline {
+    display: none;
+  }
+  #hud {
+    flex-basis: 36px;
+  }
+  #how {
+    min-height: 23px;
+    padding: 3px 8px;
+    line-height: 16px;
+  }
+  #controls {
+    flex-basis: 70px;
+    padding: 5px 10px;
+  }
+  .controlButton {
+    height: 50px;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>Earth, Hold Still</h1>
+      <div class="tagline">Take one decent picture from a wobbly satellite.</div>
+    </div>
+    <div class="scoreBox">
+      <div class="scoreLabel">MISSION SCORE</div>
+      <div id="score">0</div>
+    </div>
+  </header>
+
+  <section id="hud" aria-label="Game status">
+    <div class="assignment">
+      <div id="photoNumber">PHOTO 1 / 4</div>
+      <div id="photoName">FULL EARTH</div>
+    </div>
+    <div id="frames" class="frames" aria-label="Accepted frames"></div>
+    <div class="filmArea">
+      <span class="filmLabel">FILM</span>
+      <div id="filmCards" class="filmCards" aria-label="Film cards"></div>
+    </div>
+  </section>
+
+  <main id="stageWrap">
+    <canvas id="gameCanvas" aria-label="Camera view. Drag to move Earth into the dashed guide."></canvas>
+    <div id="flash"></div>
+    <div id="toast"></div>
+    <div id="modal">
+      <div class="modalCard">
+        <div class="modalKicker" id="modalKicker">PHOTO COMPLETE</div>
+        <h2 id="modalTitle">A Decent Picture</h2>
+        <p id="modalBody"></p>
+        <button id="modalButton" type="button">NEXT PHOTO</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="how">Drag Earth or use arrow keys to aim • +/− zoom • SHUTTER or Space. Match the dashed guide; there is no timer.</div>
+
+  <nav id="controls" aria-label="Camera controls">
+    <button id="zoomOut" class="controlButton zoomButton" type="button" aria-label="Zoom out">−</button>
+    <div class="zoomReadout">LENS<span id="zoomValue">30</span></div>
+    <button id="zoomIn" class="controlButton zoomButton" type="button" aria-label="Zoom in">+</button>
+    <button id="shutter" class="controlButton" type="button">SHUTTER</button>
+  </nav>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("gameCanvas");
+  var ctx = canvas.getContext("2d");
+  var stageWrap = document.getElementById("stageWrap");
+  var scoreEl = document.getElementById("score");
+  var photoNumberEl = document.getElementById("photoNumber");
+  var photoNameEl = document.getElementById("photoName");
+  var framesEl = document.getElementById("frames");
+  var filmCardsEl = document.getElementById("filmCards");
+  var zoomValueEl = document.getElementById("zoomValue");
+  var shutterEl = document.getElementById("shutter");
+  var zoomInEl = document.getElementById("zoomIn");
+  var zoomOutEl = document.getElementById("zoomOut");
+  var flashEl = document.getElementById("flash");
+  var toastEl = document.getElementById("toast");
+  var modalEl = document.getElementById("modal");
+  var modalKickerEl = document.getElementById("modalKicker");
+  var modalTitleEl = document.getElementById("modalTitle");
+  var modalBodyEl = document.getElementById("modalBody");
+  var modalButtonEl = document.getElementById("modalButton");
+
+  var width = 1;
+  var height = 1;
+  var dpr = 1;
+  var layout = null;
+  var dragging = false;
+  var pointerX = 0;
+  var pointerY = 0;
+  var lastTime = performance.now();
+  var lastShot = -10000;
+  var toastTimer = 0;
+  var audioContext = null;
+
+  var levels = [
+    {
+      name: "FULL EARTH",
+      subtitle: "A forgiving blue marble.",
+      targetX: 0.50,
+      targetY: 0.50,
+      targetR: 0.30,
+      positionTolerance: 0.115,
+      sizeTolerance: 0.13,
+      wobble: 0.003,
+      wobbleName: "STABLE",
+      snap: true,
+      startDX: 0.12,
+      startDY: -0.07,
+      startScale: 0.82
+    },
+    {
+      name: "BLUE MARBLE",
+      subtitle: "Leave some room for the dark.",
+      targetX: 0.36,
+      targetY: 0.50,
+      targetR: 0.39,
+      positionTolerance: 0.078,
+      sizeTolerance: 0.10,
+      wobble: 0.009,
+      wobbleName: "GENTLE",
+      snap: false,
+      startDX: 0.13,
+      startDY: 0.08,
+      startScale: 0.84
+    },
+    {
+      name: "SUNLIT HORIZON",
+      subtitle: "Catch the curve, not the whole world.",
+      targetX: 0.50,
+      targetY: 1.15,
+      targetR: 0.87,
+      positionTolerance: 0.060,
+      sizeTolerance: 0.075,
+      wobble: 0.016,
+      wobbleName: "VISIBLE",
+      snap: false,
+      startDX: -0.09,
+      startDY: -0.12,
+      startScale: 0.90
+    },
+    {
+      name: "LIMB AT DAWN",
+      subtitle: "An off-center edge through satellite wobble.",
+      targetX: -0.14,
+      targetY: 0.68,
+      targetR: 0.79,
+      positionTolerance: 0.048,
+      sizeTolerance: 0.060,
+      wobble: 0.024,
+      wobbleName: "STRONG",
+      snap: false,
+      startDX: 0.13,
+      startDY: -0.09,
+      startScale: 0.90
+    }
+  ];
+
+  var state = {
+    levelIndex: 0,
+    score: 0,
+    photoStartScore: 0,
+    pieces: [],
+    film: 3,
+    cleanStreak: 0,
+    aimX: 0.5,
+    aimY: 0.5,
+    zoom: 0.3,
+    mode: "play",
+    feedback: null,
+    badCapture: null,
+    badCaptureUntil: 0
+  };
+
+  var stars = [];
+  for (var i = 0; i < 120; i++) {
+    stars.push({
+      x: ((i * 73) % 997) / 997,
+      y: ((i * 191 + 47) % 991) / 991,
+      r: 0.35 + ((i * 29) % 100) / 90,
+      a: 0.22 + ((i * 17) % 65) / 100
+    });
+  }
+
+  function roundedPath(context, x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.lineTo(x + w - r, y);
+    context.quadraticCurveTo(x + w, y, x + w, y + r);
+    context.lineTo(x + w, y + h - r);
+    context.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    context.lineTo(x + r, y + h);
+    context.quadraticCurveTo(x, y + h, x, y + h - r);
+    context.lineTo(x, y + r);
+    context.quadraticCurveTo(x, y, x + r, y);
+    context.closePath();
+  }
+
+  function resizeCanvas() {
+    var rect = canvas.getBoundingClientRect();
+    width = Math.max(1, rect.width);
+    height = Math.max(1, rect.height);
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    makeLayout();
+  }
+
+  function makeLayout() {
+    if (width / Math.max(1, height) > 1.22) {
+      var gap = 12;
+      var margin = 10;
+      var sceneWidth = Math.max(200, width * 0.69 - margin);
+      layout = {
+        scene: {
+          x: margin,
+          y: margin,
+          w: sceneWidth,
+          h: Math.max(50, height - margin * 2)
+        },
+        panel: {
+          x: margin + sceneWidth + gap,
+          y: margin,
+          w: Math.max(90, width - sceneWidth - gap - margin * 2),
+          h: Math.max(50, height - margin * 2)
+        }
+      };
+    } else {
+      var outer = 8;
+      var verticalGap = 8;
+      var sceneHeight = Math.max(100, height * 0.66);
+      layout = {
+        scene: {
+          x: outer,
+          y: outer,
+          w: Math.max(80, width - outer * 2),
+          h: sceneHeight
+        },
+        panel: {
+          x: outer,
+          y: outer + sceneHeight + verticalGap,
+          w: Math.max(80, width - outer * 2),
+          h: Math.max(54, height - sceneHeight - verticalGap - outer * 2)
+        }
+      };
+    }
+    layout.scene.min = Math.min(layout.scene.w, layout.scene.h);
+    layout.panel.min = Math.min(layout.panel.w, layout.panel.h);
+  }
+
+  function currentLevel() {
+    return levels[state.levelIndex];
+  }
+
+  function setupLevel() {
+    var level = currentLevel();
+    state.pieces = [];
+    state.film = 3;
+    state.cleanStreak = 0;
+    state.aimX = level.targetX + level.startDX;
+    state.aimY = level.targetY + level.startDY;
+    state.zoom = level.targetR * level.startScale;
+    state.mode = "play";
+    state.feedback = null;
+    state.badCapture = null;
+    state.badCaptureUntil = 0;
+    state.photoStartScore = state.score;
+    lastShot = -10000;
+    hideModal();
+    updateHUD();
+  }
+
+  function resetCampaign() {
+    state.levelIndex = 0;
+    state.score = 0;
+    setupLevel();
+  }
+
+  function updateHUD() {
+    var level = currentLevel();
+    scoreEl.textContent = Math.round(state.score).toLocaleString();
+    photoNumberEl.textContent = "PHOTO " + (state.levelIndex + 1) + " / " + levels.length;
+    photoNameEl.textContent = level.name + " · " + level.wobbleName + " WOBBLE";
+    zoomValueEl.textContent = Math.round(state.zoom * 100);
+
+    framesEl.innerHTML = "";
+    for (var i = 0; i < 5; i++) {
+      var dot = document.createElement("span");
+      dot.className = "frameDot";
+      if (state.pieces[i]) {
+        dot.className += " " + state.pieces[i];
+      }
+      framesEl.appendChild(dot);
+    }
+
+    filmCardsEl.innerHTML = "";
+    for (var f = 0; f < 3; f++) {
+      var card = document.createElement("span");
+      card.className = "filmCard";
+      if (f >= state.film) {
+        card.className += " spent";
+      }
+      filmCardsEl.appendChild(card);
+    }
+  }
+
+  function getActual(now) {
+    var level = currentLevel();
+    var scene = layout.scene;
+    var phase = now * 0.00112 + state.levelIndex * 1.9;
+    var physicalX = level.wobble * Math.sin(phase * 1.03);
+    var physicalY = level.wobble * 0.72 * Math.cos(phase * 1.47 + 0.6);
+    return {
+      x: state.aimX + physicalX * scene.min / scene.w,
+      y: state.aimY + physicalY * scene.min / scene.h,
+      r: state.zoom
+    };
+  }
+
+  function getMetrics(actual) {
+    var level = currentLevel();
+    var scene = layout.scene;
+    var dx = (actual.x - level.targetX) * scene.w / scene.min;
+    var dy = (actual.y - level.targetY) * scene.h / scene.min;
+    var positionError = Math.sqrt(dx * dx + dy * dy);
+    var sizeError = Math.abs(actual.r - level.targetR) / level.targetR;
+    var pRatio = positionError / level.positionTolerance;
+    var sRatio = sizeError / level.sizeTolerance;
+    var fit = Math.sqrt(pRatio * pRatio + sRatio * sRatio);
+    return {
+      fit: fit,
+      positionError: positionError,
+      sizeError: sizeError,
+      positionAccuracy: Math.max(0, Math.round(100 * (1 - positionError / (level.positionTolerance * 2.25)))),
+      sizeAccuracy: Math.max(0, Math.round(100 * (1 - sizeError / (level.sizeTolerance * 2.25))))
+    };
+  }
+
+  function update(dt, now) {
+    if (!layout || state.mode !== "play") {
+      return;
+    }
+    var level = currentLevel();
+
+    if (level.snap && !dragging) {
+      var baseDX = (state.aimX - level.targetX) * layout.scene.w / layout.scene.min;
+      var baseDY = (state.aimY - level.targetY) * layout.scene.h / layout.scene.min;
+      var baseDistance = Math.sqrt(baseDX * baseDX + baseDY * baseDY);
+      var sizeDifference = Math.abs(state.zoom - level.targetR) / level.targetR;
+      var amount = Math.min(0.035, dt * 0.0013);
+
+      if (baseDistance < 0.22) {
+        state.aimX += (level.targetX - state.aimX) * amount;
+        state.aimY += (level.targetY - state.aimY) * amount;
+      }
+      if (sizeDifference < 0.19) {
+        state.zoom += (level.targetR - state.zoom) * amount * 0.55;
+      }
+    }
+
+    if (state.feedback && now > state.feedback.until) {
+      state.feedback = null;
+    }
+    if (state.badCapture && now > state.badCaptureUntil) {
+      state.badCapture = null;
+    }
+  }
+
+  function drawEarth(cx, cy, radius, alpha, rotation) {
+    if (radius < 2) {
+      return;
+    }
+
+    var line = Math.max(1, Math.min(8, radius * 0.018));
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    ctx.shadowColor = "rgba(75, 213, 255, 0.5)";
+    ctx.shadowBlur = Math.min(28, radius * 0.13);
+    ctx.strokeStyle = "rgba(104, 228, 255, 0.72)";
+    ctx.lineWidth = Math.max(2, Math.min(12, radius * 0.055));
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 1.018, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.clip();
+
+    var ocean = ctx.createRadialGradient(
+      cx - radius * 0.34,
+      cy - radius * 0.38,
+      radius * 0.08,
+      cx,
+      cy,
+      radius * 1.04
+    );
+    ocean.addColorStop(0, "#4dc7e2");
+    ocean.addColorStop(0.24, "#1477a6");
+    ocean.addColorStop(0.68, "#063b70");
+    ocean.addColorStop(1, "#03152f");
+    ctx.fillStyle = ocean;
+    ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation || 0);
+    ctx.translate(-cx, -cy);
+
+    ctx.fillStyle = "#6e9e70";
+    ctx.beginPath();
+    ctx.moveTo(cx - radius * 0.74, cy - radius * 0.43);
+    ctx.bezierCurveTo(cx - radius * 0.43, cy - radius * 0.72, cx - radius * 0.13, cy - radius * 0.62, cx - radius * 0.03, cy - radius * 0.42);
+    ctx.bezierCurveTo(cx + radius * 0.08, cy - radius * 0.25, cx - radius * 0.14, cy - radius * 0.08, cx - radius * 0.22, cy + radius * 0.08);
+    ctx.bezierCurveTo(cx - radius * 0.32, cy + radius * 0.27, cx - radius * 0.50, cy + radius * 0.18, cx - radius * 0.57, cy - radius * 0.03);
+    ctx.bezierCurveTo(cx - radius * 0.69, cy - radius * 0.10, cx - radius * 0.79, cy - radius * 0.27, cx - radius * 0.74, cy - radius * 0.43);
+    ctx.fill();
+
+    ctx.fillStyle = "#89ad70";
+    ctx.beginPath();
+    ctx.moveTo(cx + radius * 0.12, cy - radius * 0.60);
+    ctx.bezierCurveTo(cx + radius * 0.43, cy - radius * 0.63, cx + radius * 0.77, cy - radius * 0.38, cx + radius * 0.68, cy - radius * 0.12);
+    ctx.bezierCurveTo(cx + radius * 0.58, cy + radius * 0.06, cx + radius * 0.34, cy + radius * 0.02, cx + radius * 0.23, cy + radius * 0.24);
+    ctx.bezierCurveTo(cx + radius * 0.12, cy + radius * 0.44, cx - radius * 0.02, cy + radius * 0.32, cx + radius * 0.01, cy + radius * 0.11);
+    ctx.bezierCurveTo(cx - radius * 0.06, cy - radius * 0.11, cx - radius * 0.08, cy - radius * 0.43, cx + radius * 0.12, cy - radius * 0.60);
+    ctx.fill();
+
+    ctx.fillStyle = "#b1b477";
+    ctx.beginPath();
+    ctx.moveTo(cx + radius * 0.38, cy + radius * 0.25);
+    ctx.bezierCurveTo(cx + radius * 0.56, cy + radius * 0.16, cx + radius * 0.73, cy + radius * 0.33, cx + radius * 0.62, cy + radius * 0.53);
+    ctx.bezierCurveTo(cx + radius * 0.50, cy + radius * 0.69, cx + radius * 0.24, cy + radius * 0.63, cx + radius * 0.24, cy + radius * 0.45);
+    ctx.bezierCurveTo(cx + radius * 0.24, cy + radius * 0.36, cx + radius * 0.31, cy + radius * 0.30, cx + radius * 0.38, cy + radius * 0.25);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(244, 253, 255, 0.64)";
+    ctx.lineWidth = line;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(cx - radius * 0.78, cy - radius * 0.10);
+    ctx.bezierCurveTo(cx - radius * 0.38, cy - radius * 0.22, cx - radius * 0.03, cy - radius * 0.08, cx + radius * 0.34, cy - radius * 0.18);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - radius * 0.48, cy + radius * 0.42);
+    ctx.bezierCurveTo(cx - radius * 0.14, cy + radius * 0.27, cx + radius * 0.20, cy + radius * 0.43, cx + radius * 0.72, cy + radius * 0.22);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - radius * 0.26, cy - radius * 0.65);
+    ctx.bezierCurveTo(cx + radius * 0.02, cy - radius * 0.49, cx + radius * 0.28, cy - radius * 0.54, cx + radius * 0.56, cy - radius * 0.35);
+    ctx.stroke();
+
+    var shade = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+    shade.addColorStop(0, "rgba(255,255,255,0.12)");
+    shade.addColorStop(0.48, "rgba(255,255,255,0)");
+    shade.addColorStop(1, "rgba(0,0,15,0.56)");
+    ctx.fillStyle = shade;
+    ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawBackground(rect) {
+    ctx.save();
+    roundedPath(ctx, rect.x, rect.y, rect.w, rect.h, 13);
+    ctx.clip();
+
+    var bg = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y + rect.h);
+    bg.addColorStop(0, "#07111f");
+    bg.addColorStop(0.55, "#020817");
+    bg.addColorStop(1, "#080c18");
+    ctx.fillStyle = bg;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+    for (var i = 0; i < stars.length; i++) {
+      var star = stars[i];
+      var pulse = 0.72 + 0.28 * Math.sin(performance.now() * 0.001 + i);
+      ctx.globalAlpha = star.a * pulse;
+      ctx.fillStyle = i % 11 === 0 ? "#a6e9ff" : "#eef6ff";
+      ctx.beginPath();
+      ctx.arc(rect.x + star.x * rect.w, rect.y + star.y * rect.h, star.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(132, 202, 228, 0.28)";
+    ctx.lineWidth = 1;
+    roundedPath(ctx, rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1, 13);
+    ctx.stroke();
+  }
+
+  function drawGuide(rect, color) {
+    var level = currentLevel();
+    var cx = rect.x + level.targetX * rect.w;
+    var cy = rect.y + level.targetY * rect.h;
+    var radius = level.targetR * rect.min;
+
+    ctx.save();
+    roundedPath(ctx, rect.x, rect.y, rect.w, rect.h, 13);
+    ctx.clip();
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(2, Math.min(4, rect.min * 0.011));
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -performance.now() * 0.012;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.setLineDash([]);
+
+    if (cx > rect.x && cx < rect.x + rect.w && cy > rect.y && cy < rect.y + rect.h) {
+      var cross = Math.max(7, Math.min(13, rect.min * 0.032));
+      ctx.globalAlpha = 0.78;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - cross, cy);
+      ctx.lineTo(cx + cross, cy);
+      ctx.moveTo(cx, cy - cross);
+      ctx.lineTo(cx, cy + cross);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawWobbleDisplay(rect, now) {
+    var level = currentLevel();
+    var boxW = Math.min(150, Math.max(104, rect.w * 0.28));
+    var boxH = 38;
+    var x = rect.x + rect.w - boxW - 10;
+    var y = rect.y + 10;
+
+    ctx.fillStyle = "rgba(3, 9, 18, 0.72)";
+    roundedPath(ctx, x, y, boxW, boxH, 8);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(116, 194, 217, 0.24)";
+    ctx.lineWidth = 1;
+    roundedPath(ctx, x + 0.5, y + 0.5, boxW - 1, boxH - 1, 8);
+    ctx.stroke();
+
+    ctx.fillStyle = "#86a1b2";
+    ctx.font = "800 8px system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("SATELLITE " + level.wobbleName, x + 8, y + 10);
+
+    ctx.strokeStyle = level.wobble > 0.018 ? "#f1bd5a" : "#76dae8";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var i = 0; i <= 32; i++) {
+      var px = x + 8 + i * (boxW - 16) / 32;
+      var wave = Math.sin(now * 0.004 + i * 0.46) * level.wobble * 235;
+      var py = y + 27 + wave;
+      if (i === 0) {
+        ctx.moveTo(px, py);
+      } else {
+        ctx.lineTo(px, py);
+      }
+    }
+    ctx.stroke();
+  }
+
+  function drawAlignmentPill(rect, metrics) {
+    var text;
+    var color;
+    if (metrics.fit <= 1) {
+      text = "FRAME LOCKED";
+      color = "#9ff6ff";
+    } else if (metrics.fit <= 1.85) {
+      text = "NEAR — HOLD STEADY";
+      color = "#f2c267";
+    } else {
+      text = "ALIGN EARTH TO GUIDE";
+      color = "#d1dde4";
+    }
+
+    var pillW = Math.min(190, Math.max(126, rect.w * 0.38));
+    var pillH = 26;
+    var x = rect.x + 10;
+    var y = rect.y + rect.h - pillH - 10;
+
+    ctx.fillStyle = "rgba(3, 9, 17, 0.78)";
+    roundedPath(ctx, x, y, pillW, pillH, 13);
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.58;
+    roundedPath(ctx, x + 0.5, y + 0.5, pillW - 1, pillH - 1, 13);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = color;
+    ctx.font = "900 9px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, x + pillW / 2, y + pillH / 2 + 0.5);
+    ctx.textAlign = "left";
+  }
+
+  function drawScene(now) {
+    var rect = layout.scene;
+    var actual = getActual(now);
+    var metrics = getMetrics(actual);
+    var guideColor = "rgba(226, 244, 249, 0.82)";
+
+    if (metrics.fit <= 1) {
+      guideColor = "#a9f7ff";
+    } else if (metrics.fit <= 1.85) {
+      guideColor = "#f1bd5a";
+    }
+    if (state.feedback && state.feedback.type === "bad") {
+      guideColor = "#ff6373";
+    }
+
+    drawBackground(rect);
+
+    ctx.save();
+    roundedPath(ctx, rect.x, rect.y, rect.w, rect.h, 13);
+    ctx.clip();
+
+    var earthX = rect.x + actual.x * rect.w;
+    var earthY = rect.y + actual.y * rect.h;
+    var earthRadius = actual.r * rect.min;
+    drawEarth(earthX, earthY, earthRadius, 1, now * 0.000035);
+
+    var vignette = ctx.createRadialGradient(
+      rect.x + rect.w / 2,
+      rect.y + rect.h / 2,
+      rect.min * 0.12,
+      rect.x + rect.w / 2,
+      rect.y + rect.h / 2,
+      Math.max(rect.w, rect.h) * 0.67
+    );
+    vignette.addColorStop(0, "rgba(0,0,0,0)");
+    vignette.addColorStop(1, "rgba(0,0,12,0.48)");
+    ctx.fillStyle = vignette;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+    ctx.restore();
+
+    drawGuide(rect, guideColor);
+    drawWobbleDisplay(rect, now);
+    drawAlignmentPill(rect, metrics);
+
+    ctx.fillStyle = "rgba(218, 235, 241, 0.72)";
+    ctx.font = "800 9px system-ui, sans-serif";
+    ctx.textBaseline = "top";
+    ctx.fillText("LIVE CAMERA", rect.x + 12, rect.y + 12);
+  }
+
+  function panelPhotoRect(panel) {
+    var header = Math.min(31, panel.h * 0.20);
+    var footer = Math.min(27, panel.h * 0.18);
+    return {
+      x: panel.x + 10,
+      y: panel.y + header,
+      w: Math.max(20, panel.w - 20),
+      h: Math.max(18, panel.h - header - footer - 5)
+    };
+  }
+
+  function drawPhotoComposition(photo, capture, alpha) {
+    ctx.save();
+    roundedPath(ctx, photo.x, photo.y, photo.w, photo.h, 5);
+    ctx.clip();
+
+    var gradient = ctx.createLinearGradient(photo.x, photo.y, photo.x, photo.y + photo.h);
+    gradient.addColorStop(0, "#071323");
+    gradient.addColorStop(1, "#02050e");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(photo.x, photo.y, photo.w, photo.h);
+
+    var min = Math.min(photo.w, photo.h);
+    drawEarth(
+      photo.x + capture.x * photo.w,
+      photo.y + capture.y * photo.h,
+      capture.r * min,
+      alpha,
+      0.08
+    );
+
+    ctx.restore();
+  }
+
+  function drawDevelopingPanel(panel) {
+    var level = currentLevel();
+    var photo = panelPhotoRect(panel);
+    var targetCapture = {
+      x: level.targetX,
+      y: level.targetY,
+      r: level.targetR
+    };
+
+    ctx.fillStyle = "#d8ddd9";
+    roundedPath(ctx, panel.x, panel.y, panel.w, panel.h, 12);
+    ctx.fill();
+
+    ctx.fillStyle = "#2e3a40";
+    ctx.font = "900 9px system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("DEVELOPING PRINT", panel.x + 11, panel.y + 14);
+
+    drawPhotoComposition(photo, targetCapture, 0.15);
+
+    var order = [2, 0, 4, 1, 3];
+    for (var i = 0; i < state.pieces.length; i++) {
+      var section = order[i];
+      var sectionW = photo.w / 5;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(photo.x + section * sectionW - 0.5, photo.y, sectionW + 1, photo.h);
+      ctx.clip();
+      drawPhotoComposition(photo, targetCapture, 1);
+      ctx.restore();
+
+      ctx.strokeStyle = state.pieces[i] === "near" ? "#e9b953" : "rgba(211, 249, 255, 0.52)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(photo.x + section * sectionW + 0.5, photo.y + 0.5, sectionW - 1, photo.h - 1);
+    }
+
+    ctx.strokeStyle = "rgba(35, 48, 55, 0.35)";
+    ctx.lineWidth = 1;
+    roundedPath(ctx, photo.x + 0.5, photo.y + 0.5, photo.w - 1, photo.h - 1, 5);
+    ctx.stroke();
+
+    ctx.fillStyle = "#57656b";
+    ctx.font = "800 8px system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText(state.pieces.length + " / 5 CLEAR PIECES", panel.x + 11, panel.y + panel.h - 12);
+
+    for (var j = 0; j < 5; j++) {
+      var dotX = panel.x + panel.w - 12 - (4 - j) * 11;
+      ctx.fillStyle = state.pieces[j] === "clean" ? "#36aabb" :
+        state.pieces[j] === "near" ? "#d89e37" : "#a7aeac";
+      ctx.beginPath();
+      ctx.arc(dotX, panel.y + panel.h - 12, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawBadPanel(panel) {
+    var level = currentLevel();
+    var photo = panelPhotoRect(panel);
+    var capture = state.badCapture;
+
+    ctx.fillStyle = "#e1dbd7";
+    roundedPath(ctx, panel.x, panel.y, panel.w, panel.h, 12);
+    ctx.fill();
+
+    ctx.fillStyle = "#a52f3d";
+    ctx.font = "900 9px system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("LAST FRAME · RED GAPS", panel.x + 11, panel.y + 14);
+
+    drawPhotoComposition(photo, capture, 0.94);
+
+    ctx.save();
+    roundedPath(ctx, photo.x, photo.y, photo.w, photo.h, 5);
+    ctx.clip();
+
+    var min = Math.min(photo.w, photo.h);
+    var targetX = photo.x + level.targetX * photo.w;
+    var targetY = photo.y + level.targetY * photo.h;
+    var targetR = level.targetR * min;
+    var actualX = photo.x + capture.x * photo.w;
+    var actualY = photo.y + capture.y * photo.h;
+
+    ctx.strokeStyle = "#ff4f63";
+    ctx.fillStyle = "#ff4f63";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.arc(targetX, targetY, targetR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.globalAlpha = 0.42;
+    var gapSize = Math.max(4, Math.min(13, min * 0.08));
+    ctx.fillRect(photo.x, photo.y, photo.w, gapSize);
+    ctx.fillRect(photo.x, photo.y + photo.h - gapSize, photo.w, gapSize);
+    ctx.fillRect(photo.x, photo.y, gapSize, photo.h);
+    ctx.fillRect(photo.x + photo.w - gapSize, photo.y, gapSize, photo.h);
+    ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = "#ff7180";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(actualX, actualY);
+    ctx.lineTo(targetX, targetY);
+    ctx.stroke();
+
+    ctx.restore();
+
+    ctx.strokeStyle = "#c13b49";
+    ctx.lineWidth = 2;
+    roundedPath(ctx, photo.x + 1, photo.y + 1, photo.w - 2, photo.h - 2, 5);
+    ctx.stroke();
+
+    ctx.fillStyle = "#8d3a42";
+    ctx.font = "800 8px system-ui, sans-serif";
+    ctx.fillText("FILM CARD USED", panel.x + 11, panel.y + panel.h - 12);
+  }
+
+  function drawPanel() {
+    if (state.badCapture) {
+      drawBadPanel(layout.panel);
+    } else {
+      drawDevelopingPanel(layout.panel);
+    }
+  }
+
+  function render(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    var whole = ctx.createLinearGradient(0, 0, width, height);
+    whole.addColorStop(0, "#07101c");
+    whole.addColorStop(1, "#03060d");
+    ctx.fillStyle = whole;
+    ctx.fillRect(0, 0, width, height);
+
+    if (layout) {
+      drawScene(now);
+      drawPanel();
+    }
+  }
+
+  function frame(now) {
+    var dt = Math.min(50, now - lastTime);
+    lastTime = now;
+    update(dt, now);
+    render(now);
+    requestAnimationFrame(frame);
+  }
+
+  function clampAim() {
+    state.aimX = Math.max(-0.85, Math.min(1.85, state.aimX));
+    state.aimY = Math.max(-0.85, Math.min(1.85, state.aimY));
+  }
+
+  function adjustZoom(amount) {
+    if (state.mode !== "play") {
+      return;
+    }
+    state.zoom = Math.max(0.14, Math.min(1.18, state.zoom + amount));
+    updateHUD();
+  }
+
+  function animateClass(element, className) {
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+    setTimeout(function () {
+      element.classList.remove(className);
+    }, 600);
+  }
+
+  function flash(type) {
+    flashEl.className = "";
+    void flashEl.offsetWidth;
+    flashEl.className = type;
+  }
+
+  function showToast(message, type) {
+    clearTimeout(toastTimer);
+    toastEl.textContent = message;
+    toastEl.className = "show " + type;
+    toastTimer = setTimeout(function () {
+      toastEl.className = "";
+    }, 1200);
+  }
+
+  function ensureAudio() {
+    if (!audioContext) {
+      var AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtor) {
+        audioContext = new AudioCtor();
+      }
+    }
+    if (audioContext && audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+    return audioContext;
+  }
+
+  function playClick(isNear) {
+    var ac = ensureAudio();
+    if (!ac) {
+      return;
+    }
+    var t = ac.currentTime;
+    var gain = ac.createGain();
+    var oscillator = ac.createOscillator();
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(isNear ? 820 : 1280, t);
+    oscillator.frequency.exponentialRampToValueAtTime(isNear ? 440 : 680, t + 0.055);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(isNear ? 0.09 : 0.14, t + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+    oscillator.connect(gain);
+    gain.connect(ac.destination);
+    oscillator.start(t);
+    oscillator.stop(t + 0.08);
+
+    var buffer = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.045), ac.sampleRate);
+    var data = buffer.getChannelData(0);
+    for (var i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    }
+    var source = ac.createBufferSource();
+    var noiseGain = ac.createGain();
+    source.buffer = buffer;
+    noiseGain.gain.value = isNear ? 0.035 : 0.065;
+    source.connect(noiseGain);
+    noiseGain.connect(ac.destination);
+    source.start(t);
+  }
+
+  function playClunk() {
+    var ac = ensureAudio();
+    if (!ac) {
+      return;
+    }
+    var t = ac.currentTime;
+    var oscillator = ac.createOscillator();
+    var gain = ac.createGain();
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(150, t);
+    oscillator.frequency.exponentialRampToValueAtTime(58, t + 0.17);
+    gain.gain.setValueAtTime(0.16, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    oscillator.connect(gain);
+    gain.connect(ac.destination);
+    oscillator.start(t);
+    oscillator.stop(t + 0.21);
+  }
+
+  function satelliteKick() {
+    var level = currentLevel();
+    var amount = 0.006 + level.wobble * 0.62;
+    var angle = (state.pieces.length * 2.31 + state.levelIndex * 1.17 + performance.now() * 0.0007);
+    state.aimX += Math.cos(angle) * amount * layout.scene.min / layout.scene.w;
+    state.aimY += Math.sin(angle) * amount * layout.scene.min / layout.scene.h;
+    clampAim();
+  }
+
+  function takeShot() {
+    var now = performance.now();
+    if (state.mode !== "play" || now - lastShot < 800 || !layout) {
+      return;
+    }
+
+    lastShot = now;
+    shutterEl.classList.add("cooling");
+    setTimeout(function () {
+      shutterEl.classList.remove("cooling");
+    }, 760);
+
+    var actual = getActual(now);
+    var metrics = getMetrics(actual);
+    var capture = {
+      x: actual.x,
+      y: actual.y,
+      r: actual.r
+    };
+
+    if (metrics.fit <= 1) {
+      state.cleanStreak += 1;
+      var accuracyPoints = Math.round(700 + Math.max(0, 1 - metrics.fit) * 300);
+      var streakBonus = state.cleanStreak >= 2 ? (state.cleanStreak - 1) * 100 : 0;
+      var cleanPoints = accuracyPoints + streakBonus;
+      state.score += cleanPoints;
+      state.pieces.push("clean");
+      state.feedback = { type: "clean", until: now + 850 };
+      flash("white");
+      playClick(false);
+      showToast(
+        "CLEAN +" + cleanPoints +
+        " · POS " + metrics.positionAccuracy +
+        " · SIZE " + metrics.sizeAccuracy +
+        (streakBonus ? " · STREAK BONUS" : ""),
+        "clean"
+      );
+      satelliteKick();
+      updateHUD();
+      checkPhotoComplete();
+    } else if (metrics.fit <= 1.85) {
+      state.cleanStreak = 0;
+      var nearFactor = Math.max(0, 1 - (metrics.fit - 1) / 0.85);
+      var nearPoints = Math.round(300 + nearFactor * 200);
+      state.score += nearPoints;
+      state.pieces.push("near");
+      state.feedback = { type: "near", until: now + 900 };
+      flash("gold");
+      playClick(true);
+      animateClass(stageWrap, "softWobble");
+      showToast(
+        "NEAR-MISS +" + nearPoints +
+        " · POS " + metrics.positionAccuracy +
+        " · SIZE " + metrics.sizeAccuracy,
+        "near"
+      );
+      satelliteKick();
+      updateHUD();
+      checkPhotoComplete();
+    } else {
+      state.cleanStreak = 0;
+      state.film -= 1;
+      state.badCapture = capture;
+      state.badCaptureUntil = now + 1550;
+      state.feedback = { type: "bad", until: now + 900 };
+      flash("red");
+      playClunk();
+      animateClass(stageWrap, "bump");
+      showToast(
+        "OFF FRAME · POS " + metrics.positionAccuracy +
+        " · SIZE " + metrics.sizeAccuracy +
+        " · FILM USED",
+        "bad"
+      );
+      updateHUD();
+
+      if (state.film <= 0) {
+        state.mode = "resultWait";
+        setTimeout(function () {
+          showModal(
+            "FILM SPENT",
+            "Current Photo Rewound",
+            "The three film cards are gone. Only this photo restarts: its pieces and points are rewound, while earlier photos stay complete.",
+            "RELOAD 3 FILM",
+            function () {
+              state.score = state.photoStartScore;
+              setupLevel();
+            }
+          );
+        }, 1250);
+      }
+    }
+  }
+
+  function checkPhotoComplete() {
+    if (state.pieces.length < 5) {
+      return;
+    }
+
+    state.mode = "resultWait";
+    var cleanCount = 0;
+    for (var i = 0; i < state.pieces.length; i++) {
+      if (state.pieces[i] === "clean") {
+        cleanCount++;
+      }
+    }
+
+    setTimeout(function () {
+      if (state.levelIndex < levels.length - 1) {
+        showModal(
+          "PHOTO COMPLETE",
+          cleanCount >= 4 ? "Sharp Enough to Keep" : "A Decent Picture",
+          "Five usable frames developed into one photo. " + cleanCount +
+          " were clean. Next comes a tighter composition and stronger satellite wobble.",
+          "NEXT PHOTO",
+          function () {
+            state.levelIndex += 1;
+            setupLevel();
+          }
+        );
+      } else {
+        showModal(
+          "MISSION COMPLETE",
+          "Earth Held Still",
+          "Four photos assembled, twenty usable frames captured. Final mission score: " +
+          Math.round(state.score).toLocaleString() + ".",
+          "FLY AGAIN",
+          function () {
+            resetCampaign();
+          }
+        );
+      }
+    }, 1050);
+  }
+
+  function showModal(kicker, title, body, buttonText, callback) {
+    modalKickerEl.textContent = kicker;
+    modalTitleEl.textContent = title;
+    modalBodyEl.textContent = body;
+    modalButtonEl.textContent = buttonText;
+    modalButtonEl.onclick = function () {
+      callback();
+    };
+    modalEl.classList.add("open");
+    modalButtonEl.focus();
+  }
+
+  function hideModal() {
+    modalEl.classList.remove("open");
+  }
+
+  canvas.addEventListener("pointerdown", function (event) {
+    if (state.mode !== "play" || !layout) {
+      return;
+    }
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+    var scene = layout.scene;
+
+    if (x < scene.x || x > scene.x + scene.w || y < scene.y || y > scene.y + scene.h) {
+      return;
+    }
+
+    dragging = true;
+    pointerX = x;
+    pointerY = y;
+    canvas.classList.add("dragging");
+    canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointermove", function (event) {
+    if (!dragging || state.mode !== "play") {
+      return;
+    }
+
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+    var dx = x - pointerX;
+    var dy = y - pointerY;
+    pointerX = x;
+    pointerY = y;
+
+    state.aimX += dx / layout.scene.w;
+    state.aimY += dy / layout.scene.h;
+    clampAim();
+    event.preventDefault();
+  });
+
+  function endDrag(event) {
+    if (!dragging) {
+      return;
+    }
+    dragging = false;
+    canvas.classList.remove("dragging");
+    if (event && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("contextmenu", function (event) {
+    event.preventDefault();
+  });
+
+  zoomInEl.addEventListener("click", function () {
+    adjustZoom(0.022);
+  });
+  zoomOutEl.addEventListener("click", function () {
+    adjustZoom(-0.022);
+  });
+  shutterEl.addEventListener("click", function () {
+    takeShot();
+  });
+
+  window.addEventListener("keydown", function (event) {
+    var key = event.key;
+    var handled = false;
+
+    if (state.mode === "play" && layout) {
+      var step = event.shiftKey ? 16 : 8;
+      if (key === "ArrowLeft") {
+        state.aimX -= step / layout.scene.w;
+        handled = true;
+      } else if (key === "ArrowRight") {
+        state.aimX += step / layout.scene.w;
+        handled = true;
+      } else if (key === "ArrowUp") {
+        state.aimY -= step / layout.scene.h;
+        handled = true;
+      } else if (key === "ArrowDown") {
+        state.aimY += step / layout.scene.h;
+        handled = true;
+      } else if (key === "+" || key === "=" || event.code === "NumpadAdd") {
+        adjustZoom(0.022);
+        handled = true;
+      } else if (key === "-" || key === "_" || event.code === "NumpadSubtract") {
+        adjustZoom(-0.022);
+        handled = true;
+      } else if (key === " " || event.code === "Space") {
+        if (!event.repeat) {
+          takeShot();
+        }
+        handled = true;
+      }
+      clampAim();
+    } else if (modalEl.classList.contains("open") && (key === " " || key === "Enter")) {
+      if (!event.repeat) {
+        modalButtonEl.click();
+      }
+      handled = true;
+    }
+
+    if (handled) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener("resize", resizeCanvas);
+
+  if (window.ResizeObserver) {
+    var resizeObserver = new ResizeObserver(function () {
+      resizeCanvas();
+    });
+    resizeObserver.observe(stageWrap);
+  }
+
+  resizeCanvas();
+  setupLevel();
+  requestAnimationFrame(frame);
+}());
+</script>
+</body>
+</html>

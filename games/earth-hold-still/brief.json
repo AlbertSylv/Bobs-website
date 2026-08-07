@@ -1,0 +1,11 @@
+{
+  "title": "Earth, Hold Still",
+  "slug": "earth-hold-still",
+  "tagline": "Take one decent picture from a wobbly satellite.",
+  "concept": "Frame Earth inside a simple camera guide and build a rough space photo one shot at a time.",
+  "core_loop": "Drag to line up Earth, use the big zoom buttons to match the guide, then take the shot; each attempt lasts a few seconds, and chasing a cleaner photo keeps the simple framing satisfying.",
+  "mechanics": "Controls: drag or use the arrow keys to aim, tap the large plus and minus buttons or use the matching keys to zoom, and tap the shutter or press Space to take a picture.; Win or lose: complete five good frames to finish a photo; a bad shot uses one of three visible film cards, and running out restarts only the current photo.; Scoring: earn points for position and size accuracy, with extra points for several clean shots in a row.",
+  "feedback": "A good shot gives a bright camera flash, a crisp click, and adds a clear piece to the photo. A bad shot shows the captured frame beside the guide with red gaps, makes a dull clunk, and removes one film card. A near-miss gets a warm gold outline, a soft wobble, and still counts with fewer points.",
+  "difficulty": "The first photo uses a large full Earth, wide scoring limits, and gentle snap help. Later photos ask for close horizons and off-center views while a slow, clearly shown satellite wobble makes steady framing harder; there is never a countdown.",
+  "mobile": true
+}
