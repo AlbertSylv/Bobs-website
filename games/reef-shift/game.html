@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Reef Shift</title>
+<style>
+  html, body { margin:0; height:100%; }
+  * { box-sizing:border-box; }
+  body {
+    overflow:hidden;
+    background:#063d50;
+    color:#fff8df;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    touch-action:none;
+    user-select:none;
+  }
+  #game {
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#07566c;
+  }
+  canvas {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  #hud {
+    position:absolute;
+    z-index:3;
+    top:0;
+    left:0;
+    right:0;
+    min-height:82px;
+    padding:10px 13px 8px;
+    background:linear-gradient(180deg, rgba(2,28,38,.91), rgba(2,37,48,.66), transparent);
+    pointer-events:none;
+  }
+  .hudRow {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  #brand {
+    min-width:0;
+    line-height:1;
+  }
+  #brand strong {
+    display:block;
+    color:#fff1b4;
+    font-size:clamp(18px, 3vw, 28px);
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    text-shadow:0 2px 0 #163944;
+  }
+  #brand small {
+    display:block;
+    margin-top:5px;
+    color:#a9e5e8;
+    font-size:11px;
+    letter-spacing:.03em;
+    white-space:nowrap;
+  }
+  #stats {
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:9px;
+    font-weight:800;
+    font-size:13px;
+  }
+  .stat {
+    min-width:68px;
+    padding:6px 9px;
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:11px;
+    background:rgba(0,28,38,.58);
+    box-shadow:0 3px 10px rgba(0,0,0,.18);
+    text-align:center;
+  }
+  .stat span {
+    display:block;
+    margin-top:1px;
+    color:#fff;
+    font-size:16px;
+  }
+  #planks {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    height:21px;
+  }
+  .plank {
+    position:relative;
+    display:block;
+    width:20px;
+    height:8px;
+    border-radius:3px;
+    background:#e6a85c;
+    border:1px solid #6e381f;
+    box-shadow:inset 0 2px rgba(255,255,255,.25);
+    transform:rotate(-3deg);
+    transition:transform .22s, opacity .22s, filter .22s;
+  }
+  .plank:nth-child(2) { transform:rotate(3deg); }
+  .plank:nth-child(3) { transform:rotate(-1deg); }
+  .plank.broken {
+    opacity:.23;
+    filter:grayscale(1);
+    transform:rotate(25deg) scale(.72);
+  }
+  #subHud {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:7px;
+    color:#d7fbf5;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.02em;
+  }
+  #progress {
+    flex:1;
+    max-width:330px;
+    height:5px;
+    overflow:hidden;
+    border-radius:999px;
+    background:rgba(0,0,0,.34);
+  }
+  #progressFill {
+    width:0;
+    height:100%;
+    border-radius:inherit;
+    background:linear-gradient(90deg, #43e0d0, #ffe36e);
+    transition:width .3s ease;
+  }
+  #currentText {
+    white-space:nowrap;
+    color:#a9f4ed;
+  }
+  #toast {
+    position:absolute;
+    z-index:4;
+    top:94px;
+    left:50%;
+    max-width:min(88vw, 440px);
+    padding:8px 15px;
+    border-radius:999px;
+    background:rgba(1,27,36,.85);
+    border:1px solid rgba(255,255,255,.22);
+    box-shadow:0 5px 18px rgba(0,0,0,.25);
+    color:#fff6c9;
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:.04em;
+    text-align:center;
+    opacity:0;
+    transform:translate(-50%, -8px) scale(.96);
+    transition:opacity .16s, transform .16s;
+    pointer-events:none;
+  }
+  #toast.show {
+    opacity:1;
+    transform:translate(-50%, 0) scale(1);
+  }
+  #controls {
+    position:absolute;
+    z-index:4;
+    left:0;
+    right:0;
+    bottom:0;
+    display:grid;
+    grid-template-columns:1fr 1.05fr 1fr;
+    gap:8px;
+    padding:9px max(9px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-bottom)) max(9px, env(safe-area-inset-right));
+    background:linear-gradient(0deg, rgba(2,28,37,.98), rgba(2,36,46,.89), rgba(2,36,46,0));
+  }
+  .control {
+    min-height:66px;
+    border:0;
+    border-radius:17px;
+    color:#17333a;
+    font:900 16px/1 system-ui, sans-serif;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+    box-shadow:0 5px 0 rgba(0,23,30,.75), inset 0 2px rgba(255,255,255,.45);
+    cursor:pointer;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .control small {
+    display:block;
+    margin-top:7px;
+    font-size:10px;
+    letter-spacing:.03em;
+    opacity:.72;
+  }
+  .control.left { background:#ffc45c; }
+  .control.hold { background:#fff0b8; }
+  .control.right { background:#56dfd2; }
+  .control:active:not(:disabled) {
+    transform:translateY(4px);
+    box-shadow:0 1px 0 rgba(0,23,30,.75), inset 0 2px rgba(255,255,255,.35);
+  }
+  .control:disabled {
+    opacity:.46;
+    cursor:default;
+  }
+  #overlay {
+    position:absolute;
+    z-index:8;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(1,23,31,.63);
+    backdrop-filter:blur(3px);
+  }
+  #overlay.hidden { display:none; }
+  .card {
+    width:min(510px, 94vw);
+    max-height:92vh;
+    overflow:auto;
+    padding:24px clamp(19px, 5vw, 36px);
+    border:2px solid rgba(255,245,190,.55);
+    border-radius:25px;
+    background:
+      linear-gradient(145deg, rgba(17,91,102,.98), rgba(5,47,61,.98));
+    box-shadow:0 18px 60px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.17);
+    text-align:center;
+  }
+  .card h1 {
+    margin:0;
+    color:#fff0a7;
+    font-size:clamp(42px, 11vw, 72px);
+    line-height:.92;
+    letter-spacing:-.045em;
+    text-transform:uppercase;
+    text-shadow:0 5px 0 #173e43;
+  }
+  .tagline {
+    margin:12px 0 21px;
+    color:#bff8ee;
+    font-size:clamp(15px, 4vw, 20px);
+    font-weight:800;
+  }
+  .how {
+    margin:0 auto 18px;
+    padding:13px 14px;
+    border-radius:15px;
+    background:rgba(0,24,32,.42);
+    color:#fff9dc;
+    font-size:14px;
+    line-height:1.45;
+  }
+  .keyline {
+    margin:0 0 21px;
+    color:#aee4e7;
+    font-size:12px;
+    line-height:1.45;
+  }
+  .mainButton {
+    width:100%;
+    min-height:56px;
+    border:0;
+    border-radius:15px;
+    background:#ffe06c;
+    color:#17353c;
+    box-shadow:0 6px 0 #9b7431, inset 0 2px rgba(255,255,255,.55);
+    font:900 17px/1 system-ui, sans-serif;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .mainButton:active {
+    transform:translateY(4px);
+    box-shadow:0 2px 0 #9b7431;
+  }
+  .resultScore {
+    margin:17px 0 4px;
+    color:#fff;
+    font-size:30px;
+    font-weight:900;
+  }
+  .resultDetail {
+    margin:0 0 21px;
+    color:#bdebe8;
+    font-size:14px;
+  }
+  @media (max-width:620px) {
+    #brand small { display:none; }
+    .stat { min-width:57px; padding:5px 6px; }
+    #stats { gap:5px; font-size:10px; }
+    .stat span { font-size:14px; }
+    #subHud { font-size:10px; }
+    .control { min-height:61px; font-size:14px; border-radius:14px; }
+  }
+  @media (max-height:530px) {
+    #hud { min-height:65px; padding-top:6px; }
+    #brand strong { font-size:18px; }
+    #subHud { margin-top:3px; }
+    #toast { top:70px; }
+    .control { min-height:49px; }
+    .control small { margin-top:4px; }
+    .card { padding-top:17px; padding-bottom:17px; }
+    .card h1 { font-size:40px; }
+    .tagline { margin:7px 0 10px; }
+    .how { margin-bottom:10px; padding:9px; }
+    .keyline { margin-bottom:12px; }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Reef Shift game area"></canvas>
+
+  <div id="hud">
+    <div class="hudRow">
+      <div id="brand">
+        <strong>Reef Shift</strong>
+        <small>Move the crate. The raft takes it personally.</small>
+      </div>
+      <div id="stats">
+        <div class="stat">Wave<span id="waveValue">1 / 18</span></div>
+        <div class="stat">Score<span id="scoreValue">0</span></div>
+        <div class="stat">Planks
+          <span id="planks" aria-label="Three planks remaining">
+            <i class="plank"></i><i class="plank"></i><i class="plank"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div id="subHud">
+      <span id="currentText">Current: calm</span>
+      <div id="progress"><div id="progressFill"></div></div>
+      <span>Fit the preview bar through the gap</span>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <div id="controls" aria-label="Raft controls">
+    <button class="control left" data-action="-1" disabled>◀ Left<small>Left Arrow</small></button>
+    <button class="control hold" data-action="0" disabled>● Hold<small>Space</small></button>
+    <button class="control right" data-action="1" disabled>Right ▶<small>Right Arrow</small></button>
+  </div>
+
+  <div id="overlay">
+    <div class="card" id="card">
+      <h1>Reef<br>Shift</h1>
+      <p class="tagline">Move the crate. The raft takes it personally.</p>
+      <p class="how"><strong>How to play:</strong> choose left, hold, or right. The crate shifts and the raft advances one wave. The three dots and bars show the exact possible landing spots—fit one through the reef gap.</p>
+      <p class="keyline">Reach shore after 18 waves. Reef hits break one of three planks. Middle passes earn a bonus, and every plank left at shore is worth more points. No timer—study the water.</p>
+      <button class="mainButton" id="startButton">Launch the Raft</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var overlay = document.getElementById("overlay");
+  var card = document.getElementById("card");
+  var startButton = document.getElementById("startButton");
+  var waveValue = document.getElementById("waveValue");
+  var scoreValue = document.getElementById("scoreValue");
+  var progressFill = document.getElementById("progressFill");
+  var currentText = document.getElementById("currentText");
+  var toast = document.getElementById("toast");
+  var controlButtons = Array.prototype.slice.call(document.querySelectorAll(".control"));
+  var plankIcons = Array.prototype.slice.call(document.querySelectorAll(".plank"));
+
+  var W = 0;
+  var H = 0;
+  var DPR = 1;
+  var raftHalf = 0.525;
+  var totalWaves = 18;
+  var mode = "intro";
+  var endScene = "";
+  var move = null;
+  var winStart = 0;
+  var sinkStart = 0;
+  var previewShakeStart = -9999;
+  var wobbleUntil = 0;
+  var flashStart = -9999;
+  var toastTimer = 0;
+  var audioContext = null;
+  var particles = [];
+  var rings = [];
+  var bubbles = [];
+  var course = [];
+
+  var currents = [
+    0.00, 0.04, -0.04, 0.07, -0.06, 0.02,
+    0.18, -0.22, 0.28, -0.18, 0.35, -0.32,
+    0.20, -0.38, 0.42, -0.28, 0.35, -0.45
+  ];
+
+  var solutionActions = [
+    0, 0, 0, 0, 0, 0,
+    1, -1, -1, 1, 1, -1,
+    -1, 1, 1, -1, -1, 1
+  ];
+
+  var gapWidths = [
+    3.60, 3.42, 3.28, 3.14, 3.02, 2.90,
+    2.56, 2.40, 2.26, 2.14, 2.05, 1.97,
+    1.90, 1.83, 1.77, 1.72, 1.68, 1.65
+  ];
+
+  var state = {
+    wave: 0,
+    score: 0,
+    planks: 3,
+    x: 0,
+    crate: 0
+  };
+
+  function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(maximum, value));
+  }
+
+  function lerp(a, b, amount) {
+    return a + (b - a) * amount;
+  }
+
+  function smooth(amount) {
+    amount = clamp(amount, 0, 1);
+    return amount * amount * (3 - 2 * amount);
+  }
+
+  function buildCourse() {
+    var x = 0;
+    var crate = 0;
+    var result = [];
+    var i;
+    for (i = 0; i < totalWaves; i += 1) {
+      crate = clamp(crate + solutionActions[i], -1, 1);
+      x += currents[i] + crate * 0.52 + solutionActions[i] * 0.18;
+      result.push({
+        center: x,
+        originalCenter: x,
+        width: gapWidths[i],
+        current: currents[i]
+      });
+    }
+    return result;
+  }
+
+  function resetGame() {
+    course = buildCourse();
+    state.wave = 0;
+    state.score = 0;
+    state.planks = 3;
+    state.x = 0;
+    state.crate = 0;
+    particles.length = 0;
+    rings.length = 0;
+    previewShakeStart = -9999;
+    wobbleUntil = 0;
+    flashStart = -9999;
+    move = null;
+    endScene = "";
+    prepareWave();
+    updateHUD();
+  }
+
+  function resize() {
+    W = Math.max(1, window.innerWidth);
+    H = Math.max(1, window.innerHeight);
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    makeBubbles();
+  }
+
+  function makeBubbles() {
+    bubbles.length = 0;
+    var count = Math.max(18, Math.floor(W * H / 30000));
+    var i;
+    for (i = 0; i < count; i += 1) {
+      bubbles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: 1 + Math.random() * 3,
+        speed: 5 + Math.random() * 12,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function scaleX() {
+    return Math.min(W / 10.5, 92);
+  }
+
+  function worldToX(value) {
+    return W * 0.5 + value * scaleX();
+  }
+
+  function raftY() {
+    return Math.min(H * 0.69, H - 112);
+  }
+
+  function reefStartY() {
+    return Math.max(125, H * 0.34);
+  }
+
+  function landingFor(action, x, crate, waveIndex) {
+    var nextCrate = clamp(crate + action, -1, 1);
+    var landing = x + course[waveIndex].current + nextCrate * 0.52 + action * 0.18;
+    return {
+      action: action,
+      x: landing,
+      crate: nextCrate
+    };
+  }
+
+  function getPreviews() {
+    return [
+      landingFor(-1, state.x, state.crate, state.wave),
+      landingFor(0, state.x, state.crate, state.wave),
+      landingFor(1, state.x, state.crate, state.wave)
+    ];
+  }
+
+  function isSafeAt(x, reef) {
+    return Math.abs(x - reef.center) + raftHalf <= reef.width * 0.5;
+  }
+
+  function prepareWave() {
+    if (state.wave >= totalWaves) {
+      return;
+    }
+
+    var reef = course[state.wave];
+    var previews = getPreviews();
+    var anySafe = false;
+    var closest = previews[0];
+    var closestDistance = Infinity;
+    var i;
+
+    for (i = 0; i < previews.length; i += 1) {
+      if (isSafeAt(previews[i].x, reef)) {
+        anySafe = true;
+      }
+      var distance = Math.abs(previews[i].x - reef.originalCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closest = previews[i];
+      }
+    }
+
+    if (!anySafe) {
+      reef.center = closest.x;
+    }
+
+    updateCurrentLabel();
+  }
+
+  function updateCurrentLabel() {
+    if (state.wave >= totalWaves) {
+      currentText.textContent = "Current: shoreward";
+      return;
+    }
+    var current = course[state.wave].current;
+    var strength = Math.abs(current);
+    var word = strength < 0.09 ? "gentle" : strength < 0.30 ? "steady" : "strong";
+    if (strength < 0.025) {
+      currentText.textContent = "Current: calm";
+    } else {
+      currentText.textContent = "Current: " + word + " " + (current < 0 ? "←" : "→");
+    }
+  }
+
+  function updateHUD() {
+    waveValue.textContent = Math.min(state.wave + 1, totalWaves) + " / " + totalWaves;
+    scoreValue.textContent = String(state.score);
+    progressFill.style.width = (state.wave / totalWaves * 100) + "%";
+    var i;
+    for (i = 0; i < plankIcons.length; i += 1) {
+      if (i >= state.planks) {
+        plankIcons[i].classList.add("broken");
+      } else {
+        plankIcons[i].classList.remove("broken");
+      }
+    }
+    document.getElementById("planks").setAttribute("aria-label", state.planks + " planks remaining");
+  }
+
+  function setControls(enabled) {
+    var i;
+    for (i = 0; i < controlButtons.length; i += 1) {
+      controlButtons[i].disabled = !enabled;
+    }
+  }
+
+  function showToast(message, color) {
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.style.color = color || "#fff6c9";
+    toast.classList.remove("show");
+    void toast.offsetWidth;
+    toast.classList.add("show");
+    toastTimer = setTimeout(function () {
+      toast.classList.remove("show");
+    }, 1200);
+  }
+
+  function ensureAudio() {
+    if (!audioContext) {
+      var AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtor) {
+        audioContext = new AudioCtor();
+      }
+    }
+    if (audioContext && audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }
+
+  function tone(frequency, duration, type, volume, delay) {
+    if (!audioContext) {
+      return;
+    }
+    var now = audioContext.currentTime + (delay || 0);
+    var oscillator = audioContext.createOscillator();
+    var gain = audioContext.createGain();
+    oscillator.type = type || "sine";
+    oscillator.frequency.setValueAtTime(frequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(45, frequency * 0.7), now + duration);
+    gain.gain.setValueAtTime(volume || 0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+  }
+
+  function noise(duration, volume) {
+    if (!audioContext) {
+      return;
+    }
+    var length = Math.floor(audioContext.sampleRate * duration);
+    var buffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
+    var data = buffer.getChannelData(0);
+    var i;
+    for (i = 0; i < length; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+    }
+    var source = audioContext.createBufferSource();
+    var gain = audioContext.createGain();
+    var filter = audioContext.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 850;
+    filter.Q.value = 0.7;
+    gain.gain.value = volume;
+    source.buffer = buffer;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioContext.destination);
+    source.start();
+  }
+
+  function soundKnock(centered) {
+    tone(205, 0.09, "triangle", 0.10, 0);
+    tone(centered ? 340 : 290, 0.07, "sine", 0.055, 0.055);
+  }
+
+  function soundClose() {
+    noise(0.20, 0.09);
+    tone(170, 0.12, "triangle", 0.05, 0);
+  }
+
+  function soundCrack() {
+    noise(0.18, 0.15);
+    tone(115, 0.23, "square", 0.08, 0);
+    tone(72, 0.28, "triangle", 0.08, 0.04);
+  }
+
+  function soundWin() {
+    tone(330, 0.18, "triangle", 0.08, 0);
+    tone(440, 0.18, "triangle", 0.08, 0.15);
+    tone(554, 0.26, "triangle", 0.09, 0.30);
+    tone(660, 0.36, "sine", 0.08, 0.47);
+  }
+
+  function beginMove(action) {
+    if (mode !== "idle" || state.wave >= totalWaves) {
+      return;
+    }
+    ensureAudio();
+
+    var reef = course[state.wave];
+    var target = landingFor(action, state.x, state.crate, state.wave);
+    var distance = Math.abs(target.x - reef.center);
+    var edgeClearance = reef.width * 0.5 - (distance + raftHalf);
+    var safe = edgeClearance >= 0;
+    var centerThreshold = Math.max(0.12, reef.width * 0.09);
+    var centered = safe && distance <= centerThreshold;
+    var outcome = safe ? (edgeClearance < 0.20 ? "close" : "clean") : "hit";
+
+    move = {
+      start: performance.now(),
+      duration: 900,
+      fromX: state.x,
+      toX: target.x,
+      fromCrate: state.crate,
+      toCrate: target.crate,
+      action: action,
+      outcome: outcome,
+      centered: centered,
+      edgeClearance: edgeClearance,
+      impacted: false,
+      correctedX: target.x
+    };
+
+    mode = "moving";
+    setControls(false);
+  }
+
+  function impactMove(now) {
+    if (!move || move.impacted) {
+      return;
+    }
+    move.impacted = true;
+    var reef = course[state.wave];
+    var hitX = worldToX(move.toX);
+    var y = raftY();
+
+    if (move.outcome === "hit") {
+      state.planks -= 1;
+      flashStart = now;
+      wobbleUntil = now + 650;
+
+      var safeAllowance = Math.max(0.06, reef.width * 0.5 - raftHalf);
+      move.correctedX = reef.center + clamp(move.toX - reef.center, -safeAllowance * 0.72, safeAllowance * 0.72);
+
+      soundCrack();
+      addSpray(hitX, y, "#ffd8bc", 22);
+      showToast(state.planks > 0 ? "CRACK!  PLANK BROKEN" : "THE RAFT HAS OPINIONS", "#ffb09d");
+
+      if (state.planks > 0) {
+        state.score += 100;
+      }
+    } else {
+      state.score += 100;
+
+      if (move.centered) {
+        state.score += 75;
+        showToast("+175  PERFECT CHANNEL", "#fff080");
+      } else if (move.outcome === "close") {
+        showToast("+100  CLOSE SQUEEZE", "#bffbff");
+      } else {
+        showToast("+100  CLEAN PASS", "#d9ffb5");
+      }
+
+      if (move.outcome === "close") {
+        wobbleUntil = now + 540;
+        soundClose();
+        var side = move.toX < reef.center ? -1 : 1;
+        addSpray(worldToX(reef.center + side * reef.width * 0.5), y, "#d7ffff", 18);
+      } else {
+        soundKnock(move.centered);
+        rings.push({
+          x: hitX,
+          y: y + 18,
+          start: now,
+          life: 720,
+          strong: move.centered
+        });
+      }
+    }
+
+    updateHUD();
+  }
+
+  function finishMove(now) {
+    if (!move) {
+      return;
+    }
+
+    state.x = move.correctedX;
+    state.crate = move.toCrate;
+    var wasHit = move.outcome === "hit";
+    move = null;
+
+    if (state.planks <= 0) {
+      startSink(now);
+      return;
+    }
+
+    state.wave += 1;
+    updateHUD();
+
+    if (state.wave >= totalWaves) {
+      startWin(now);
+      return;
+    }
+
+    prepareWave();
+    mode = "idle";
+    setControls(true);
+
+    if (wasHit) {
+      previewShakeStart = now;
+    }
+  }
+
+  function startWin(now) {
+    mode = "win";
+    endScene = "win";
+    winStart = now;
+    var plankBonus = state.planks * 250;
+    state.score += plankBonus;
+    progressFill.style.width = "100%";
+    scoreValue.textContent = String(state.score);
+    waveValue.textContent = "18 / 18";
+    currentText.textContent = "Current: shoreward";
+    showToast("SHORE!  +" + plankBonus + " PLANK BONUS", "#fff080");
+    soundWin();
+    setControls(false);
+  }
+
+  function startSink(now) {
+    mode = "sink";
+    endScene = "sink";
+    sinkStart = now;
+    setControls(false);
+    showToast("THE CRATE FLOATS. OF COURSE.", "#ffd2c4");
+  }
+
+  function showEnd(won) {
+    mode = "over";
+    var heading = won ? "Shore Made!" : "Raft Sunk";
+    var detail = won
+      ? state.planks + " plank" + (state.planks === 1 ? "" : "s") + " survived the reef."
+      : "The crate is floating beautifully. Its timing is terrible.";
+    card.innerHTML =
+      "<h1 style=\"font-size:clamp(38px,10vw,64px)\">" + heading + "</h1>" +
+      "<p class=\"tagline\">" + (won ? "A cheerful, mostly controlled arrival." : "Three planks down. One smug crate up.") + "</p>" +
+      "<div class=\"resultScore\">" + state.score + " points</div>" +
+      "<p class=\"resultDetail\">" + detail + "</p>" +
+      "<button class=\"mainButton\" id=\"restartButton\">Raft Again</button>";
+    overlay.classList.remove("hidden");
+    document.getElementById("restartButton").addEventListener("click", function () {
+      overlay.classList.add("hidden");
+      resetGame();
+      mode = "idle";
+      setControls(true);
+    });
+  }
+
+  function addSpray(x, y, color, count) {
+    var i;
+    for (i = 0; i < count; i += 1) {
+      particles.push({
+        x: x + (Math.random() - 0.5) * 24,
+        y: y + (Math.random() - 0.5) * 15,
+        vx: (Math.random() - 0.5) * 105,
+        vy: -35 - Math.random() * 115,
+        gravity: 125,
+        start: performance.now(),
+        life: 420 + Math.random() * 430,
+        size: 1.8 + Math.random() * 4.2,
+        color: color
+      });
+    }
+  }
+
+  function drawBackground(now) {
+    var gradient = ctx.createLinearGradient(0, 0, 0, H);
+    gradient.addColorStop(0, "#08758a");
+    gradient.addColorStop(0.48, "#08687d");
+    gradient.addColorStop(1, "#05465c");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W, H);
+
+    var t = now * 0.001;
+    ctx.globalAlpha = 0.08;
+    ctx.strokeStyle = "#e5ffff";
+    ctx.lineWidth = 2;
+    var y;
+    for (y = 105; y < H; y += 58) {
+      ctx.beginPath();
+      var x;
+      for (x = -30; x <= W + 30; x += 32) {
+        var waveY = y + Math.sin(x * 0.023 + t * 1.3 + y) * 4;
+        if (x === -30) {
+          ctx.moveTo(x, waveY);
+        } else {
+          ctx.lineTo(x, waveY);
+        }
+      }
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    var i;
+    for (i = 0; i < bubbles.length; i += 1) {
+      var bubble = bubbles[i];
+      var by = (bubble.y - t * bubble.speed + H * 4) % H;
+      var bx = bubble.x + Math.sin(t + bubble.phase) * 7;
+      ctx.beginPath();
+      ctx.arc(bx, by, bubble.r, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(210,255,255,.18)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    var current = state.wave < totalWaves ? course[state.wave].current : 0;
+    if (Math.abs(current) > 0.1 && mode !== "intro") {
+      ctx.globalAlpha = Math.min(0.22, Math.abs(current) * 0.42);
+      ctx.strokeStyle = "#b9ffff";
+      ctx.lineWidth = 2;
+      for (i = 0; i < 8; i += 1) {
+        var streamY = 130 + i * Math.max(34, (H - 250) / 8);
+        var offset = ((t * 70 * (current < 0 ? -1 : 1)) + i * 79) % (W + 160);
+        var streamX = current < 0 ? W - offset : offset - 80;
+        ctx.beginPath();
+        ctx.moveTo(streamX, streamY);
+        ctx.lineTo(streamX + (current < 0 ? -42 : 42), streamY + 5);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawReefSide(x1, x2, y, seed) {
+    if (x2 <= x1) {
+      return;
+    }
+
+    var step = 30;
+    var x;
+    ctx.beginPath();
+    ctx.moveTo(x1, y - 15);
+    for (x = x1; x <= x2; x += step) {
+      ctx.lineTo(x, y - 15 + Math.sin(x * 0.065 + seed * 2.1) * 7);
+    }
+    ctx.lineTo(x2, y + 22);
+    for (x = x2; x >= x1; x -= step) {
+      ctx.lineTo(x, y + 22 + Math.cos(x * 0.055 + seed) * 6);
+    }
+    ctx.closePath();
+
+    var reefGradient = ctx.createLinearGradient(0, y - 25, 0, y + 32);
+    reefGradient.addColorStop(0, "#a55b4e");
+    reefGradient.addColorStop(0.5, "#75453e");
+    reefGradient.addColorStop(1, "#412f36");
+    ctx.fillStyle = reefGradient;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(45,22,31,.7)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x1, y - 44, x2 - x1, 88);
+    ctx.clip();
+
+    var count = Math.ceil((x2 - x1) / 43);
+    var i;
+    for (i = 0; i < count; i += 1) {
+      var coralX = x1 + 17 + i * 43 + Math.sin(i * 4.8 + seed) * 10;
+      var coralY = y - 13 + Math.cos(i * 3.1 + seed) * 8;
+      var radius = 5 + ((i + seed) % 4);
+      ctx.fillStyle = i % 3 === 0 ? "#ff7968" : i % 3 === 1 ? "#eab65f" : "#9bce78";
+      ctx.beginPath();
+      ctx.arc(coralX, coralY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(coralX - 2, coralY - 15, 4, 15);
+      if (i % 2 === 0) {
+        ctx.fillRect(coralX - 8, coralY - 10, 7, 3);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawReef(y) {
+    if (state.wave >= totalWaves) {
+      return;
+    }
+    var reef = course[state.wave];
+    var gapLeft = worldToX(reef.center - reef.width * 0.5);
+    var gapRight = worldToX(reef.center + reef.width * 0.5);
+
+    ctx.fillStyle = "rgba(0,22,31,.22)";
+    ctx.fillRect(0, y + 23, W, 13);
+
+    drawReefSide(-20, gapLeft, y, state.wave + 1);
+    drawReefSide(gapRight, W + 20, y, state.wave + 7);
+
+    ctx.strokeStyle = "rgba(205,255,242,.20)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(gapLeft, y - 27);
+    ctx.lineTo(gapLeft, y + 32);
+    ctx.moveTo(gapRight, y - 27);
+    ctx.lineTo(gapRight, y + 32);
+    ctx.stroke();
+  }
+
+  function drawPreviews(now, y) {
+    if (state.wave >= totalWaves || mode !== "idle") {
+      return;
+    }
+
+    var previews = getPreviews();
+    var colors = ["#ffc45c", "#fff0b8", "#56dfd2"];
+    var labels = ["L", "●", "R"];
+    var shakeAge = now - previewShakeStart;
+    var shake = 0;
+
+    if (shakeAge >= 0 && shakeAge < 620) {
+      shake = Math.sin(shakeAge * 0.075) * 9 * (1 - shakeAge / 620);
+    }
+
+    var i;
+    for (i = 0; i < previews.length; i += 1) {
+      var x = worldToX(previews[i].x) + shake;
+      var halfPixels = raftHalf * scaleX();
+
+      ctx.save();
+      ctx.globalAlpha = 0.83;
+      ctx.fillStyle = "rgba(0,25,34,.32)";
+      ctx.fillRect(x - halfPixels, y - 6, halfPixels * 2, 12);
+      ctx.strokeStyle = colors[i];
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x - halfPixels, y - 6, halfPixels * 2, 12);
+
+      ctx.shadowColor = colors[i];
+      ctx.shadowBlur = 13;
+      ctx.beginPath();
+      ctx.arc(x, y, 11, 0, Math.PI * 2);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = "#16343a";
+      ctx.font = "900 10px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(labels[i], x, y + 0.5);
+      ctx.restore();
+    }
+
+    ctx.fillStyle = "rgba(232,255,251,.78)";
+    ctx.font = "700 11px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("EXACT LANDINGS", W * 0.5, y - 27);
+  }
+
+  function drawRaft(xWorld, y, cratePosition, now, alpha, specialRotation) {
+    var width = raftHalf * 2 * scaleX();
+    var length = clamp(H * 0.105, 56, 82);
+    var x = worldToX(xWorld);
+    var angle = cratePosition * 0.07;
+    var age = wobbleUntil - now;
+
+    if (age > 0) {
+      angle += Math.sin(now * 0.045) * 0.12 * (age / 650);
+    }
+    angle += specialRotation || 0;
+
+    ctx.save();
+    ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    ctx.fillStyle = "rgba(0,25,32,.28)";
+    ctx.beginPath();
+    ctx.ellipse(4, 8, width * 0.65, length * 0.46, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    var plankWidth = width / 3.25;
+    var i;
+    for (i = 0; i < 3; i += 1) {
+      var px = (i - 1) * plankWidth * 1.03;
+      if (i >= state.planks) {
+        if (state.planks <= 0) {
+          ctx.save();
+          ctx.translate(px + (i - 1) * 13, 12 + i * 7);
+          ctx.rotate((i - 1) * 0.35);
+          ctx.globalAlpha *= 0.32;
+          ctx.fillStyle = "#7a472d";
+          ctx.fillRect(-plankWidth * 0.45, -length * 0.28, plankWidth * 0.9, length * 0.43);
+          ctx.restore();
+        }
+        continue;
+      }
+
+      var plankGradient = ctx.createLinearGradient(px, -length * 0.5, px, length * 0.5);
+      plankGradient.addColorStop(0, i === 1 ? "#d8954e" : "#c78043");
+      plankGradient.addColorStop(1, i === 1 ? "#9e5c34" : "#8d4e30");
+      ctx.fillStyle = plankGradient;
+      ctx.strokeStyle = "#603423";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px - plankWidth * 0.46, -length * 0.5);
+      ctx.lineTo(px + plankWidth * 0.46, -length * 0.47);
+      ctx.lineTo(px + plankWidth * 0.5, length * 0.46);
+      ctx.lineTo(px - plankWidth * 0.48, length * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(86,42,25,.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px - plankWidth * 0.2, -length * 0.37);
+      ctx.lineTo(px + plankWidth * 0.13, length * 0.34);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = "#59412e";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-width * 0.48, -length * 0.23);
+    ctx.lineTo(width * 0.48, -length * 0.23);
+    ctx.moveTo(-width * 0.48, length * 0.29);
+    ctx.lineTo(width * 0.48, length * 0.29);
+    ctx.stroke();
+
+    if (state.planks > 0) {
+      var crateX = cratePosition * width * 0.25;
+      var crateSize = clamp(width * 0.36, 23, 34);
+      ctx.translate(crateX, -3);
+      ctx.fillStyle = "rgba(0,0,0,.23)";
+      ctx.fillRect(-crateSize * 0.45 + 3, -crateSize * 0.45 + 5, crateSize, crateSize);
+      ctx.fillStyle = "#8a5532";
+      ctx.strokeStyle = "#4a2c20";
+      ctx.lineWidth = 2;
+      ctx.fillRect(-crateSize * 0.5, -crateSize * 0.5, crateSize, crateSize);
+      ctx.strokeRect(-crateSize * 0.5, -crateSize * 0.5, crateSize, crateSize);
+      ctx.strokeStyle = "#c28b51";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-crateSize * 0.43, -crateSize * 0.36);
+      ctx.lineTo(crateSize * 0.43, crateSize * 0.36);
+      ctx.moveTo(crateSize * 0.43, -crateSize * 0.36);
+      ctx.lineTo(-crateSize * 0.43, crateSize * 0.36);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawFloatingCrate(now, settled) {
+    var t = settled ? 1 : clamp((now - sinkStart) / 1600, 0, 1);
+    var x = worldToX(state.x) + Math.sin(now * 0.003) * 7;
+    var y = raftY() - 8 - t * 14 + Math.sin(now * 0.006) * 3;
+    var size = clamp(scaleX() * 0.38, 27, 37);
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(now * 0.004) * 0.08);
+    ctx.fillStyle = "rgba(0,20,27,.25)";
+    ctx.beginPath();
+    ctx.ellipse(4, size * 0.45, size * 0.7, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#8c5734";
+    ctx.strokeStyle = "#4a2c20";
+    ctx.lineWidth = 2;
+    ctx.fillRect(-size * 0.5, -size * 0.5, size, size);
+    ctx.strokeRect(-size * 0.5, -size * 0.5, size, size);
+    ctx.strokeStyle = "#d09a5c";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.42, -size * 0.36);
+    ctx.lineTo(size * 0.42, size * 0.36);
+    ctx.moveTo(size * 0.42, -size * 0.36);
+    ctx.lineTo(-size * 0.42, size * 0.36);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = "rgba(255,245,210,.9)";
+    ctx.font = "800 13px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("Still floating.", x, y - size);
+  }
+
+  function drawRings(now) {
+    var kept = [];
+    var i;
+    for (i = 0; i < rings.length; i += 1) {
+      var ring = rings[i];
+      var age = now - ring.start;
+      if (age < ring.life) {
+        var p = age / ring.life;
+        ctx.globalAlpha = (1 - p) * 0.8;
+        ctx.strokeStyle = ring.strong ? "#fff47b" : "#aaffed";
+        ctx.lineWidth = ring.strong ? 4 : 3;
+        ctx.beginPath();
+        ctx.ellipse(ring.x, ring.y, 18 + p * 62, 7 + p * 24, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        kept.push(ring);
+      }
+    }
+    rings = kept;
+    ctx.globalAlpha = 1;
+  }
+
+  function drawParticles(now) {
+    var kept = [];
+    var i;
+    for (i = 0; i < particles.length; i += 1) {
+      var particle = particles[i];
+      var age = now - particle.start;
+      if (age < particle.life) {
+        var seconds = age / 1000;
+        var p = age / particle.life;
+        var x = particle.x + particle.vx * seconds;
+        var y = particle.y + particle.vy * seconds + particle.gravity * seconds * seconds * 0.5;
+        ctx.globalAlpha = 1 - p;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(x, y, particle.size * (1 - p * 0.45), 0, Math.PI * 2);
+        ctx.fill();
+        kept.push(particle);
+      }
+    }
+    particles = kept;
+    ctx.globalAlpha = 1;
+  }
+
+  function drawShore(now, settled) {
+    var t = settled ? 1 : clamp((now - winStart) / 1450, 0, 1);
+    var edgeY = lerp(-45, raftY() + 78, smooth(t));
+
+    var sandGradient = ctx.createLinearGradient(0, 0, 0, edgeY);
+    sandGradient.addColorStop(0, "#f6cf79");
+    sandGradient.addColorStop(1, "#d9a955");
+    ctx.fillStyle = sandGradient;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(W, 0);
+    ctx.lineTo(W, edgeY);
+    var x;
+    for (x = W; x >= 0; x -= 28) {
+      ctx.lineTo(x, edgeY + Math.sin(x * 0.055) * 9);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,250,198,.82)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    for (x = 0; x <= W; x += 18) {
+      var waveY = edgeY + Math.sin(x * 0.055) * 9;
+      if (x === 0) {
+        ctx.moveTo(x, waveY);
+      } else {
+        ctx.lineTo(x, waveY);
+      }
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(130,83,41,.42)";
+    var i;
+    for (i = 0; i < 15; i += 1) {
+      var shellX = (i * 83 + 41) % Math.max(1, W);
+      var shellY = 35 + ((i * 47) % Math.max(45, edgeY - 55));
+      ctx.beginPath();
+      ctx.arc(shellX, shellY, 2 + i % 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function render(now) {
+    drawBackground(now);
+
+    var rY = raftY();
+    var reefY = reefStartY();
+    var raftX = state.x;
+    var cratePosition = state.crate;
+
+    if (mode === "win" || (mode === "over" && endScene === "win")) {
+      var settledWin = mode === "over";
+      drawShore(now, settledWin);
+      var winP = settledWin ? 1 : clamp((now - winStart) / 1450, 0, 1);
+      drawRings(now);
+      drawParticles(now);
+      drawRaft(lerp(state.x, 0, smooth(winP) * 0.35), rY - smooth(winP) * 52, state.crate, now, 1, -0.05 * smooth(winP));
+    } else if (mode === "sink" || (mode === "over" && endScene === "sink")) {
+      var settledSink = mode === "over";
+      var sinkP = settledSink ? 1 : clamp((now - sinkStart) / 1400, 0, 1);
+      drawParticles(now);
+      drawRaft(state.x, rY + sinkP * 31, state.crate, now, 1 - sinkP, sinkP * 0.16);
+      drawFloatingCrate(now, settledSink);
+    } else {
+      if (mode === "moving" && move) {
+        var p = clamp((now - move.start) / move.duration, 0, 1);
+        var impactPoint = 0.62;
+
+        if (p <= impactPoint) {
+          var before = smooth(p / impactPoint);
+          reefY = lerp(reefStartY(), rY, before);
+          raftX = lerp(move.fromX, move.toX, before);
+          cratePosition = lerp(move.fromCrate, move.toCrate, before);
+        } else {
+          var after = smooth((p - impactPoint) / (1 - impactPoint));
+          reefY = lerp(rY, H * 0.86, after);
+          raftX = lerp(move.toX, move.correctedX, after);
+          cratePosition = move.toCrate;
+        }
+      }
+
+      drawReef(reefY);
+      drawPreviews(now, reefY);
+      drawRings(now);
+      drawParticles(now);
+      drawRaft(raftX, rY + Math.sin(now * 0.0032) * 2.5, cratePosition, now, 1, 0);
+    }
+
+    var flashAge = now - flashStart;
+    if (flashAge >= 0 && flashAge < 340) {
+      ctx.fillStyle = "rgba(255,92,73," + ((1 - flashAge / 340) * 0.22) + ")";
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(255,228,205," + (1 - flashAge / 340) + ")";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.47, rY - 38);
+      ctx.lineTo(W * 0.51, rY - 11);
+      ctx.lineTo(W * 0.48, rY + 8);
+      ctx.lineTo(W * 0.54, rY + 36);
+      ctx.stroke();
+    }
+  }
+
+  function update(now) {
+    if (mode === "moving" && move) {
+      var p = (now - move.start) / move.duration;
+      if (p >= 0.62 && !move.impacted) {
+        impactMove(now);
+      }
+      if (p >= 1) {
+        finishMove(now);
+      }
+    } else if (mode === "win" && now - winStart > 1900) {
+      showEnd(true);
+    } else if (mode === "sink" && now - sinkStart > 1800) {
+      showEnd(false);
+    }
+  }
+
+  function loop(now) {
+    update(now);
+    render(now);
+    requestAnimationFrame(loop);
+  }
+
+  startButton.addEventListener("click", function () {
+    ensureAudio();
+    overlay.classList.add("hidden");
+    resetGame();
+    mode = "idle";
+    setControls(true);
+    showToast("THREE LANDINGS. CHOOSE ONE.", "#d8ffef");
+  });
+
+  controlButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      beginMove(parseInt(button.getAttribute("data-action"), 10));
+    });
+  });
+
+  window.addEventListener("keydown", function (event) {
+    var key = event.key;
+
+    if (mode === "intro") {
+      if (key === "Enter" || key === " ") {
+        event.preventDefault();
+        startButton.click();
+      }
+      return;
+    }
+
+    if (mode !== "idle" || event.repeat) {
+      return;
+    }
+
+    if (key === "ArrowLeft") {
+      event.preventDefault();
+      beginMove(-1);
+    } else if (key === " " || key === "Spacebar") {
+      event.preventDefault();
+      beginMove(0);
+    } else if (key === "ArrowRight") {
+      event.preventDefault();
+      beginMove(1);
+    }
+  });
+
+  window.addEventListener("resize", resize);
+
+  resize();
+  resetGame();
+  setControls(false);
+  requestAnimationFrame(loop);
+}());
+</script>
+</body>
+</html>

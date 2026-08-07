@@ -1,0 +1,11 @@
+{
+  "title": "Reef Shift",
+  "slug": "reef-shift",
+  "tagline": "Move the crate. The raft takes it personally.",
+  "concept": "Guide a homemade raft through a reef by shifting one heavy crate to control its lean.",
+  "core_loop": "Study the next reef gap and three visible landing dots, then choose left, hold, or right; the raft takes one wave forward, making each safe squeeze a quick bit of planning rather than a guess.",
+  "mechanics": "Controls: tap the broad left, hold, or right button, or use Left Arrow, Space, and Right Arrow, to move the crate and advance one wave.; Win or lose: reach shore after 18 waves; hitting reef breaks one of three visible planks, and losing all three sinks the raft.; Scoring: earn points for every reef line cleared, with a bonus for passing through the middle of a gap and for each plank left at shore.",
+  "feedback": "Before every move, three dots show the exact possible landing spots. A clean pass makes a bright wake ring and a wooden knock; a close pass throws up spray and gives a quick wobble; a hit cracks the raft, breaks a plank icon, and makes the next move preview shake once. Reaching shore brings a cheerful slide onto sand, while sinking leaves the crate floating with poor timing.",
+  "difficulty": "The first six waves have wide gaps, weak currents, and an obvious straight path. Later gaps narrow, currents push sideways, and safe moves require planning around the crate’s next position, but every outcome remains previewed and there is no timer.",
+  "mobile": true
+}

@@ -309,6 +309,15 @@
       "path": "games/next-stop-socks/",
       "mobile": true,
       "thumbnail": "games/next-stop-socks/cover.webp"
+    },
+    {
+      "slug": "reef-shift",
+      "title": "Reef Shift",
+      "tagline": "Move the crate. The raft takes it personally.",
+      "date": "2026-08-07",
+      "path": "games/reef-shift/",
+      "mobile": true,
+      "thumbnail": "games/reef-shift/cover.webp"
     }
   ]
 }
