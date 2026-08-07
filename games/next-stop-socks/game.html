@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Next Stop, Socks</title>
+<style>
+  :root {
+    --ink: #30251f;
+    --cream: #fff3d1;
+    --paper: #fffaf0;
+    --red: #c94d3f;
+    --red-dark: #8f2d29;
+    --blue: #2d8191;
+    --gold: #e5ad3e;
+    --wood: #a96f43;
+    --wood-dark: #70462f;
+    --green: #43896e;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin:0; height:100%; }
+
+  body {
+    overflow: hidden;
+    background: #483126;
+    color: var(--ink);
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #game {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    background:
+      radial-gradient(circle at 15% 15%, rgba(255,255,255,.08), transparent 23%),
+      linear-gradient(135deg, #70482f, #3d2922);
+  }
+
+  header {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 9px 14px;
+    background: #f4e3bd;
+    border-bottom: 4px solid #584034;
+    box-shadow: 0 3px 0 rgba(0,0,0,.18);
+    z-index: 3;
+  }
+
+  .brand {
+    min-width: 245px;
+    line-height: 1;
+  }
+
+  .brand h1 {
+    margin: 0;
+    color: #8e342f;
+    font-size: clamp(24px, 3.2vw, 38px);
+    letter-spacing: -1.5px;
+    text-shadow: 0 2px #fff8df;
+  }
+
+  .tagline {
+    margin-top: 5px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .02em;
+  }
+
+  #hud {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    flex: 1;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .hud-card {
+    min-width: 72px;
+    padding: 6px 9px;
+    text-align: center;
+    background: rgba(255,255,255,.55);
+    border: 2px solid rgba(80,57,44,.28);
+    border-radius: 9px;
+    box-shadow: inset 0 -2px rgba(0,0,0,.06);
+  }
+
+  .hud-label {
+    display: block;
+    color: #715549;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .12em;
+  }
+
+  .hud-value {
+    display: block;
+    margin-top: 1px;
+    font-size: 20px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  #cleanCard.hot {
+    color: #166b5c;
+    background: #d8f6dc;
+    border-color: #58a779;
+    animation: cleanPulse .7s ease;
+  }
+
+  @keyframes cleanPulse {
+    50% { transform: scale(1.08) rotate(-1deg); }
+  }
+
+  #tickets {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 2px;
+  }
+
+  .ticket {
+    position: relative;
+    width: 35px;
+    height: 49px;
+    display: grid;
+    place-items: center;
+    color: #763324;
+    background: #f4c85d;
+    border: 2px solid #8b5730;
+    border-radius: 4px;
+    font-size: 17px;
+    font-weight: 900;
+    box-shadow: 0 2px 0 rgba(0,0,0,.15);
+    transition: transform .25s, filter .25s;
+  }
+
+  .ticket::before, .ticket::after {
+    content: "";
+    position: absolute;
+    left: -5px;
+    width: 8px;
+    height: 8px;
+    background: #f4e3bd;
+    border-radius: 50%;
+  }
+
+  .ticket::before { top: 7px; }
+  .ticket::after { bottom: 7px; }
+
+  .ticket.punched {
+    transform: rotate(-8deg) scale(.92);
+    filter: grayscale(.65) brightness(.78);
+  }
+
+  .ticket.punched span {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    color: transparent;
+    background: #49322a;
+    box-shadow: inset 0 2px 4px #1d1512;
+  }
+
+  #how {
+    padding: 5px 12px 6px;
+    color: #f9edcf;
+    background: #5a4034;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .01em;
+  }
+
+  #stage {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    background: #7d5136;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: pointer;
+  }
+
+  #status {
+    position: absolute;
+    left: 50%;
+    bottom: 9px;
+    max-width: calc(100% - 28px);
+    transform: translateX(-50%);
+    padding: 7px 14px;
+    color: #fff7dc;
+    background: rgba(48,34,28,.88);
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 999px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.3);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(45,30,24,.69);
+    backdrop-filter: blur(2px);
+    z-index: 5;
+  }
+
+  #overlay.hidden { display: none; }
+
+  .paper {
+    width: min(470px, 94vw);
+    padding: 24px 24px 20px;
+    text-align: center;
+    background: var(--paper);
+    border: 4px solid #5b4032;
+    border-radius: 14px;
+    box-shadow: 0 14px 0 rgba(35,22,17,.25), 0 20px 45px rgba(0,0,0,.35);
+    transform: rotate(-.5deg);
+  }
+
+  .paper .eyebrow {
+    color: #2d8191;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .18em;
+  }
+
+  .paper h2 {
+    margin: 7px 0 8px;
+    color: #a13e35;
+    font-size: clamp(28px, 7vw, 46px);
+    line-height: .98;
+  }
+
+  .paper p {
+    margin: 8px auto 16px;
+    max-width: 390px;
+    line-height: 1.42;
+    font-weight: 700;
+  }
+
+  button {
+    font: inherit;
+    touch-action: manipulation;
+  }
+
+  .big-button, #sendButton {
+    border: 0;
+    color: #fffaf0;
+    background: #b94237;
+    border-radius: 10px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    box-shadow: inset 0 -4px rgba(79,24,20,.35), 0 4px 0 #672b27;
+    cursor: pointer;
+  }
+
+  .big-button {
+    min-width: 190px;
+    min-height: 48px;
+    padding: 13px 20px 15px;
+    font-size: 17px;
+  }
+
+  .big-button:hover, #sendButton:hover { filter: brightness(1.08); }
+  .big-button:active, #sendButton:active { transform: translateY(3px); box-shadow: inset 0 -2px rgba(79,24,20,.3), 0 1px 0 #672b27; }
+
+  footer {
+    min-height: 67px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 12px;
+    color: #f7e9cb;
+    background: #3e2c25;
+    border-top: 3px solid #251b17;
+    z-index: 3;
+  }
+
+  .key-help {
+    max-width: 670px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  kbd {
+    display: inline-block;
+    min-width: 25px;
+    margin: 1px;
+    padding: 2px 5px;
+    color: #35261f;
+    background: #f8e9c5;
+    border: 1px solid #aa8b67;
+    border-bottom-width: 3px;
+    border-radius: 5px;
+    text-align: center;
+    font-family: inherit;
+    font-weight: 900;
+  }
+
+  #sendButton {
+    flex: 0 0 auto;
+    min-width: 158px;
+    min-height: 48px;
+    padding: 8px 17px 11px;
+    font-size: 16px;
+  }
+
+  #sendButton:disabled {
+    cursor: default;
+    filter: grayscale(.75) brightness(.7);
+    transform: none;
+    box-shadow: inset 0 -3px rgba(0,0,0,.25);
+  }
+
+  @media (max-width: 760px) {
+    header {
+      min-height: 64px;
+      padding: 6px 8px;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      min-width: 155px;
+      flex: 1;
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      letter-spacing: -1px;
+    }
+
+    .tagline {
+      font-size: 10px;
+      margin-top: 3px;
+    }
+
+    #hud {
+      flex: 1 1 100%;
+      order: 2;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .hud-card {
+      min-width: 58px;
+      padding: 3px 5px;
+    }
+
+    .hud-value { font-size: 16px; }
+    .hud-label { font-size: 8px; }
+
+    .ticket {
+      width: 27px;
+      height: 35px;
+      font-size: 13px;
+    }
+
+    #how {
+      padding: 4px 7px;
+      font-size: 10px;
+    }
+
+    footer {
+      min-height: 62px;
+      gap: 8px;
+      padding: 6px 8px;
+    }
+
+    .key-help {
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    kbd {
+      min-width: 20px;
+      padding: 1px 3px;
+    }
+
+    #sendButton {
+      min-width: 130px;
+      min-height: 48px;
+      padding: 7px 10px 10px;
+      font-size: 14px;
+    }
+
+    #status {
+      bottom: 5px;
+      padding: 5px 10px;
+      font-size: 10px;
+    }
+  }
+
+  @media (max-height: 590px) {
+    header { min-height: 52px; padding-top: 4px; padding-bottom: 4px; }
+    .brand h1 { font-size: 22px; }
+    .tagline { display: none; }
+    #how { padding: 3px 8px; }
+    footer { min-height: 52px; padding-top: 3px; padding-bottom: 3px; }
+    #sendButton { min-height: 44px; }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <header>
+    <div class="brand">
+      <h1>Next Stop, Socks</h1>
+      <div class="tagline">Set the switches. The socks have places to be.</div>
+    </div>
+    <div id="hud">
+      <div class="hud-card">
+        <span class="hud-label">YARD</span>
+        <span class="hud-value" id="yardValue">1/5</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-value" id="scoreValue">0</span>
+      </div>
+      <div class="hud-card" id="cleanCard">
+        <span class="hud-label">CLEAN RUN</span>
+        <span class="hud-value" id="cleanValue">×0</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">PARCELS</span>
+        <span class="hud-value" id="parcelValue">0/1</span>
+      </div>
+      <div id="tickets" aria-label="Three route tickets">
+        <div class="ticket"><span>1</span></div>
+        <div class="ticket"><span>2</span></div>
+        <div class="ticket"><span>3</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="how">How to play: match the next parcel to a station, flip switches, then tap the train or send button. Wrong stations and buffers punch a ticket.</div>
+
+  <main id="stage">
+    <canvas id="canvas" aria-label="Interactive tabletop railway yard"></canvas>
+    <div id="status" role="status" aria-live="polite">Set the switches, then send the train.</div>
+    <div id="overlay">
+      <div class="paper">
+        <div class="eyebrow">A TABLETOP ROUTING GAME</div>
+        <h2>Next Stop,<br>Socks</h2>
+        <p>Check the parcel picture, set the little rail switches, and wind up the train. Three bad routes will end the run.</p>
+        <button class="big-button" id="overlayButton">START THE TRAIN</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="key-help">
+      Touch/click a lever to flip it. Tap the train or use
+      <kbd>Space</kbd> to send. Use <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>
+      to select switches and <kbd>Enter</kbd> to flip.
+    </div>
+    <button id="sendButton" disabled>WIND &amp; SEND</button>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var statusEl = document.getElementById("status");
+  var overlay = document.getElementById("overlay");
+  var overlayButton = document.getElementById("overlayButton");
+  var sendButton = document.getElementById("sendButton");
+  var scoreEl = document.getElementById("scoreValue");
+  var cleanEl = document.getElementById("cleanValue");
+  var cleanCard = document.getElementById("cleanCard");
+  var parcelEl = document.getElementById("parcelValue");
+  var yardEl = document.getElementById("yardValue");
+  var ticketEls = Array.prototype.slice.call(document.querySelectorAll(".ticket"));
+
+  var WORLD_W = 900;
+  var WORLD_H = 500;
+  var MIN_TOUCH_RADIUS_PX = 24;
+  var view = { scale: 1, ox: 0, oy: 0, width: 1, height: 1 };
+  var audioCtx = null;
+
+  var boards = [
+    {
+      name: "The Fork",
+      subtitle: "One parcel. One lever. Nice and tidy.",
+      root: "A",
+      start: { x: 72, y: 292 },
+      order: ["A"],
+      parcels: ["sock"],
+      initial: { A: 1 },
+      nodes: {
+        A: { kind: "switch", x: 350, y: 292, out: [
+          { target: "S1", via: [{ x: 535, y: 220 }] },
+          { target: "S2", via: [{ x: 535, y: 365 }] }
+        ]},
+        S1: { kind: "station", icon: "sock", x: 760, y: 170 },
+        S2: { kind: "station", icon: "button", x: 760, y: 420 }
+      }
+    },
+    {
+      name: "The Long Pocket",
+      subtitle: "The parcel stack must be delivered in order.",
+      root: "A",
+      start: { x: 68, y: 276 },
+      order: ["A", "B"],
+      parcels: ["key", "duck"],
+      initial: { A: 1, B: 1 },
+      nodes: {
+        A: { kind: "switch", x: 285, y: 276, out: [
+          { target: "DUCK", via: [{ x: 510, y: 160 }] },
+          { target: "B", via: [{ x: 405, y: 345 }] }
+        ]},
+        B: { kind: "switch", x: 555, y: 365, out: [
+          { target: "KEY", via: [{ x: 675, y: 305 }] },
+          { target: "BUF", via: [{ x: 680, y: 438 }] }
+        ]},
+        DUCK: { kind: "station", icon: "duck", x: 790, y: 125 },
+        KEY: { kind: "station", icon: "key", x: 805, y: 285 },
+        BUF: { kind: "buffer", x: 800, y: 450 }
+      }
+    },
+    {
+      name: "The Trouser Tree",
+      subtitle: "Two forks hide three useful platforms.",
+      root: "A",
+      start: { x: 65, y: 285 },
+      order: ["A", "B", "C"],
+      parcels: ["moon", "duck", "sock"],
+      initial: { A: 0, B: 0, C: 1 },
+      nodes: {
+        A: { kind: "switch", x: 265, y: 285, out: [
+          { target: "B", via: [{ x: 370, y: 190 }] },
+          { target: "C", via: [{ x: 370, y: 375 }] }
+        ]},
+        B: { kind: "switch", x: 500, y: 165, out: [
+          { target: "SOCK", via: [{ x: 635, y: 105 }] },
+          { target: "MOON", via: [{ x: 650, y: 220 }] }
+        ]},
+        C: { kind: "switch", x: 500, y: 385, out: [
+          { target: "DUCK", via: [{ x: 650, y: 330 }] },
+          { target: "BUF", via: [{ x: 660, y: 445 }] }
+        ]},
+        SOCK: { kind: "station", icon: "sock", x: 805, y: 95 },
+        MOON: { kind: "station", icon: "moon", x: 805, y: 230 },
+        DUCK: { kind: "station", icon: "duck", x: 805, y: 330 },
+        BUF: { kind: "buffer", x: 805, y: 455 }
+      }
+    },
+    {
+      name: "The Crossed Laces",
+      subtitle: "Watch the crossing: rails may cross without joining.",
+      root: "A",
+      start: { x: 62, y: 275 },
+      order: ["A", "B", "C", "D"],
+      parcels: ["fish", "key", "sock", "button"],
+      initial: { A: 1, B: 1, C: 1, D: 1 },
+      bridges: [{ x: 640, y: 260, angle: -0.55 }],
+      nodes: {
+        A: { kind: "switch", x: 225, y: 275, out: [
+          { target: "B", via: [{ x: 330, y: 160 }] },
+          { target: "C", via: [{ x: 330, y: 380 }] }
+        ]},
+        B: { kind: "switch", x: 440, y: 145, out: [
+          { target: "KEY", via: [{ x: 620, y: 100 }] },
+          { target: "BUTTON", via: [{ x: 590, y: 235 }, { x: 720, y: 315 }] }
+        ]},
+        C: { kind: "switch", x: 440, y: 385, out: [
+          { target: "FISH", via: [{ x: 590, y: 305 }, { x: 720, y: 205 }] },
+          { target: "D", via: [{ x: 545, y: 430 }] }
+        ]},
+        D: { kind: "switch", x: 645, y: 425, out: [
+          { target: "SOCK", via: [{ x: 720, y: 390 }] },
+          { target: "BUF", via: [{ x: 735, y: 468 }] }
+        ]},
+        KEY: { kind: "station", icon: "key", x: 820, y: 90 },
+        FISH: { kind: "station", icon: "fish", x: 820, y: 185 },
+        BUTTON: { kind: "station", icon: "button", x: 820, y: 325 },
+        SOCK: { kind: "station", icon: "sock", x: 820, y: 385 },
+        BUF: { kind: "buffer", x: 825, y: 470 }
+      }
+    },
+    {
+      name: "Grand Sock Central",
+      subtitle: "Five switches, five parcels, and no hurry.",
+      root: "A",
+      start: { x: 55, y: 275 },
+      order: ["A", "B", "C", "D", "E"],
+      parcels: ["star", "moon", "fish", "cup", "sock"],
+      initial: { A: 0, B: 1, C: 1, D: 1, E: 0 },
+      bridges: [{ x: 665, y: 290, angle: 0.5 }],
+      nodes: {
+        A: { kind: "switch", x: 205, y: 275, out: [
+          { target: "B", via: [{ x: 290, y: 150 }] },
+          { target: "C", via: [{ x: 290, y: 395 }] }
+        ]},
+        B: { kind: "switch", x: 395, y: 145, out: [
+          { target: "MOON", via: [{ x: 580, y: 100 }] },
+          { target: "E", via: [{ x: 510, y: 185 }] }
+        ]},
+        E: { kind: "switch", x: 625, y: 185, out: [
+          { target: "CUP", via: [{ x: 715, y: 155 }] },
+          { target: "STAR", via: [{ x: 720, y: 245 }] }
+        ]},
+        C: { kind: "switch", x: 395, y: 395, out: [
+          { target: "D", via: [{ x: 500, y: 340 }] },
+          { target: "BUF", via: [{ x: 620, y: 465 }] }
+        ]},
+        D: { kind: "switch", x: 595, y: 340, out: [
+          { target: "FISH", via: [{ x: 720, y: 310 }] },
+          { target: "SOCK", via: [{ x: 720, y: 410 }] }
+        ]},
+        MOON: { kind: "station", icon: "moon", x: 825, y: 92 },
+        CUP: { kind: "station", icon: "cup", x: 825, y: 155 },
+        STAR: { kind: "station", icon: "star", x: 825, y: 245 },
+        FISH: { kind: "station", icon: "fish", x: 825, y: 310 },
+        SOCK: { kind: "station", icon: "sock", x: 825, y: 415 },
+        BUF: { kind: "buffer", x: 825, y: 468 }
+      }
+    }
+  ];
+
+  var boardIndex = 0;
+  var board = null;
+  var settings = {};
+  var parcelIndex = 0;
+  var selectedSwitch = 0;
+  var tickets = 3;
+  var deliveries = 0;
+  var bonus = 0;
+  var streak = 0;
+  var mode = "overlay";
+  var warningSwitch = null;
+  var lastWarning = null;
+  var moving = null;
+  var drops = [];
+  var flashUntil = 0;
+  var resetAt = 0;
+  var resultAction = "";
+
+  function cloneBoard(source) {
+    return JSON.parse(JSON.stringify(source));
+  }
+
+  function setupBoard(index) {
+    boardIndex = index;
+    board = cloneBoard(boards[index]);
+    settings = {};
+    board.order.forEach(function (id) {
+      settings[id] = board.initial[id] || 0;
+    });
+    parcelIndex = 0;
+    selectedSwitch = 0;
+    moving = null;
+    drops = [];
+    warningSwitch = null;
+    lastWarning = null;
+    resultAction = "";
+    assessRoute(false);
+    updateHUD();
+  }
+
+  function resetRun() {
+    tickets = 3;
+    deliveries = 0;
+    bonus = 0;
+    streak = 0;
+    setupBoard(0);
+    hideOverlay();
+    setStatus("Set the switches, then send the train.");
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = String(deliveries + bonus);
+    cleanEl.textContent = "×" + streak + (bonus ? "  +" + bonus : "");
+    parcelEl.textContent = parcelIndex + "/" + board.parcels.length;
+    yardEl.textContent = (boardIndex + 1) + "/" + boards.length;
+    cleanCard.className = streak >= 3 ? "hud-card hot" : "hud-card";
+    ticketEls.forEach(function (el, i) {
+      el.className = i >= tickets ? "ticket punched" : "ticket";
+    });
+    sendButton.disabled = mode !== "idle" || !overlay.classList.contains("hidden");
+  }
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  function hideOverlay() {
+    overlay.classList.add("hidden");
+    mode = "idle";
+    updateHUD();
+    assessRoute(false);
+  }
+
+  function showOverlay(title, eyebrow, message, buttonText, action) {
+    mode = "overlay";
+    overlay.classList.remove("hidden");
+    overlay.innerHTML =
+      '<div class="paper">' +
+      '<div class="eyebrow">' + eyebrow + '</div>' +
+      '<h2>' + title + '</h2>' +
+      '<p>' + message + '</p>' +
+      '<button class="big-button" id="overlayButton">' + buttonText + '</button>' +
+      '</div>';
+    overlayButton = document.getElementById("overlayButton");
+    overlayButton.addEventListener("click", function () {
+      initAudio();
+      action();
+    });
+    updateHUD();
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        audioCtx = new AC();
+      }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+  }
+
+  function tone(freq, duration, type, volume, delay) {
+    if (!audioCtx) return;
+    var now = audioCtx.currentTime + (delay || 0);
+    var oscillator = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    oscillator.type = type || "sine";
+    oscillator.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume || 0.05, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain);
+    gain.connect(audioCtx.destination);
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.03);
+  }
+
+  function softClick() {
+    tone(540, 0.055, "triangle", 0.025, 0);
+  }
+
+  function flipSound() {
+    tone(190, 0.055, "square", 0.035, 0);
+    tone(285, 0.05, "triangle", 0.025, 0.045);
+  }
+
+  function windSound() {
+    tone(140, 0.08, "square", 0.025, 0);
+    tone(190, 0.08, "square", 0.025, 0.09);
+    tone(255, 0.1, "triangle", 0.035, 0.18);
+  }
+
+  function bellSound() {
+    tone(880, 0.42, "sine", 0.09, 0);
+    tone(1320, 0.32, "sine", 0.055, 0.045);
+    tone(1760, 0.22, "sine", 0.025, 0.08);
+  }
+
+  function clunkSound() {
+    tone(105, 0.28, "square", 0.09, 0);
+    tone(72, 0.35, "sawtooth", 0.045, 0.04);
+  }
+
+  function nodePoint(id) {
+    var n = board.nodes[id];
+    return { x: n.x, y: n.y };
+  }
+
+  function edgePart(fromId, edge) {
+    var from = board.nodes[fromId];
+    var points = [{ x: from.x, y: from.y }];
+    if (edge.via) {
+      edge.via.forEach(function (p) {
+        points.push({ x: p.x, y: p.y });
+      });
+    }
+    points.push(nodePoint(edge.target));
+    return points;
+  }
+
+  function startPart() {
+    return [
+      { x: board.start.x, y: board.start.y },
+      nodePoint(board.root)
+    ];
+  }
+
+  function currentRoute() {
+    var parts = [startPart()];
+    var entries = [];
+    var id = board.root;
+    var guard = 0;
+
+    while (guard++ < 20) {
+      var node = board.nodes[id];
+      if (!node || node.kind !== "switch") {
+        return { parts: parts, entries: entries, terminal: node, terminalId: id };
+      }
+      var branch = settings[id] || 0;
+      var edge = node.out[branch];
+      var part = edgePart(id, edge);
+      entries.push({ id: id, branch: branch, part: part });
+      parts.push(part);
+      id = edge.target;
+    }
+    return { parts: parts, entries: entries, terminal: null, terminalId: "" };
+  }
+
+  function findDesiredFrom(id, icon) {
+    var node = board.nodes[id];
+    if (!node) return null;
+
+    if (node.kind === "station") {
+      return node.icon === icon ? { entries: [], terminal: node, terminalId: id } : null;
+    }
+    if (node.kind !== "switch") return null;
+
+    for (var branch = 0; branch < 2; branch++) {
+      var edge = node.out[branch];
+      var found = findDesiredFrom(edge.target, icon);
+      if (found) {
+        found.entries.unshift({
+          id: id,
+          branch: branch,
+          part: edgePart(id, edge)
+        });
+        return found;
+      }
+    }
+    return null;
+  }
+
+  function desiredRoute() {
+    var icon = board.parcels[parcelIndex];
+    if (!icon) return null;
+    var route = findDesiredFrom(board.root, icon);
+    if (route) {
+      route.parts = [startPart()];
+      route.entries.forEach(function (entry) {
+        route.parts.push(entry.part);
+      });
+    }
+    return route;
+  }
+
+  function assessRoute(playWarning) {
+    if (!board || parcelIndex >= board.parcels.length) return;
+
+    var desired = desiredRoute();
+    var actual = currentRoute();
+    var mismatches = [];
+
+    if (desired) {
+      desired.entries.forEach(function (entry) {
+        if ((settings[entry.id] || 0) !== entry.branch) {
+          mismatches.push(entry.id);
+        }
+      });
+    }
+
+    warningSwitch = mismatches.length === 1 ? mismatches[0] : null;
+    var correct = actual.terminal && actual.terminal.kind === "station" &&
+      actual.terminal.icon === board.parcels[parcelIndex];
+
+    if (correct) {
+      setStatus("The rails glow bright — this route matches the parcel.");
+    } else if (warningSwitch) {
+      setStatus("Soft click: switch " + warningSwitch + " is blocking an otherwise good route.");
+      if (playWarning && lastWarning !== warningSwitch) softClick();
+    } else {
+      setStatus("Trace the glowing rails and compare the end picture.");
+    }
+
+    lastWarning = warningSwitch;
+  }
+
+  function flipSwitch(id) {
+    if (mode !== "idle") return;
+    initAudio();
+    settings[id] = settings[id] ? 0 : 1;
+    selectedSwitch = Math.max(0, board.order.indexOf(id));
+    flipSound();
+    assessRoute(true);
+  }
+
+  function flattenParts(parts) {
+    var points = [];
+    parts.forEach(function (part) {
+      part.forEach(function (p, index) {
+        if (points.length && index === 0) return;
+        points.push({ x: p.x, y: p.y });
+      });
+    });
+    return points;
+  }
+
+  function pathMetrics(points) {
+    var lengths = [];
+    var total = 0;
+    for (var i = 1; i < points.length; i++) {
+      var dx = points[i].x - points[i - 1].x;
+      var dy = points[i].y - points[i - 1].y;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      lengths.push(len);
+      total += len;
+    }
+    return { lengths: lengths, total: total };
+  }
+
+  function positionOnPath(points, metrics, progress) {
+    if (points.length < 2) return { x: board.start.x, y: board.start.y, angle: 0 };
+    var distance = metrics.total * Math.max(0, Math.min(1, progress));
+    var used = 0;
+
+    for (var i = 0; i < metrics.lengths.length; i++) {
+      var len = metrics.lengths[i];
+      if (distance <= used + len || i === metrics.lengths.length - 1) {
+        var t = len ? (distance - used) / len : 0;
+        t = Math.max(0, Math.min(1, t));
+        var a = points[i];
+        var b = points[i + 1];
+        return {
+          x: a.x + (b.x - a.x) * t,
+          y: a.y + (b.y - a.y) * t,
+          angle: Math.atan2(b.y - a.y, b.x - a.x)
+        };
+      }
+      used += len;
+    }
+    return { x: points[points.length - 1].x, y: points[points.length - 1].y, angle: 0 };
+  }
+
+  function sendTrain() {
+    if (mode !== "idle" || parcelIndex >= board.parcels.length) return;
+    initAudio();
+    var route = currentRoute();
+    var points = flattenParts(route.parts);
+    var metrics = pathMetrics(points);
+    moving = {
+      route: route,
+      points: points,
+      metrics: metrics,
+      start: performance.now(),
+      duration: Math.max(1150, Math.min(2100, metrics.total * 2.65)),
+      cargo: board.parcels[parcelIndex],
+      progress: 0
+    };
+    mode = "moving";
+    windSound();
+    setStatus("Chuff-chuff… watch the route!");
+    updateHUD();
+  }
+
+  function resolveRoute(now) {
+    if (!moving) return;
+    var terminal = moving.route.terminal;
+    var correct = terminal && terminal.kind === "station" && terminal.icon === moving.cargo;
+
+    mode = "result";
+    resultAction = "";
+
+    if (correct) {
+      bellSound();
+      terminal.litUntil = now + 1300;
+      drops.push({
+        x: terminal.x,
+        y: terminal.y,
+        icon: moving.cargo,
+        time: now,
+        slot: drops.filter(function (d) {
+          return d.x === terminal.x && d.y === terminal.y;
+        }).length
+      });
+
+      deliveries++;
+      streak++;
+      var extra = 0;
+      if (streak % 3 === 0) {
+        extra = Math.floor(streak / 3);
+        bonus += extra;
+      }
+
+      parcelIndex++;
+      setStatus("Ding! " + iconName(moving.cargo) + " delivered · +1" +
+        (extra ? " and clean-run bonus +" + extra + "!" : "."));
+
+      if (parcelIndex >= board.parcels.length) {
+        resultAction = boardIndex === boards.length - 1 ? "win" : "clear";
+        resetAt = now + 1150;
+      } else {
+        resetAt = now + 900;
+      }
+    } else {
+      clunkSound();
+      flashUntil = now + 650;
+      tickets--;
+      streak = 0;
+
+      if (terminal && terminal.kind === "station") {
+        terminal.badUntil = now + 900;
+        setStatus("Clunk! Wrong picture. One ticket punched.");
+      } else {
+        setStatus("Clunk! Buffer hit. One ticket punched.");
+      }
+
+      if (tickets <= 0) {
+        resultAction = "lose";
+        resetAt = now + 1000;
+      } else {
+        resetAt = now + 950;
+      }
+    }
+
+    updateHUD();
+  }
+
+  function finishResult() {
+    moving = null;
+
+    if (resultAction === "clear") {
+      var cleared = boardIndex + 1;
+      showOverlay(
+        "Yard Cleared!",
+        "EVERY PARCEL DELIVERED",
+        "The platforms are tidy and your wind-up train is ready for Yard " + (cleared + 1) + ".",
+        "NEXT YARD",
+        function () {
+          setupBoard(boardIndex + 1);
+          hideOverlay();
+        }
+      );
+    } else if (resultAction === "win") {
+      showOverlay(
+        "All Aboard!",
+        "GRAND SOCK CENTRAL IS CLEAR",
+        "Every odd parcel found its picture. Final score: " + (deliveries + bonus) + ".",
+        "PLAY AGAIN",
+        resetRun
+      );
+    } else if (resultAction === "lose") {
+      showOverlay(
+        "Tickets, Please",
+        "ALL THREE TICKETS WERE PUNCHED",
+        "The parcels are still waiting, but the little train needs another run.",
+        "TRY AGAIN",
+        resetRun
+      );
+    } else {
+      mode = "idle";
+      assessRoute(false);
+      updateHUD();
+    }
+  }
+
+  function iconName(icon) {
+    var names = {
+      sock: "Sock",
+      duck: "Duck",
+      key: "Key",
+      moon: "Moon",
+      button: "Button",
+      fish: "Fish",
+      cup: "Teacup",
+      star: "Star"
+    };
+    return names[icon] || icon;
+  }
+
+  function resizeCanvas() {
+    var rect = canvas.getBoundingClientRect();
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var width = Math.max(1, Math.round(rect.width * dpr));
+    var height = Math.max(1, Math.round(rect.height * dpr));
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    view.width = rect.width;
+    view.height = rect.height;
+    view.scale = Math.min(rect.width / WORLD_W, rect.height / WORLD_H);
+    view.ox = (rect.width - WORLD_W * view.scale) / 2;
+    view.oy = (rect.height - WORLD_H * view.scale) / 2;
+  }
+
+  function rr(x, y, w, h, r) {
+    var radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  }
+
+  function strokePolyline(points) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (var i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+  }
+
+  function drawWoodBackground() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    ctx.scale(dpr, dpr);
+
+    var gradient = ctx.createLinearGradient(0, 0, view.width, view.height);
+    gradient.addColorStop(0, "#b67b4c");
+    gradient.addColorStop(.48, "#9c643e");
+    gradient.addColorStop(1, "#75482f");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, view.width, view.height);
+
+    ctx.globalAlpha = .13;
+    ctx.strokeStyle = "#4c2e21";
+    ctx.lineWidth = 2;
+    for (var y = 18; y < view.height; y += 38) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      for (var x = 0; x <= view.width; x += 80) {
+        ctx.quadraticCurveTo(x + 35, y + Math.sin(x * .05 + y) * 5, x + 80, y);
+      }
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = .07;
+    ctx.fillStyle = "#fff0c5";
+    for (var i = 0; i < 18; i++) {
+      var gx = (i * 173 + 41) % Math.max(1, view.width);
+      var gy = (i * 97 + 23) % Math.max(1, view.height);
+      ctx.fillRect(gx, gy, 55 + (i % 5) * 13, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.translate(view.ox, view.oy);
+    ctx.scale(view.scale, view.scale);
+
+    ctx.fillStyle = "rgba(255,244,211,.08)";
+    rr(6, 6, WORLD_W - 12, WORLD_H - 12, 18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(76,43,28,.45)";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+  }
+
+  function allTrackParts() {
+    var parts = [startPart()];
+    Object.keys(board.nodes).forEach(function (id) {
+      var node = board.nodes[id];
+      if (node.kind === "switch") {
+        node.out.forEach(function (edge) {
+          parts.push(edgePart(id, edge));
+        });
+      }
+    });
+    return parts;
+  }
+
+  function drawSleepers(points) {
+    ctx.strokeStyle = "#4f3529";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+
+    for (var i = 1; i < points.length; i++) {
+      var a = points[i - 1];
+      var b = points[i];
+      var dx = b.x - a.x;
+      var dy = b.y - a.y;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      var nx = len ? -dy / len : 0;
+      var ny = len ? dx / len : 0;
+      var steps = Math.floor(len / 24);
+
+      for (var s = 1; s < steps; s++) {
+        var t = s / steps;
+        var x = a.x + dx * t;
+        var y = a.y + dy * t;
+        ctx.beginPath();
+        ctx.moveTo(x - nx * 11, y - ny * 11);
+        ctx.lineTo(x + nx * 11, y + ny * 11);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawTrack(points) {
+    drawSleepers(points);
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    ctx.strokeStyle = "#332b27";
+    ctx.lineWidth = 16;
+    strokePolyline(points);
+
+    ctx.strokeStyle = "#b6a27c";
+    ctx.lineWidth = 11;
+    strokePolyline(points);
+
+    ctx.strokeStyle = "#4a4039";
+    ctx.lineWidth = 4;
+    strokePolyline(points);
+  }
+
+  function drawGlow(parts, color, alpha, now) {
+    var pulse = .78 + Math.sin(now * .006) * .18;
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 17;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha * pulse;
+    ctx.lineWidth = 15;
+    parts.forEach(strokePolyline);
+    ctx.globalAlpha = Math.min(1, alpha + .15);
+    ctx.shadowBlur = 4;
+    ctx.strokeStyle = "#f8fff2";
+    ctx.lineWidth = 3;
+    parts.forEach(strokePolyline);
+    ctx.restore();
+  }
+
+  function warningParts() {
+    var desired = desiredRoute();
+    if (!desired || !warningSwitch) return [];
+    var parts = [startPart()];
+    for (var i = 0; i < desired.entries.length; i++) {
+      if (desired.entries[i].id === warningSwitch) break;
+      parts.push(desired.entries[i].part);
+    }
+    return parts;
+  }
+
+  function drawBridge(bridge) {
+    ctx.save();
+    ctx.translate(bridge.x, bridge.y);
+    ctx.rotate(bridge.angle || 0);
+    ctx.fillStyle = "#76634f";
+    ctx.shadowColor = "rgba(0,0,0,.35)";
+    ctx.shadowBlur = 5;
+    rr(-25, -12, 50, 24, 5);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#c5b18a";
+    rr(-23, -8, 46, 16, 4);
+    ctx.fill();
+    ctx.strokeStyle = "#4c443d";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-22, -4);
+    ctx.lineTo(22, -4);
+    ctx.moveTo(-22, 4);
+    ctx.lineTo(22, 4);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBoardLabels() {
+    ctx.fillStyle = "#fff0c9";
+    ctx.font = "900 22px Trebuchet MS, Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(board.name, 25, 31);
+
+    ctx.fillStyle = "rgba(255,244,218,.82)";
+    ctx.font = "700 11px Trebuchet MS, Arial";
+    ctx.fillText(board.subtitle, 25, 48);
+
+    var remaining = board.parcels.slice(parcelIndex);
+    var cardW = 46;
+    var startX = Math.max(380, 865 - remaining.length * 52);
+
+    ctx.fillStyle = "rgba(54,36,28,.73)";
+    rr(startX - 65, 13, remaining.length * 52 + 65, 61, 10);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffeec8";
+    ctx.textAlign = "center";
+    ctx.font = "900 9px Trebuchet MS, Arial";
+    ctx.fillText("ORDER", startX - 32, 36);
+    ctx.fillText("→", startX - 32, 54);
+
+    remaining.forEach(function (icon, index) {
+      var x = startX + index * 52;
+      ctx.fillStyle = index === 0 ? "#fff7dc" : "#decba6";
+      ctx.strokeStyle = index === 0 ? "#2a8a94" : "#755c4a";
+      ctx.lineWidth = index === 0 ? 4 : 2;
+      rr(x, 19, cardW, 48, 7);
+      ctx.fill();
+      ctx.stroke();
+      drawIcon(icon, x + cardW / 2, 43, 24);
+    });
+  }
+
+  function drawStation(node, now) {
+    var lit = node.litUntil && node.litUntil > now;
+    var bad = node.badUntil && node.badUntil > now;
+
+    ctx.save();
+    if (lit) {
+      ctx.shadowColor = "#fff271";
+      ctx.shadowBlur = 25;
+      ctx.fillStyle = "rgba(255,242,113,.75)";
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 43, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (bad) {
+      ctx.shadowColor = "#e92e29";
+      ctx.shadowBlur = 25;
+    }
+
+    ctx.fillStyle = bad ? "#e76c5e" : (lit ? "#fff1a4" : "#ead7ad");
+    ctx.strokeStyle = bad ? "#85241e" : "#5d493b";
+    ctx.lineWidth = 4;
+    rr(node.x - 35, node.y - 27, 70, 54, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#77553e";
+    ctx.fillRect(node.x - 43, node.y + 22, 86, 8);
+
+    drawIcon(node.icon, node.x, node.y - 3, 32);
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#fff2d0";
+    ctx.strokeStyle = "#4d362b";
+    ctx.lineWidth = 3;
+    rr(node.x - 31, node.y + 31, 62, 19, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#3f2b23";
+    ctx.textAlign = "center";
+    ctx.font = "900 10px Trebuchet MS, Arial";
+    ctx.fillText(iconName(node.icon).toUpperCase(), node.x, node.y + 44);
+    ctx.restore();
+  }
+
+  function drawBuffer(node) {
+    ctx.save();
+    ctx.translate(node.x, node.y);
+    ctx.strokeStyle = "#3c302a";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-8, -18);
+    ctx.lineTo(-8, 18);
+    ctx.moveTo(8, -18);
+    ctx.lineTo(8, 18);
+    ctx.moveTo(-19, -16);
+    ctx.lineTo(18, 16);
+    ctx.moveTo(-19, 16);
+    ctx.lineTo(18, -16);
+    ctx.stroke();
+
+    ctx.fillStyle = "#c64639";
+    ctx.strokeStyle = "#fff0c7";
+    ctx.lineWidth = 3;
+    rr(-24, -9, 48, 18, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff0c7";
+    ctx.font = "900 9px Trebuchet MS, Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("BUFFER", 0, 30);
+    ctx.restore();
+  }
+
+  function drawSwitch(id, node, now) {
+    var isSelected = board.order[selectedSwitch] === id;
+    var warning = warningSwitch === id && mode === "idle";
+    var shake = warning ? Math.sin(now * .045) * 3.5 : 0;
+    var branch = settings[id] || 0;
+    var edge = node.out[branch];
+    var target = edge.via && edge.via.length ? edge.via[0] : nodePoint(edge.target);
+    var dx = target.x - node.x;
+    var dy = target.y - node.y;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / len;
+    var uy = dy / len;
+
+    ctx.save();
+    ctx.translate(shake, 0);
+
+    if (warning) {
+      ctx.strokeStyle = "#ffd85d";
+      ctx.lineWidth = 5;
+      ctx.globalAlpha = .65 + Math.sin(now * .008) * .25;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 35, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    if (isSelected) {
+      ctx.strokeStyle = "#f8fff5";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 29, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.fillStyle = "#3f312a";
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 17, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#e4c35f";
+    ctx.lineWidth = 7;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(node.x, node.y);
+    ctx.lineTo(node.x + ux * 27, node.y + uy * 27);
+    ctx.stroke();
+
+    ctx.fillStyle = "#bb4137";
+    ctx.strokeStyle = "#642b27";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(node.x + ux * 28, node.y + uy * 28, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff3ce";
+    ctx.strokeStyle = "#4b362c";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y - 27, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#33231d";
+    ctx.textAlign = "center";
+    ctx.font = "900 12px Trebuchet MS, Arial";
+    ctx.fillText(id, node.x, node.y - 23);
+    ctx.restore();
+  }
+
+  function drawDrops(now) {
+    drops.forEach(function (drop) {
+      var p = Math.max(0, Math.min(1, (now - drop.time) / 480));
+      var eased = 1 - Math.pow(1 - p, 3);
+      var bounce = p < 1 ? Math.sin(p * Math.PI) * 8 : 0;
+      var x = drop.x + 25 + drop.slot * 13;
+      var y = drop.y - 47 + eased * 63 - bounce;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((1 - p) * .22);
+      ctx.fillStyle = "#f6e5b8";
+      ctx.strokeStyle = "#714d38";
+      ctx.lineWidth = 2;
+      rr(-12, -11, 24, 22, 4);
+      ctx.fill();
+      ctx.stroke();
+      drawIcon(drop.icon, 0, 0, 15);
+      ctx.restore();
+    });
+  }
+
+  function drawTrain(position, cargo, movingNow) {
+    ctx.save();
+    ctx.translate(position.x, position.y);
+    ctx.rotate(position.angle);
+
+    ctx.shadowColor = "rgba(0,0,0,.42)";
+    ctx.shadowBlur = 7;
+    ctx.shadowOffsetY = 5;
+
+    ctx.fillStyle = "#272321";
+    ctx.beginPath();
+    ctx.arc(-15, 13, 8, 0, Math.PI * 2);
+    ctx.arc(13, 13, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#c64136";
+    ctx.strokeStyle = "#642620";
+    ctx.lineWidth = 3;
+    rr(-24, -12, 48, 25, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#e5a83b";
+    rr(-15, -24, 25, 19, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#2f302d";
+    ctx.fillRect(10, -25, 8, 18);
+    ctx.beginPath();
+    ctx.moveTo(7, -25);
+    ctx.lineTo(21, -25);
+    ctx.lineTo(18, -33);
+    ctx.lineTo(10, -33);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#f3d66f";
+    ctx.beginPath();
+    ctx.arc(24, -2, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#d5c08f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-21, -2);
+    ctx.lineTo(-34, -2);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(-45, 0);
+    ctx.fillStyle = "#447d82";
+    ctx.strokeStyle = "#263f40";
+    ctx.lineWidth = 3;
+    rr(-13, -10, 26, 21, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#25211f";
+    ctx.beginPath();
+    ctx.arc(-8, 12, 5, 0, Math.PI * 2);
+    ctx.arc(8, 12, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (cargo) {
+      ctx.fillStyle = "#fff0c6";
+      ctx.strokeStyle = "#664633";
+      ctx.lineWidth = 2;
+      rr(-10, -14, 20, 18, 4);
+      ctx.fill();
+      ctx.stroke();
+      drawIcon(cargo, 0, -5, 13);
+    }
+    ctx.restore();
+
+    if (!movingNow) {
+      ctx.strokeStyle = "#e5c66b";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-7, 21);
+      ctx.lineTo(-7, 33);
+      ctx.lineTo(5, 33);
+      ctx.stroke();
+      ctx.fillStyle = "#c64136";
+      ctx.beginPath();
+      ctx.arc(7, 33, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function drawIcon(type, x, y, size) {
+    var s = size / 32;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.lineWidth = 2.4;
+
+    if (type === "sock") {
+      ctx.fillStyle = "#d64c43";
+      ctx.strokeStyle = "#762c29";
+      ctx.beginPath();
+      ctx.moveTo(-9, -14);
+      ctx.lineTo(7, -14);
+      ctx.lineTo(6, 3);
+      ctx.quadraticCurveTo(10, 6, 14, 8);
+      ctx.quadraticCurveTo(13, 15, 5, 15);
+      ctx.lineTo(-4, 12);
+      ctx.quadraticCurveTo(-10, 10, -9, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#fff0cf";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-8, -9);
+      ctx.lineTo(6, -9);
+      ctx.stroke();
+    } else if (type === "duck") {
+      ctx.fillStyle = "#e8bd3f";
+      ctx.strokeStyle = "#725125";
+      ctx.beginPath();
+      ctx.ellipse(-2, 5, 13, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(7, -5, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#ef7636";
+      ctx.beginPath();
+      ctx.moveTo(13, -5);
+      ctx.lineTo(20, -1);
+      ctx.lineTo(13, 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#2d2521";
+      ctx.beginPath();
+      ctx.arc(9, -7, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (type === "key") {
+      ctx.strokeStyle = "#8b5e1c";
+      ctx.fillStyle = "#e4ad3b";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(-7, -4, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-1, 1);
+      ctx.lineTo(13, 14);
+      ctx.lineTo(18, 9);
+      ctx.moveTo(9, 10);
+      ctx.lineTo(14, 5);
+      ctx.stroke();
+    } else if (type === "moon") {
+      ctx.fillStyle = "#e7be45";
+      ctx.strokeStyle = "#7a5b28";
+      ctx.beginPath();
+      ctx.moveTo(8, -14);
+      ctx.bezierCurveTo(-10, -11, -13, 10, 5, 14);
+      ctx.bezierCurveTo(-2, 8, -1, -4, 8, -14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (type === "button") {
+      ctx.fillStyle = "#4389a3";
+      ctx.strokeStyle = "#244d5f";
+      ctx.beginPath();
+      ctx.arc(0, 0, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff1ce";
+      [[-5,-5],[5,-5],[-5,5],[5,5]].forEach(function (p) {
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else if (type === "fish") {
+      ctx.fillStyle = "#53a68c";
+      ctx.strokeStyle = "#285b50";
+      ctx.beginPath();
+      ctx.ellipse(-3, 0, 12, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-13, 0);
+      ctx.lineTo(-22, -9);
+      ctx.lineTo(-21, 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#202927";
+      ctx.beginPath();
+      ctx.arc(4, -2, 1.7, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (type === "cup") {
+      ctx.fillStyle = "#e8e2d6";
+      ctx.strokeStyle = "#665349";
+      ctx.beginPath();
+      ctx.moveTo(-12, -9);
+      ctx.lineTo(9, -9);
+      ctx.lineTo(7, 8);
+      ctx.quadraticCurveTo(0, 13, -8, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(10, -1, 7, -Math.PI / 2, Math.PI / 2);
+      ctx.stroke();
+      ctx.strokeStyle = "#7c5b48";
+      ctx.beginPath();
+      ctx.moveTo(-13, 13);
+      ctx.lineTo(13, 13);
+      ctx.stroke();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-5, -14);
+      ctx.quadraticCurveTo(-8, -19, -3, -22);
+      ctx.moveTo(3, -14);
+      ctx.quadraticCurveTo(0, -19, 5, -22);
+      ctx.stroke();
+    } else if (type === "star") {
+      ctx.fillStyle = "#e6b838";
+      ctx.strokeStyle = "#7d5b20";
+      ctx.beginPath();
+      for (var i = 0; i < 10; i++) {
+        var angle = -Math.PI / 2 + i * Math.PI / 5;
+        var radius = i % 2 === 0 ? 15 : 7;
+        var sx = Math.cos(angle) * radius;
+        var sy = Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function render(now) {
+    resizeCanvas();
+    drawWoodBackground();
+    drawBoardLabels();
+
+    var tracks = allTrackParts();
+    tracks.forEach(drawTrack);
+
+    if (board.bridges) {
+      board.bridges.forEach(drawBridge);
+    }
+
+    if (mode === "idle") {
+      if (warningSwitch) {
+        drawGlow(warningParts(), "#65e5da", .72, now);
+      } else {
+        var idleRoute = currentRoute();
+        var isRight = idleRoute.terminal && idleRoute.terminal.kind === "station" &&
+          idleRoute.terminal.icon === board.parcels[parcelIndex];
+        drawGlow(idleRoute.parts, isRight ? "#6af0d6" : "#efb74c", isRight ? .82 : .55, now);
+      }
+    } else if (moving) {
+      drawGlow(moving.route.parts, "#79e9d2", .7, now);
+    }
+
+    Object.keys(board.nodes).forEach(function (id) {
+      var node = board.nodes[id];
+      if (node.kind === "station") drawStation(node, now);
+      if (node.kind === "buffer") drawBuffer(node);
+    });
+
+    Object.keys(board.nodes).forEach(function (id) {
+      var node = board.nodes[id];
+      if (node.kind === "switch") drawSwitch(id, node, now);
+    });
+
+    drawDrops(now);
+
+    var trainPosition;
+    var cargo = parcelIndex < board.parcels.length ? board.parcels[parcelIndex] : null;
+
+    if (moving) {
+      trainPosition = positionOnPath(moving.points, moving.metrics, moving.progress);
+      cargo = mode === "moving" ? moving.cargo : null;
+    } else {
+      var first = startPart();
+      trainPosition = {
+        x: board.start.x,
+        y: board.start.y,
+        angle: Math.atan2(first[1].y - first[0].y, first[1].x - first[0].x)
+      };
+    }
+    drawTrain(trainPosition, cargo, mode === "moving");
+
+    if (flashUntil > now) {
+      var alpha = (flashUntil - now) / 650;
+      ctx.fillStyle = "rgba(210,31,26," + (alpha * .33) + ")";
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+  }
+
+  function update(now) {
+    if (mode === "moving" && moving) {
+      moving.progress = Math.min(1, (now - moving.start) / moving.duration);
+      if (moving.progress >= 1) {
+        resolveRoute(now);
+      }
+    } else if (mode === "result" && now >= resetAt) {
+      finishResult();
+    }
+  }
+
+  function frame(now) {
+    update(now);
+    render(now);
+    requestAnimationFrame(frame);
+  }
+
+  function toWorld(event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left - view.ox) / view.scale,
+      y: (event.clientY - rect.top - view.oy) / view.scale
+    };
+  }
+
+  function screenDistanceFromWorldPoint(point, target) {
+    var dx = point.x - target.x;
+    var dy = point.y - target.y;
+    return Math.sqrt(dx * dx + dy * dy) * view.scale;
+  }
+
+  canvas.addEventListener("pointerdown", function (event) {
+    if (mode !== "idle" || !overlay.classList.contains("hidden")) return;
+    event.preventDefault();
+    initAudio();
+
+    var p = toWorld(event);
+    var nearestAction = null;
+    var nearestDistancePx = Infinity;
+    var switchRadiusPx = Math.max(MIN_TOUCH_RADIUS_PX, 45 * view.scale);
+    var trainRadiusPx = Math.max(MIN_TOUCH_RADIUS_PX, 58 * view.scale);
+
+    board.order.forEach(function (id) {
+      var node = board.nodes[id];
+      var distancePx = screenDistanceFromWorldPoint(p, node);
+      if (distancePx <= switchRadiusPx && distancePx < nearestDistancePx) {
+        nearestDistancePx = distancePx;
+        nearestAction = { type: "switch", id: id };
+      }
+    });
+
+    var trainDistancePx = screenDistanceFromWorldPoint(p, board.start);
+    if (trainDistancePx <= trainRadiusPx && trainDistancePx < nearestDistancePx) {
+      nearestAction = { type: "train" };
+    }
+
+    if (nearestAction && nearestAction.type === "switch") {
+      flipSwitch(nearestAction.id);
+    } else if (nearestAction && nearestAction.type === "train") {
+      sendTrain();
+    }
+  });
+
+  sendButton.addEventListener("click", function () {
+    sendTrain();
+  });
+
+  window.addEventListener("keydown", function (event) {
+    var key = event.key;
+
+    if (!overlay.classList.contains("hidden")) {
+      if (key === "Enter" || key === " ") {
+        event.preventDefault();
+        var button = overlay.querySelector("button");
+        if (button) button.click();
+      }
+      return;
+    }
+
+    if (mode !== "idle") {
+      if (key === " ") event.preventDefault();
+      return;
+    }
+
+    if (key === "ArrowLeft" || key === "ArrowUp") {
+      event.preventDefault();
+      selectedSwitch = (selectedSwitch - 1 + board.order.length) % board.order.length;
+      setStatus("Selected switch " + board.order[selectedSwitch] + ". Press Enter to flip.");
+    } else if (key === "ArrowRight" || key === "ArrowDown") {
+      event.preventDefault();
+      selectedSwitch = (selectedSwitch + 1) % board.order.length;
+      setStatus("Selected switch " + board.order[selectedSwitch] + ". Press Enter to flip.");
+    } else if (key === "Enter") {
+      event.preventDefault();
+      flipSwitch(board.order[selectedSwitch]);
+    } else if (key === " " || key === "Spacebar") {
+      event.preventDefault();
+      sendTrain();
+    }
+  });
+
+  window.addEventListener("resize", resizeCanvas);
+
+  setupBoard(0);
+  showOverlay(
+    "Next Stop,<br>Socks",
+    "A TABLETOP ROUTING GAME",
+    "Check the parcel picture, set the little rail switches, and wind up the train. Three bad routes will end the run.",
+    "START THE TRAIN",
+    function () {
+      hideOverlay();
+    }
+  );
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

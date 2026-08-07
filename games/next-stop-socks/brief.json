@@ -1,0 +1,11 @@
+{
+  "title": "Next Stop, Socks",
+  "slug": "next-stop-socks",
+  "tagline": "Set the switches. The socks have places to be.",
+  "concept": "Route a wind-up model train through a tabletop rail yard and deliver odd parcels to stations with matching pictures.",
+  "core_loop": "Check the picture on the next parcel, flip one or more track switches, then send the train and watch the route play out; each quick delivery feels like solving a small moving puzzle.",
+  "mechanics": "Tap or click a switch to flip it, then tap the train or press Space to send it; arrow keys select switches and Enter flips them.; Deliver every parcel to clear the board; a wrong station or buffer hit punches one of three visible tickets, and losing all three ends the run.; Each delivery scores a point, and several correct routes in a row build a visible clean-run bonus.",
+  "feedback": "Connected rails glow from the train before it moves. A correct delivery rings a bright bell, lights the station, and drops the parcel onto the platform. A wrong route ends with a dull clunk, a red flash, and a ticket being punched. If one switch is stopping an otherwise good route, the glow ends there, the lever shakes, and a soft click warns the player before they send the train.",
+  "difficulty": "The first boards have one parcel, one switch, and short tracks. Later boards add more stations, crossing loops, several switches, and a visible stack of parcels that must be delivered in order, with no timer forcing the choice.",
+  "mobile": true
+}
