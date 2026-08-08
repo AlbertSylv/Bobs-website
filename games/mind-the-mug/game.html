@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mind the Mug</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+:root {
+  --ink:#30271f;
+  --cream:#fff7df;
+  --wood:#a96635;
+  --wood-dark:#653a24;
+  --green:#4f966d;
+  --amber:#e0a737;
+  --red:#c63f42;
+  --blue:#4c7891;
+}
+body {
+  overflow:hidden;
+  background:#d9caa9;
+  color:var(--ink);
+  font-family:Verdana, Geneva, sans-serif;
+  -webkit-user-select:none;
+  user-select:none;
+}
+button { font:inherit; }
+#game {
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,0)),
+    repeating-linear-gradient(90deg, #d9c9a9 0, #d9c9a9 65px, #d4c2a1 66px, #d4c2a1 68px);
+}
+header {
+  z-index:5;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-height:80px;
+  padding:9px 14px;
+  color:#fff9e9;
+  background:#4b3a30;
+  box-shadow:0 3px 0 rgba(57,38,25,.25);
+}
+.brand {
+  min-width:175px;
+}
+.brand h1 {
+  margin:0;
+  font-family:Georgia, serif;
+  font-size:clamp(23px, 3.5vw, 38px);
+  line-height:.95;
+  letter-spacing:-1px;
+}
+.tagline {
+  margin-top:5px;
+  color:#ead6ae;
+  font-size:clamp(9px, 1.35vw, 13px);
+}
+.hud {
+  flex:1;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(70px, 1fr));
+  gap:6px;
+}
+.stat {
+  min-height:48px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:5px 8px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;
+  background:rgba(0,0,0,.14);
+}
+.stat span {
+  color:#dbc8a7;
+  font-size:9px;
+  font-weight:bold;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.stat strong {
+  margin-top:2px;
+  font-size:clamp(13px, 2vw, 19px);
+  white-space:nowrap;
+}
+#soundButton {
+  flex:0 0 auto;
+  width:42px;
+  height:42px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:50%;
+  color:white;
+  background:#665044;
+  cursor:pointer;
+}
+#soundButton:focus-visible,
+.controlButton:focus-visible,
+.overlay button:focus-visible {
+  outline:3px solid #ffd56a;
+  outline-offset:2px;
+}
+main {
+  position:relative;
+  flex:1 1 auto;
+  min-height:230px;
+  overflow:hidden;
+}
+#stage {
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 22% 23%, rgba(255,255,255,.27) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 35%, rgba(255,255,255,.2) 0 2px, transparent 3px);
+}
+.wallArt {
+  position:absolute;
+  top:10%;
+  width:70px;
+  height:50px;
+  border:6px solid #77523b;
+  background:#b6cfbd;
+  box-shadow:2px 3px 0 rgba(0,0,0,.13);
+  opacity:.75;
+}
+.wallArt.one { left:7%; transform:rotate(-2deg); }
+.wallArt.two { right:8%; width:54px; background:#d4ac84; transform:rotate(3deg); }
+.wallArt:after {
+  content:"";
+  position:absolute;
+  left:15%;
+  right:15%;
+  bottom:10%;
+  height:45%;
+  background:#668069;
+  clip-path:polygon(0 100%, 35% 25%, 55% 65%, 77% 12%, 100% 100%);
+}
+.levelInfo {
+  position:absolute;
+  z-index:3;
+  top:7px;
+  left:50%;
+  width:min(92%, 650px);
+  transform:translateX(-50%);
+  text-align:center;
+}
+#levelName {
+  margin:0 0 3px;
+  font-family:Georgia, serif;
+  font-size:clamp(16px, 2.6vw, 24px);
+}
+#levelHint {
+  min-height:16px;
+  margin:0;
+  color:#675244;
+  font-size:clamp(9px, 1.5vw, 12px);
+}
+.balancePanel {
+  position:absolute;
+  z-index:4;
+  top:59px;
+  left:50%;
+  width:min(76%, 480px);
+  transform:translateX(-50%);
+}
+.balanceLabels {
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:3px;
+  color:#735b4e;
+  font-size:8px;
+  font-weight:bold;
+  letter-spacing:.6px;
+}
+.balanceTrack {
+  position:relative;
+  height:17px;
+  overflow:hidden;
+  border:2px solid #4d4036;
+  border-radius:12px;
+  background:linear-gradient(90deg,
+    #bd3e40 0 13%,
+    #e8ad39 13% 23%,
+    #6fa47b 23% 77%,
+    #e8ad39 77% 87%,
+    #bd3e40 87% 100%);
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.25);
+}
+.balanceTrack:after {
+  content:"";
+  position:absolute;
+  left:50%;
+  top:1px;
+  width:2px;
+  height:11px;
+  background:rgba(255,255,255,.7);
+}
+#needle {
+  position:absolute;
+  z-index:2;
+  top:-4px;
+  left:50%;
+  width:8px;
+  height:25px;
+  border-radius:4px;
+  background:#2f2924;
+  box-shadow:0 1px 2px #fff;
+  transform:translateX(-50%);
+  transition:left .35s ease, background .2s;
+}
+#stage.warning #needle { background:#8c5000; }
+#stage.danger #needle {
+  background:#fff;
+  box-shadow:0 0 7px 3px var(--red);
+}
+#status {
+  position:absolute;
+  z-index:6;
+  left:50%;
+  bottom:3px;
+  width:min(94%, 700px);
+  min-height:28px;
+  padding:6px 12px;
+  transform:translateX(-50%);
+  border-radius:16px 16px 0 0;
+  color:#fff;
+  background:rgba(61,47,38,.92);
+  text-align:center;
+  font-size:clamp(10px, 1.6vw, 13px);
+  pointer-events:none;
+}
+.shelfAssembly {
+  position:absolute;
+  z-index:2;
+  left:5%;
+  bottom:11%;
+  width:90%;
+  height:clamp(145px, 29vh, 215px);
+  transform-origin:50% 84%;
+  transition:transform .42s cubic-bezier(.2,.75,.3,1);
+}
+.rearRail {
+  position:absolute;
+  z-index:1;
+  left:2%;
+  right:2%;
+  bottom:83px;
+  height:9px;
+  border:2px solid #476346;
+  border-radius:5px;
+  background:linear-gradient(#8caf78, #55794e);
+  box-shadow:0 4px 0 #3f573b, 0 6px 5px rgba(0,0,0,.2);
+  opacity:.9;
+}
+.rearRail:after {
+  content:"REAR PARKING";
+  position:absolute;
+  right:5px;
+  bottom:10px;
+  color:#466044;
+  font-size:7px;
+  font-weight:bold;
+  letter-spacing:.7px;
+  white-space:nowrap;
+}
+.shelfBoard {
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:22px;
+  height:22px;
+  border:2px solid #5b321d;
+  border-radius:4px;
+  background:
+    linear-gradient(#c4834d 0 24%, #a46234 25% 70%, #7d472a 71% 100%);
+  box-shadow:0 8px 0 #5c3624, 0 12px 7px rgba(0,0,0,.25);
+}
+.shelfBoard:before,
+.shelfBoard:after {
+  content:"";
+  position:absolute;
+  top:26px;
+  width:23px;
+  height:35px;
+  border:5px solid #68402b;
+  border-top:0;
+}
+.shelfBoard:before { left:8%; }
+.shelfBoard:after { right:8%; }
+.shelfAssembly.knock .shelfBoard {
+  animation:woodKnock .24s ease;
+}
+@keyframes woodKnock {
+  0%,100% { margin-bottom:0; }
+  45% { margin-bottom:-3px; }
+}
+.slot {
+  position:absolute;
+  bottom:42px;
+  width:12px;
+  height:5px;
+  transform:translateX(-50%);
+  border-radius:5px;
+  background:#70462e;
+  opacity:.28;
+  transition:width .15s, opacity .15s, background .15s, box-shadow .15s;
+}
+.slot.allowed {
+  width:26px;
+  opacity:.95;
+  background:#e3b94f;
+  box-shadow:0 0 0 2px rgba(255,244,180,.6);
+}
+.slot.occupied {
+  opacity:.7;
+  background:#5d3928;
+}
+.parkingSpot {
+  z-index:2;
+  bottom:84px;
+  width:22px;
+  height:8px;
+  opacity:.9;
+  background:#5d9e69;
+  box-shadow:0 0 0 2px rgba(225,255,216,.65);
+}
+.parkingSpot.selectedTarget {
+  width:31px;
+  background:#ffd35b;
+  box-shadow:0 0 0 3px rgba(255,247,184,.75), 0 0 8px rgba(255,206,52,.85);
+}
+#stage.narrow .slot {
+  height:7px;
+  border:1px solid #6b452e;
+}
+.piece,
+.cat {
+  position:absolute;
+  z-index:3;
+  bottom:43px;
+  width:clamp(30px, 6.8vw, 66px);
+  height:clamp(55px, 12vh, 100px);
+  padding:0;
+  transform:translateX(-50%);
+  border:0;
+  color:inherit;
+  background:transparent;
+  transition:left .3s ease, bottom .3s ease, transform .3s ease, filter .2s;
+}
+button.piece {
+  cursor:grab;
+  touch-action:none;
+}
+button.piece:active { cursor:grabbing; }
+button.piece:focus-visible {
+  outline:3px dashed #f4c83e;
+  outline-offset:3px;
+  border-radius:8px;
+}
+.piece.selected {
+  filter:drop-shadow(0 0 5px rgba(255,205,45,.95));
+}
+.piece.dragging {
+  transition:none;
+  filter:drop-shadow(0 6px 4px rgba(0,0,0,.25));
+}
+.piece.parked {
+  z-index:2;
+  bottom:85px;
+  transform:translateX(-50%) scale(.82);
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.2));
+}
+.piece.parked.selected {
+  filter:drop-shadow(0 0 6px rgba(255,205,45,.95));
+}
+.art {
+  position:absolute;
+  left:50%;
+  bottom:14px;
+  width:70%;
+  height:65%;
+  transform:translateX(-50%);
+}
+.objectName {
+  position:absolute;
+  left:50%;
+  bottom:0;
+  transform:translateX(-50%);
+  max-width:90px;
+  padding:2px 4px;
+  border-radius:5px;
+  color:#fff;
+  background:rgba(54,39,31,.82);
+  font-size:clamp(6px, 1.2vw, 9px);
+  font-weight:bold;
+  white-space:nowrap;
+}
+.piece.parked .objectName {
+  background:#416a4d;
+}
+.bookArt:before,
+.bookArt:after {
+  content:"";
+  position:absolute;
+  left:4%;
+  width:92%;
+  height:27%;
+  border:2px solid #48352a;
+  border-radius:3px;
+}
+.bookArt:before {
+  bottom:7%;
+  background:#47758c;
+  transform:rotate(2deg);
+}
+.bookArt:after {
+  bottom:36%;
+  background:#b75a48;
+  transform:rotate(-3deg);
+}
+.bookArt i {
+  position:absolute;
+  left:11%;
+  right:7%;
+  bottom:66%;
+  height:25%;
+  border:2px solid #48352a;
+  border-radius:3px;
+  background:#d6a843;
+  transform:rotate(1deg);
+}
+.mugArt .cup {
+  position:absolute;
+  left:9%;
+  bottom:0;
+  width:67%;
+  height:66%;
+  border:3px solid #47372f;
+  border-radius:4px 4px 12px 12px;
+  background:#f5ead2;
+}
+.mugArt .cup:before {
+  content:"";
+  position:absolute;
+  left:-3px;
+  right:-3px;
+  top:-5px;
+  height:8px;
+  border:3px solid #47372f;
+  border-radius:50%;
+  background:#5e3b28;
+}
+.mugArt .handle {
+  position:absolute;
+  right:2%;
+  bottom:13%;
+  width:39%;
+  height:42%;
+  border:5px solid #47372f;
+  border-left:0;
+  border-radius:0 16px 16px 0;
+}
+.plantArt .pot {
+  position:absolute;
+  left:23%;
+  bottom:0;
+  width:55%;
+  height:40%;
+  border:2px solid #57392a;
+  background:#b9663d;
+  clip-path:polygon(7% 0, 93% 0, 78% 100%, 22% 100%);
+}
+.plantArt .leaf {
+  position:absolute;
+  bottom:34%;
+  width:34%;
+  height:50%;
+  border:2px solid #31583a;
+  border-radius:100% 0 100% 0;
+  background:#4f8a58;
+  transform-origin:bottom center;
+}
+.plantArt .a { left:33%; transform:rotate(-24deg); }
+.plantArt .b { left:40%; transform:rotate(18deg) scale(.9); }
+.plantArt .c { left:16%; transform:rotate(-48deg) scale(.8); }
+.boxArt {
+  bottom:13px;
+  height:58%;
+  border:3px solid #573823;
+  border-radius:3px;
+  background:#b77a43;
+}
+.boxArt:before {
+  content:"";
+  position:absolute;
+  left:47%;
+  top:0;
+  bottom:0;
+  width:8%;
+  background:#e1bd76;
+}
+.boxArt:after {
+  content:"";
+  position:absolute;
+  left:10%;
+  right:10%;
+  top:13%;
+  height:2px;
+  background:#6f472b;
+}
+.kettleArt .body {
+  position:absolute;
+  left:15%;
+  bottom:0;
+  width:68%;
+  height:58%;
+  border:3px solid #3d4444;
+  border-radius:45% 45% 35% 35%;
+  background:#7c8d8c;
+}
+.kettleArt .body:before {
+  content:"";
+  position:absolute;
+  left:17%;
+  top:-16px;
+  width:55%;
+  height:13px;
+  border:3px solid #3d4444;
+  border-radius:50% 50% 0 0;
+  background:#9ba6a3;
+}
+.kettleArt .handle {
+  position:absolute;
+  left:17%;
+  top:0;
+  width:64%;
+  height:45%;
+  border:5px solid #3d4444;
+  border-bottom:0;
+  border-radius:25px 25px 0 0;
+}
+.kettleArt .spout {
+  position:absolute;
+  right:-5%;
+  bottom:25%;
+  width:31%;
+  height:18%;
+  border:3px solid #3d4444;
+  background:#899a98;
+  transform:rotate(-20deg);
+}
+.cushionArt {
+  bottom:12px;
+  height:48%;
+  border:3px solid #574139;
+  border-radius:14px 10px 15px 9px;
+  background:#bd6d70;
+  transform:translateX(-50%) rotate(-2deg);
+  box-shadow:inset 0 0 0 4px rgba(255,255,255,.15);
+}
+.cushionArt:after {
+  content:"×";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  color:#eed0c7;
+  font-size:16px;
+}
+.cat {
+  z-index:5;
+  width:clamp(43px, 9vw, 75px);
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.cat:focus-visible {
+  outline:3px dashed #f4c83e;
+  outline-offset:2px;
+  border-radius:40%;
+}
+.catBody {
+  position:absolute;
+  left:19%;
+  bottom:15px;
+  width:60%;
+  height:35%;
+  border:3px solid #352c28;
+  border-radius:50% 45% 38% 44%;
+  background:#6c6761;
+}
+.catBody:after {
+  content:"";
+  position:absolute;
+  left:13%;
+  bottom:-18px;
+  width:8px;
+  height:24px;
+  border-radius:4px;
+  background:#4f4b47;
+  box-shadow:25px 0 #4f4b47;
+}
+.catHead {
+  position:absolute;
+  right:5%;
+  bottom:30%;
+  width:43%;
+  height:38%;
+  border:3px solid #352c28;
+  border-radius:48%;
+  background:#76716b;
+  transition:transform .2s;
+}
+.catHead:before,
+.catHead:after {
+  content:"";
+  position:absolute;
+  top:-33%;
+  width:35%;
+  height:48%;
+  border:3px solid #352c28;
+  background:#76716b;
+  transform:rotate(45deg);
+}
+.catHead:before { left:5%; }
+.catHead:after { right:5%; }
+.catFace {
+  position:absolute;
+  z-index:2;
+  left:22%;
+  top:43%;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#e9d44d;
+  box-shadow:18px 0 #e9d44d;
+}
+.catFace:after {
+  content:"";
+  position:absolute;
+  left:7px;
+  top:8px;
+  width:6px;
+  height:4px;
+  border-radius:50%;
+  background:#332520;
+}
+.catTail {
+  position:absolute;
+  left:2%;
+  bottom:30%;
+  width:32%;
+  height:45%;
+  border:6px solid #4f4b47;
+  border-right:0;
+  border-bottom:0;
+  border-radius:30px 0 0 0;
+  transform:rotate(-18deg);
+}
+.cat.proud {
+  animation:proudStep .38s ease;
+}
+@keyframes proudStep {
+  0%,100% { transform:translateX(-50%) translateY(0); }
+  45% { transform:translateX(-50%) translateY(-11px) rotate(-2deg); }
+}
+#stage.near .catHead {
+  transform:rotate(14deg);
+}
+#stage.near .fragile .art {
+  animation:mugWobble .48s ease-in-out infinite alternate;
+  transform-origin:50% 100%;
+}
+@keyframes mugWobble {
+  from { transform:translateX(-50%) rotate(-5deg); }
+  to { transform:translateX(-50%) rotate(5deg); }
+}
+.piece.drop-right {
+  z-index:8;
+  animation:dropRight 1.1s ease-in forwards;
+}
+.piece.drop-left {
+  z-index:8;
+  animation:dropLeft 1.1s ease-in forwards;
+}
+@keyframes dropRight {
+  0% { transform:translateX(-50%) rotate(0); }
+  35% { transform:translate(18px, 8px) rotate(16deg); }
+  100% { transform:translate(130px, 260px) rotate(170deg); opacity:.15; }
+}
+@keyframes dropLeft {
+  0% { transform:translateX(-50%) rotate(0); }
+  35% { transform:translate(-48px, 8px) rotate(-16deg); }
+  100% { transform:translate(-170px, 260px) rotate(-170deg); opacity:.15; }
+}
+#stage.failing {
+  animation:sceneThump .28s .8s ease;
+}
+@keyframes sceneThump {
+  0%,100% { filter:none; }
+  50% { filter:brightness(.78) saturate(1.4); }
+}
+footer {
+  z-index:7;
+  flex:0 0 auto;
+  min-height:78px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:7px 12px;
+  color:#f9edcf;
+  background:#382d27;
+}
+.how {
+  flex:1;
+  max-width:760px;
+  font-size:clamp(9px, 1.5vw, 12px);
+  line-height:1.45;
+}
+.how strong { color:#ffd66a; }
+.controls {
+  display:flex;
+  flex:0 0 auto;
+  gap:6px;
+}
+.controlButton {
+  min-width:48px;
+  min-height:44px;
+  padding:7px 10px;
+  border:2px solid #846b57;
+  border-radius:9px;
+  color:#fff7df;
+  background:#5b493e;
+  box-shadow:0 3px 0 #241b17;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.controlButton:active {
+  transform:translateY(2px);
+  box-shadow:0 1px 0 #241b17;
+}
+#stepButton {
+  min-width:94px;
+  color:#30271f;
+  border-color:#c98c31;
+  background:#efbd55;
+  font-weight:bold;
+}
+.overlay {
+  position:fixed;
+  z-index:50;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(40,31,26,.73);
+}
+.overlay.hidden { display:none; }
+.overlayCard {
+  width:min(94vw, 520px);
+  max-height:92vh;
+  overflow:auto;
+  padding:clamp(19px, 4vw, 34px);
+  border:5px solid #6d442a;
+  border-radius:16px;
+  background:#fff5dc;
+  box-shadow:0 15px 40px rgba(0,0,0,.4);
+  text-align:center;
+}
+.overlayCard h2 {
+  margin:0 0 7px;
+  font-family:Georgia, serif;
+  font-size:clamp(30px, 7vw, 54px);
+}
+.overlayTag {
+  margin:0 0 18px;
+  color:#765944;
+  font-weight:bold;
+}
+.overlayText {
+  margin:12px auto 20px;
+  max-width:430px;
+  line-height:1.55;
+  font-size:14px;
+}
+.overlayScore {
+  margin:13px 0;
+  padding:10px;
+  border-radius:9px;
+  background:#eadaba;
+  font-weight:bold;
+}
+.overlay button {
+  min-width:150px;
+  padding:11px 20px;
+  border:2px solid #593822;
+  border-radius:9px;
+  color:white;
+  background:#4e8b64;
+  box-shadow:0 4px 0 #2e583e;
+  font-weight:bold;
+  cursor:pointer;
+}
+.smallKeys {
+  margin-top:16px;
+  color:#745f50;
+  font-size:11px;
+}
+@media (max-width:700px) {
+  header {
+    min-height:94px;
+    gap:7px;
+    padding:7px 8px;
+    flex-wrap:wrap;
+  }
+  .brand { min-width:145px; }
+  .tagline { max-width:150px; }
+  .hud {
+    order:3;
+    flex-basis:100%;
+    grid-template-columns:repeat(4, 1fr);
+  }
+  .stat {
+    min-height:34px;
+    padding:3px 5px;
+  }
+  .stat strong { font-size:12px; }
+  .stat span { font-size:7px; }
+  #soundButton {
+    margin-left:auto;
+    width:36px;
+    height:36px;
+  }
+  .balancePanel { top:55px; width:88%; }
+  .shelfAssembly { left:3%; width:94%; bottom:12%; }
+  footer {
+    min-height:102px;
+    flex-direction:column;
+    gap:5px;
+    padding:5px 8px;
+  }
+  .how { text-align:center; }
+  .controlButton {
+    min-width:44px;
+    min-height:40px;
+    padding:6px 8px;
+  }
+}
+@media (max-height:560px) {
+  header { min-height:66px; }
+  .brand h1 { font-size:23px; }
+  .tagline { display:none; }
+  .stat { min-height:34px; }
+  footer { min-height:64px; flex-direction:row; }
+  .how { font-size:9px; }
+  .controlButton { min-height:36px; padding:4px 8px; }
+  .balancePanel { top:45px; }
+  .shelfAssembly { bottom:8%; height:140px; }
+  #status { min-height:23px; padding:4px 8px; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <header>
+    <div class="brand">
+      <h1>Mind the Mug</h1>
+      <div class="tagline">Get the cat across. Keep the mug alive.</div>
+    </div>
+    <div class="hud" aria-label="Game status">
+      <div class="stat"><span>Level</span><strong id="levelStat">1 / 4</strong></div>
+      <div class="stat"><span>Score</span><strong id="scoreStat">0</strong></div>
+      <div class="stat"><span>Actions</span><strong id="moveStat">0</strong></div>
+      <div class="stat"><span>Fragile</span><strong id="fragileStat">1 / 1</strong></div>
+    </div>
+    <button id="soundButton" class="uiButton" type="button" aria-label="Mute sound">🔊</button>
+  </header>
+
+  <main>
+    <section id="stage" aria-label="Balancing shelf game">
+      <div class="wallArt one" aria-hidden="true"></div>
+      <div class="wallArt two" aria-hidden="true"></div>
+
+      <div class="levelInfo">
+        <h2 id="levelName"></h2>
+        <p id="levelHint"></p>
+      </div>
+
+      <div class="balancePanel">
+        <div class="balanceLabels"><span>RED: LEFT FALL</span><span>BALANCED</span><span>RED: RIGHT FALL</span></div>
+        <div id="balanceTrack" class="balanceTrack" role="meter" aria-label="Shelf tilt" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0">
+          <div id="needle"></div>
+        </div>
+      </div>
+
+      <div id="assembly" class="shelfAssembly">
+        <div class="rearRail" aria-hidden="true"></div>
+        <div id="slotsLayer" aria-hidden="true"></div>
+        <div class="shelfBoard" aria-hidden="true"></div>
+        <div id="objectsLayer"></div>
+        <button id="cat" class="cat" type="button" aria-label="Step the cat forward">
+          <span class="catTail"></span>
+          <span class="catBody"></span>
+          <span class="catHead"><span class="catFace"></span></span>
+        </button>
+      </div>
+
+      <div id="status" role="status" aria-live="polite">Park blockers on the rear ledge, balance the shelf, then step the cat.</div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="how">
+      <strong>How to play:</strong> Move outlined objects onto green rear parking spots, then tap the cat.
+      The cat cannot pass through objects. Keyboard: Tab, arrows, Space; R restarts.
+    </div>
+    <div class="controls" aria-label="Touch controls">
+      <button id="leftButton" class="controlButton uiButton" type="button" aria-label="Move selected object left">◀</button>
+      <button id="stepButton" class="controlButton uiButton" type="button">STEP CAT</button>
+      <button id="rightButton" class="controlButton uiButton" type="button" aria-label="Move selected object right">▶</button>
+      <button id="restartButton" class="controlButton uiButton" type="button" aria-label="Restart level">↻</button>
+    </div>
+  </footer>
+</div>
+
+<div id="overlay" class="overlay">
+  <div class="overlayCard" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+    <h2 id="overlayTitle">Mind the Mug</h2>
+    <p id="overlayTag" class="overlayTag">Get the cat across. Keep the mug alive.</p>
+    <div id="overlayText" class="overlayText"></div>
+    <div id="overlayScore" class="overlayScore"></div>
+    <button id="overlayButton" class="uiButton" type="button">Play</button>
+    <div id="overlayKeys" class="smallKeys"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CAT_GOAL = 7;
+
+  var levels = [
+    {
+      name:"The Gentle Introduction",
+      hint:"Move the book to its green rear perch. Front-row objects physically block the cat.",
+      limit:5.5,
+      catWeight:1,
+      catStep:1,
+      par:11,
+      narrow:false,
+      objects:[
+        { id:"book", name:"BOOK 2×", type:"book", weight:2, slot:6, movable:true, allowed:[1,2,3,4,5,6,7], parking:[4] },
+        { id:"mug", name:"MUG !", type:"mug", weight:0.5, slot:8, movable:false, fragile:true }
+      ]
+    },
+    {
+      name:"Company on the Shelf",
+      hint:"Clear both blockers first. Green rear spots are safe for the cat to pass in front of.",
+      limit:4.8,
+      catWeight:1.25,
+      catStep:1,
+      par:14,
+      narrow:false,
+      objects:[
+        { id:"books", name:"BOOKS 1×", type:"book", weight:1, slot:5, movable:true, allowed:[1,2,3,4,5,6], parking:[3] },
+        { id:"plant", name:"PLANT 1.5×", type:"plant", weight:1.5, slot:6, movable:true, allowed:[2,3,4,5,6,7], parking:[4] },
+        { id:"mug", name:"MUG !", type:"mug", weight:0.5, slot:8, movable:false, fragile:true }
+      ]
+    },
+    {
+      name:"Short Ledges",
+      hint:"Long cat steps check every crossed slot—they cannot jump through a box or plant.",
+      limit:4.5,
+      catWeight:1.3,
+      catStep:2,
+      par:8,
+      narrow:true,
+      objects:[
+        { id:"plant", name:"PLANT 1×", type:"plant", weight:1, slot:2, movable:true, allowed:[1,2], parking:[1] },
+        { id:"box", name:"BOX 2×", type:"box", weight:2, slot:6, movable:true, allowed:[3,4,5,6], parking:[3] },
+        { id:"mug", name:"MUG !", type:"mug", weight:0.8, slot:8, movable:false, fragile:true }
+      ]
+    },
+    {
+      name:"The Last Long Step",
+      hint:"The cushion blocks the route. Park it, advance carefully, then clear the heavy kettle.",
+      limit:4.5,
+      catWeight:1.5,
+      catStep:2,
+      par:11,
+      narrow:true,
+      objects:[
+        { id:"cushion", name:"CUSHION 1×", type:"cushion", weight:1, slot:4, movable:true, allowed:[1,2,3,4], parking:[2] },
+        { id:"kettle", name:"KETTLE 1.8×", type:"kettle", weight:1.8, slot:6, movable:true, allowed:[2,3,4,5,6], parking:[3] },
+        { id:"mug", name:"MUG !", type:"mug", weight:0.6, slot:8, movable:false, fragile:true }
+      ]
+    }
+  ];
+
+  var state = {
+    level:0,
+    objects:[],
+    catSlot:0,
+    actions:0,
+    objectMoves:0,
+    totalScore:0,
+    selected:null,
+    locked:true,
+    started:false,
+    fragileLost:0,
+    token:0,
+    drag:null,
+    muted:false
+  };
+
+  var stage = document.getElementById("stage");
+  var assembly = document.getElementById("assembly");
+  var objectsLayer = document.getElementById("objectsLayer");
+  var slotsLayer = document.getElementById("slotsLayer");
+  var cat = document.getElementById("cat");
+  var statusEl = document.getElementById("status");
+  var needle = document.getElementById("needle");
+  var balanceTrack = document.getElementById("balanceTrack");
+  var overlay = document.getElementById("overlay");
+  var overlayTitle = document.getElementById("overlayTitle");
+  var overlayTag = document.getElementById("overlayTag");
+  var overlayText = document.getElementById("overlayText");
+  var overlayScore = document.getElementById("overlayScore");
+  var overlayButton = document.getElementById("overlayButton");
+  var overlayKeys = document.getElementById("overlayKeys");
+
+  var audioContext = null;
+
+  function slotPercent(slot) {
+    return 6 + slot * 11;
+  }
+
+  function copyObjects(source) {
+    return source.map(function (obj) {
+      var result = {};
+      var key;
+      for (key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          result[key] = Array.isArray(obj[key]) ? obj[key].slice() : obj[key];
+        }
+      }
+      return result;
+    });
+  }
+
+  function getLevel() {
+    return levels[state.level];
+  }
+
+  function getObject(id) {
+    var i;
+    for (i = 0; i < state.objects.length; i++) {
+      if (state.objects[i].id === id) {
+        return state.objects[i];
+      }
+    }
+    return null;
+  }
+
+  function isParkingSlot(obj, slot) {
+    return !!obj.parking && obj.parking.indexOf(slot) !== -1;
+  }
+
+  function isParked(obj) {
+    return isParkingSlot(obj, obj.slot);
+  }
+
+  function shapeHTML(type) {
+    if (type === "mug") {
+      return '<span class="art mugArt"><i class="cup"></i><i class="handle"></i></span>';
+    }
+    if (type === "plant") {
+      return '<span class="art plantArt"><i class="leaf a"></i><i class="leaf b"></i><i class="leaf c"></i><i class="pot"></i></span>';
+    }
+    if (type === "box") {
+      return '<span class="art boxArt"></span>';
+    }
+    if (type === "kettle") {
+      return '<span class="art kettleArt"><i class="handle"></i><i class="body"></i><i class="spout"></i></span>';
+    }
+    if (type === "cushion") {
+      return '<span class="art cushionArt"></span>';
+    }
+    return '<span class="art bookArt"><i></i></span>';
+  }
+
+  function buildSlots() {
+    var i;
+    var parkingSlots = {};
+
+    slotsLayer.innerHTML = "";
+
+    for (i = 0; i <= 8; i++) {
+      var slot = document.createElement("span");
+      slot.className = "slot pathSlot";
+      slot.setAttribute("data-slot", String(i));
+      slot.style.left = slotPercent(i) + "%";
+      slotsLayer.appendChild(slot);
+    }
+
+    state.objects.forEach(function (obj) {
+      if (obj.parking) {
+        obj.parking.forEach(function (number) {
+          parkingSlots[number] = true;
+        });
+      }
+    });
+
+    for (i = 0; i <= 8; i++) {
+      if (parkingSlots[i]) {
+        var parkingSpot = document.createElement("span");
+        parkingSpot.className = "slot parkingSpot";
+        parkingSpot.setAttribute("data-parking-slot", String(i));
+        parkingSpot.style.left = slotPercent(i) + "%";
+        slotsLayer.appendChild(parkingSpot);
+      }
+    }
+  }
+
+  function buildObjects() {
+    objectsLayer.innerHTML = "";
+
+    state.objects.forEach(function (obj) {
+      var element;
+      var parkingText = obj.parking ? " Park it on the green rear ledge." : "";
+
+      if (obj.movable) {
+        element = document.createElement("button");
+        element.type = "button";
+        element.setAttribute("aria-label", obj.name + ". Weight " + obj.weight + "." + parkingText + " Use left and right arrows or drag.");
+      } else {
+        element = document.createElement("div");
+        element.setAttribute("role", "img");
+        element.setAttribute("aria-label", obj.name + ". Fixed object.");
+      }
+
+      element.className = "piece " + (obj.movable ? "movable " : "fixed ") + (obj.fragile ? "fragile " : "");
+      element.setAttribute("data-id", obj.id);
+      element.innerHTML = shapeHTML(obj.type) + '<span class="objectName">' + obj.name + '</span>';
+      objectsLayer.appendChild(element);
+
+      if (obj.movable) {
+        addPieceControls(element, obj.id);
+      }
+    });
+  }
+
+  function addPieceControls(element, id) {
+    element.addEventListener("focus", function () {
+      selectObject(id, false);
+    });
+
+    element.addEventListener("click", function (event) {
+      event.preventDefault();
+    });
+
+    element.addEventListener("pointerdown", function (event) {
+      if (!state.started || state.locked) {
+        return;
+      }
+
+      event.preventDefault();
+      selectObject(id, false);
+      element.focus();
+
+      state.drag = {
+        id:id,
+        startX:event.clientX,
+        lastX:event.clientX,
+        element:element
+      };
+
+      element.classList.add("dragging");
+
+      try {
+        element.setPointerCapture(event.pointerId);
+      } catch (error) {
+        state.drag = state.drag;
+      }
+    });
+
+    element.addEventListener("pointermove", function (event) {
+      if (!state.drag || state.drag.id !== id) {
+        return;
+      }
+
+      state.drag.lastX = event.clientX;
+      var distance = Math.max(-25, Math.min(25, event.clientX - state.drag.startX));
+      element.style.marginLeft = distance + "px";
+    });
+
+    element.addEventListener("pointerup", function (event) {
+      if (!state.drag || state.drag.id !== id) {
+        return;
+      }
+
+      var distance = event.clientX - state.drag.startX;
+      element.classList.remove("dragging");
+      element.style.marginLeft = "";
+      state.drag = null;
+
+      if (Math.abs(distance) >= 13) {
+        moveObject(id, distance < 0 ? -1 : 1);
+      } else {
+        setStatus(getObject(id).name + " selected. Move it toward its glowing rear parking spot.");
+      }
+    });
+
+    element.addEventListener("pointercancel", function () {
+      element.classList.remove("dragging");
+      element.style.marginLeft = "";
+      state.drag = null;
+    });
+  }
+
+  function loadLevel(index) {
+    state.token += 1;
+    state.level = index;
+    state.objects = copyObjects(levels[index].objects);
+    state.catSlot = 0;
+    state.actions = 0;
+    state.objectMoves = 0;
+    state.selected = null;
+    state.fragileLost = 0;
+    state.locked = false;
+    state.drag = null;
+
+    stage.className = levels[index].narrow ? "narrow" : "";
+    assembly.className = "shelfAssembly";
+    document.getElementById("levelName").textContent = levels[index].name;
+    document.getElementById("levelHint").textContent = levels[index].hint;
+
+    buildSlots();
+    buildObjects();
+    render();
+    setStatus("Front-row objects block the cat. Move them onto green rear parking spots.");
+  }
+
+  function calculateTorque() {
+    var level = getLevel();
+    var torque = level.catWeight * (state.catSlot - 4);
+
+    state.objects.forEach(function (obj) {
+      torque += obj.weight * (obj.slot - 4);
+    });
+
+    return torque;
+  }
+
+  function fragileTotal() {
+    var count = 0;
+
+    state.objects.forEach(function (obj) {
+      if (obj.fragile) {
+        count += 1;
+      }
+    });
+
+    return count;
+  }
+
+  function renderHUD() {
+    document.getElementById("levelStat").textContent = (state.level + 1) + " / " + levels.length;
+    document.getElementById("scoreStat").textContent = String(state.totalScore);
+    document.getElementById("moveStat").textContent = String(state.actions);
+    document.getElementById("fragileStat").textContent =
+      String(Math.max(0, fragileTotal() - state.fragileLost)) + " / " + String(fragileTotal());
+  }
+
+  function render() {
+    var level = getLevel();
+    var torque = calculateTorque();
+    var ratio = torque / level.limit;
+    var clampedRatio = Math.max(-1.15, Math.min(1.15, ratio));
+    var needlePosition = 50 + clampedRatio * 39;
+
+    assembly.style.transform = "rotate(" + (clampedRatio * 6.8) + "deg)";
+    needle.style.left = needlePosition + "%";
+    balanceTrack.setAttribute("aria-valuenow", String(Math.round(clampedRatio * 100)));
+
+    stage.classList.remove("warning");
+    stage.classList.remove("danger");
+    stage.classList.remove("near");
+
+    if (Math.abs(ratio) > 1) {
+      stage.classList.add("danger");
+    } else if (Math.abs(ratio) >= 0.75) {
+      stage.classList.add("warning");
+      stage.classList.add("near");
+    }
+
+    state.objects.forEach(function (obj) {
+      var element = objectsLayer.querySelector('[data-id="' + obj.id + '"]');
+
+      if (element) {
+        var parked = isParked(obj);
+        element.style.left = slotPercent(obj.slot) + "%";
+        element.classList.toggle("selected", state.selected === obj.id);
+        element.classList.toggle("parked", parked);
+
+        if (obj.movable) {
+          element.setAttribute(
+            "aria-label",
+            obj.name + ". Weight " + obj.weight + ". " +
+            (parked ? "Parked safely on the rear ledge." : "On the front row and blocking the cat at slot " + obj.slot + ".") +
+            " Use left and right arrows or drag."
+          );
+        }
+      }
+    });
+
+    cat.style.left = slotPercent(state.catSlot) + "%";
+
+    var selectedObject = state.selected ? getObject(state.selected) : null;
+    var occupied = {};
+
+    state.objects.forEach(function (obj) {
+      if (!isParked(obj)) {
+        occupied[obj.slot] = true;
+      }
+    });
+
+    var pathSlots = slotsLayer.querySelectorAll(".pathSlot");
+    Array.prototype.forEach.call(pathSlots, function (slotElement) {
+      var number = Number(slotElement.getAttribute("data-slot"));
+      slotElement.classList.toggle("occupied", !!occupied[number]);
+      slotElement.classList.toggle(
+        "allowed",
+        !!selectedObject &&
+        selectedObject.movable &&
+        selectedObject.allowed.indexOf(number) !== -1
+      );
+    });
+
+    var parkingSpots = slotsLayer.querySelectorAll(".parkingSpot");
+    Array.prototype.forEach.call(parkingSpots, function (spot) {
+      var number = Number(spot.getAttribute("data-parking-slot"));
+      spot.classList.toggle(
+        "selectedTarget",
+        !!selectedObject &&
+        isParkingSlot(selectedObject, number)
+      );
+    });
+
+    renderHUD();
+  }
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  function selectObject(id, announce) {
+    var obj = getObject(id);
+
+    if (!obj || !obj.movable) {
+      return;
+    }
+
+    state.selected = id;
+    render();
+
+    if (announce) {
+      setStatus(obj.name + " selected.");
+    }
+  }
+
+  function isOccupied(slot, exceptId) {
+    var i;
+
+    for (i = 0; i < state.objects.length; i++) {
+      if (state.objects[i].id !== exceptId && state.objects[i].slot === slot) {
+        return state.objects[i];
+      }
+    }
+
+    return null;
+  }
+
+  function findPathBlocker(fromSlot, toSlot) {
+    var i;
+    var nearest = null;
+
+    for (i = 0; i < state.objects.length; i++) {
+      var obj = state.objects[i];
+
+      if (!isParked(obj) && obj.slot > fromSlot && obj.slot <= toSlot) {
+        if (!nearest || obj.slot < nearest.slot) {
+          nearest = obj;
+        }
+      }
+    }
+
+    return nearest;
+  }
+
+  function balanceDescription() {
+    var ratio = calculateTorque() / getLevel().limit;
+    var percent = Math.round(Math.abs(ratio) * 100);
+
+    if (percent < 12) {
+      return "The shelf is nearly level.";
+    }
+
+    return "The shelf leans " + (ratio < 0 ? "left" : "right") + " at " + percent + "% of the red zone.";
+  }
+
+  function pulseKnock() {
+    assembly.classList.remove("knock");
+    void assembly.offsetWidth;
+    assembly.classList.add("knock");
+
+    window.setTimeout(function () {
+      assembly.classList.remove("knock");
+    }, 270);
+  }
+
+  function moveObject(id, direction) {
+    if (!state.started || state.locked) {
+      return;
+    }
+
+    var obj = getObject(id);
+
+    if (!obj || !obj.movable) {
+      return;
+    }
+
+    var candidate = obj.slot + direction;
+
+    if (obj.allowed.indexOf(candidate) === -1) {
+      setStatus("No ledge there. Try the other direction.");
+      sound("blocked");
+      return;
+    }
+
+    var blocker = isOccupied(candidate, id);
+
+    if (blocker) {
+      setStatus(blocker.name + " is already using that ledge.");
+      sound("blocked");
+      return;
+    }
+
+    if (candidate === state.catSlot && !isParkingSlot(obj, candidate)) {
+      setStatus("The cat is standing there. Use the rear parking spot or move the other way.");
+      sound("blocked");
+      return;
+    }
+
+    obj.slot = candidate;
+    state.actions += 1;
+    state.objectMoves += 1;
+    state.selected = id;
+    render();
+
+    if (Math.abs(calculateTorque()) > getLevel().limit) {
+      triggerFailure();
+      return;
+    }
+
+    pulseKnock();
+    sound("knock");
+
+    if (isParked(obj)) {
+      setStatus(obj.name + " is parked on the rear ledge. The cat can pass in front. " + balanceDescription());
+    } else if (stage.classList.contains("near")) {
+      setStatus("Near miss! " + obj.name + " is still on the front row. " + balanceDescription());
+    } else {
+      setStatus("Soft wooden knock. Move it to the glowing rear spot. " + balanceDescription());
+    }
+  }
+
+  function stepCat() {
+    if (!state.started || state.locked) {
+      return;
+    }
+
+    var level = getLevel();
+    var nextSlot = Math.min(CAT_GOAL, state.catSlot + level.catStep);
+    var blocker = findPathBlocker(state.catSlot, nextSlot);
+
+    if (blocker) {
+      if (blocker.movable) {
+        state.selected = blocker.id;
+        render();
+        setStatus(
+          blocker.name + " blocks the cat at slot " + blocker.slot +
+          ". Move it onto its glowing rear parking spot first."
+        );
+      } else {
+        setStatus(blocker.name + " blocks the route. The cat cannot pass through it.");
+      }
+
+      pulseKnock();
+      sound("blocked");
+      return;
+    }
+
+    state.catSlot = nextSlot;
+    state.actions += 1;
+    render();
+
+    if (Math.abs(calculateTorque()) > level.limit) {
+      triggerFailure();
+      return;
+    }
+
+    sound("step");
+    cat.classList.remove("proud");
+    void cat.offsetWidth;
+
+    if (!stage.classList.contains("near")) {
+      cat.classList.add("proud");
+
+      window.setTimeout(function () {
+        cat.classList.remove("proud");
+      }, 420);
+
+      setStatus("The route is clear and the cat steps forward. " + balanceDescription());
+    } else {
+      setStatus("The cat makes it through, but the mug is wobbling—rebalance before another step.");
+    }
+
+    if (state.catSlot >= CAT_GOAL) {
+      completeLevel();
+    }
+  }
+
+  function chooseFallingObject(direction) {
+    var chosen = state.objects[0];
+
+    state.objects.forEach(function (obj) {
+      if (direction > 0 && obj.slot > chosen.slot) {
+        chosen = obj;
+      }
+
+      if (direction < 0 && obj.slot < chosen.slot) {
+        chosen = obj;
+      }
+    });
+
+    return chosen;
+  }
+
+  function triggerFailure() {
+    state.locked = true;
+
+    var direction = calculateTorque() >= 0 ? 1 : -1;
+    var falling = chooseFallingObject(direction);
+    var element = objectsLayer.querySelector('[data-id="' + falling.id + '"]');
+    var token = state.token;
+
+    stage.classList.add("danger");
+    stage.classList.add("failing");
+    setStatus("RED TILT! " + falling.name + " slides, falls, and the shelf must be reset.");
+    sound("warning");
+
+    window.setTimeout(function () {
+      if (token !== state.token) {
+        return;
+      }
+
+      if (element) {
+        element.classList.remove("parked");
+        element.classList.add(direction > 0 ? "drop-right" : "drop-left");
+      }
+
+      if (falling.fragile) {
+        state.fragileLost = 1;
+        renderHUD();
+      }
+
+      sound("clatter");
+    }, 220);
+
+    window.setTimeout(function () {
+      if (token === state.token) {
+        loadLevel(state.level);
+        setStatus("Shelf reset. Clear the route without pushing the needle into red.");
+      }
+    }, 1500);
+  }
+
+  function completeLevel() {
+    state.locked = true;
+
+    var level = getLevel();
+    var fragileBonus = fragileTotal() * 250;
+    var points = Math.max(300, 1800 + state.level * 250 - state.actions * 55 + fragileBonus);
+    var efficiency = state.actions <= level.par ? "Tidy rescue!" : "Safe, but there may be a shorter solution.";
+
+    state.totalScore += points;
+    renderHUD();
+    sound("win");
+
+    window.setTimeout(function () {
+      if (state.level < levels.length - 1) {
+        showOverlay(
+          "Shelf Saved!",
+          efficiency,
+          "The cat reached the safe end in <strong>" + state.actions + "</strong> actions.<br>" +
+          "Fragile bonus: <strong>+" + fragileBonus + "</strong>",
+          "+" + points + " points · Total " + state.totalScore,
+          "Next Shelf",
+          function () {
+            hideOverlay();
+            loadLevel(state.level + 1);
+            cat.focus();
+          },
+          "Objects on the front row block every slot the cat crosses."
+        );
+      } else {
+        showOverlay(
+          "Mug Saved!",
+          "Every shelf is still standing.",
+          "The stubborn cat made it across all four shelves, every route was cleared, and every fragile mug survived.",
+          "Final score: " + state.totalScore,
+          "Play Again",
+          function () {
+            state.totalScore = 0;
+            hideOverlay();
+            loadLevel(0);
+            cat.focus();
+          },
+          "A tidy rescue scores best. Can you improve it?"
+        );
+      }
+    }, 450);
+  }
+
+  function restartLevel() {
+    if (!state.started || state.locked) {
+      return;
+    }
+
+    loadLevel(state.level);
+    setStatus("Level restarted. Park front-row blockers before the cat reaches them.");
+    sound("knock");
+  }
+
+  function moveSelected(direction) {
+    if (!state.selected) {
+      var first = null;
+
+      state.objects.some(function (obj) {
+        if (obj.movable && !isParked(obj)) {
+          first = obj;
+          return true;
+        }
+        return false;
+      });
+
+      if (!first) {
+        state.objects.some(function (obj) {
+          if (obj.movable) {
+            first = obj;
+            return true;
+          }
+          return false;
+        });
+      }
+
+      if (first) {
+        selectObject(first.id, false);
+        moveObject(first.id, direction);
+      }
+
+      return;
+    }
+
+    moveObject(state.selected, direction);
+  }
+
+  function showOverlay(title, tag, text, score, buttonText, action, keys) {
+    overlayTitle.textContent = title;
+    overlayTag.textContent = tag;
+    overlayText.innerHTML = text;
+    overlayScore.textContent = score;
+    overlayScore.style.display = score ? "block" : "none";
+    overlayButton.textContent = buttonText;
+    overlayKeys.textContent = keys || "";
+    overlay.classList.remove("hidden");
+    state.locked = true;
+    overlayButton.onclick = action;
+
+    window.setTimeout(function () {
+      overlayButton.focus();
+    }, 30);
+  }
+
+  function hideOverlay() {
+    overlay.classList.add("hidden");
+    state.locked = false;
+  }
+
+  function ensureAudio() {
+    if (audioContext) {
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+      return audioContext;
+    }
+
+    var AudioClass = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioClass) {
+      return null;
+    }
+
+    try {
+      audioContext = new AudioClass();
+    } catch (error) {
+      audioContext = null;
+    }
+
+    return audioContext;
+  }
+
+  function tone(frequency, duration, type, volume, delay) {
+    if (state.muted) {
+      return;
+    }
+
+    var context = ensureAudio();
+
+    if (!context) {
+      return;
+    }
+
+    var oscillator = context.createOscillator();
+    var gain = context.createGain();
+    var start = context.currentTime + (delay || 0);
+
+    oscillator.type = type || "sine";
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(Math.max(0.0001, volume), start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration);
+  }
+
+  function clatterNoise() {
+    if (state.muted) {
+      return;
+    }
+
+    var context = ensureAudio();
+
+    if (!context) {
+      return;
+    }
+
+    var length = Math.floor(context.sampleRate * 0.28);
+    var buffer = context.createBuffer(1, length, context.sampleRate);
+    var data = buffer.getChannelData(0);
+    var i;
+
+    for (i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    }
+
+    var source = context.createBufferSource();
+    var gain = context.createGain();
+    var filter = context.createBiquadFilter();
+
+    filter.type = "lowpass";
+    filter.frequency.value = 900;
+    gain.gain.value = 0.24;
+    source.buffer = buffer;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(context.destination);
+    source.start();
+  }
+
+  function sound(kind) {
+    if (kind === "knock") {
+      tone(135, 0.09, "triangle", 0.07, 0);
+      tone(87, 0.13, "sine", 0.045, 0.025);
+    } else if (kind === "step") {
+      tone(220, 0.06, "triangle", 0.045, 0);
+      tone(275, 0.09, "triangle", 0.04, 0.07);
+    } else if (kind === "warning") {
+      tone(105, 0.28, "sawtooth", 0.055, 0);
+    } else if (kind === "blocked") {
+      tone(92, 0.08, "square", 0.025, 0);
+    } else if (kind === "clatter") {
+      clatterNoise();
+      tone(66, 0.32, "triangle", 0.09, 0);
+    } else if (kind === "win") {
+      tone(330, 0.16, "triangle", 0.05, 0);
+      tone(440, 0.18, "triangle", 0.05, 0.13);
+      tone(550, 0.28, "triangle", 0.05, 0.27);
+    }
+  }
+
+  cat.addEventListener("click", function () {
+    stepCat();
+  });
+
+  document.getElementById("leftButton").addEventListener("click", function () {
+    moveSelected(-1);
+  });
+
+  document.getElementById("rightButton").addEventListener("click", function () {
+    moveSelected(1);
+  });
+
+  document.getElementById("stepButton").addEventListener("click", function () {
+    stepCat();
+  });
+
+  document.getElementById("restartButton").addEventListener("click", function () {
+    restartLevel();
+  });
+
+  document.getElementById("soundButton").addEventListener("click", function () {
+    state.muted = !state.muted;
+    this.textContent = state.muted ? "🔇" : "🔊";
+    this.setAttribute("aria-label", state.muted ? "Unmute sound" : "Mute sound");
+
+    if (!state.muted) {
+      sound("knock");
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var active = document.activeElement;
+
+    if ((event.key === "r" || event.key === "R") && overlay.classList.contains("hidden")) {
+      event.preventDefault();
+      restartLevel();
+      return;
+    }
+
+    if ((event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+        active && active.classList.contains("movable")) {
+      event.preventDefault();
+      moveObject(active.getAttribute("data-id"), event.key === "ArrowLeft" ? -1 : 1);
+      return;
+    }
+
+    if ((event.code === "Space" || event.key === " ") &&
+        overlay.classList.contains("hidden") &&
+        (!active || !active.classList.contains("uiButton"))) {
+      event.preventDefault();
+      stepCat();
+    }
+  });
+
+  loadLevel(0);
+  state.started = false;
+
+  showOverlay(
+    "Mind the Mug",
+    "Get the cat across. Keep the mug alive.",
+    "Objects on the front row really block the cat: each step checks every slot it crosses. Move outlined blockers onto their <strong>green rear parking spots</strong>, keep the balance needle out of red, then let the cat advance.",
+    "",
+    "Start Balancing",
+    function () {
+      state.started = true;
+      hideOverlay();
+      setStatus("Move the book left onto its glowing rear spot, then step the cat.");
+      sound("knock");
+      cat.focus();
+    },
+    "Touch: drag objects and tap STEP CAT. Keyboard: Tab, arrows, Space, R."
+  );
+}());
+</script>
+</body>
+</html>

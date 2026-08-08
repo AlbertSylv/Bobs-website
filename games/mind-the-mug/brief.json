@@ -1,0 +1,11 @@
+{
+  "title": "Mind the Mug",
+  "slug": "mind-the-mug",
+  "tagline": "Get the cat across. Keep the mug alive.",
+  "concept": "Balance the things on a shelf so a stubborn cat can walk across without tipping anything off.",
+  "core_loop": "Move one object left or right, watch the shelf tilt, then let the cat take a step; each move changes the balance, so finding a tidy rescue in a few moves stays satisfying.",
+  "mechanics": "Drag objects and tap the cat on touch screens, or use Tab, arrow keys, and Space on a keyboard.; Reach the far end of the shelf to win; if the shelf hits the red tilt zone, an object falls and the level restarts.; Score improves when you finish with fewer moves and every fragile object still on the shelf.",
+  "feedback": "Safe moves level the shelf with a soft wooden knock and make the cat step forward proudly. Bad moves tilt the whole scene, turn the balance guide red, and send loose objects sliding before one falls with a blunt clatter. Near-misses leave the mug wobbling at the edge while the cat freezes and stares at you.",
+  "difficulty": "The first shelves have one movable object and wide safe zones. Later shelves add objects with different weights, narrow ledges, and cats that take longer steps, but nothing moves until the player acts.",
+  "mobile": true
+}

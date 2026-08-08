@@ -334,6 +334,15 @@
       "path": "games/earth-hold-still/",
       "mobile": true,
       "thumbnail": "games/earth-hold-still/cover.webp"
+    },
+    {
+      "slug": "mind-the-mug",
+      "title": "Mind the Mug",
+      "tagline": "Get the cat across. Keep the mug alive.",
+      "date": "2026-08-08",
+      "path": "games/mind-the-mug/",
+      "mobile": true,
+      "thumbnail": "games/mind-the-mug/cover.webp"
     }
   ]
 }
