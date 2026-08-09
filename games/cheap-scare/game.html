@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Cheap Scare</title>
+<style>
+  html, body { margin:0; height:100%; }
+  * { box-sizing:border-box; }
+
+  body {
+    overflow:hidden;
+    background:#100b18;
+    color:#fff7dd;
+    font-family:Impact, Haettenschweiler, "Arial Narrow Bold", system-ui, sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+  }
+
+  button { font:inherit; }
+
+  #game {
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(116,81,145,.25), transparent 38%),
+      linear-gradient(#24152d, #0e0915 72%);
+  }
+
+  header {
+    flex:0 0 auto;
+    min-height:76px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:8px 14px;
+    border-bottom:3px solid #09060d;
+    background:linear-gradient(180deg, #42234d, #25142d);
+    box-shadow:0 5px 18px rgba(0,0,0,.45);
+    z-index:4;
+  }
+
+  .brand {
+    min-width:190px;
+    line-height:.9;
+  }
+
+  .brand h1 {
+    margin:0;
+    color:#b8f45c;
+    font-size:clamp(26px, 4vw, 44px);
+    letter-spacing:2px;
+    text-shadow:3px 3px 0 #371645, 5px 5px 0 #09060c;
+    transform:rotate(-1deg);
+  }
+
+  .tagline {
+    margin-top:7px;
+    color:#e7d7b1;
+    font-family:system-ui, sans-serif;
+    font-size:clamp(9px, 1.4vw, 12px);
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  #hud {
+    min-width:0;
+    flex:1;
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:7px;
+  }
+
+  .counter {
+    min-width:67px;
+    padding:6px 8px;
+    border:2px solid #7a5a85;
+    border-radius:8px;
+    background:#17101d;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.035), 2px 3px 0 #09060c;
+    text-align:center;
+  }
+
+  .counter b {
+    display:block;
+    color:#ffdf64;
+    font-size:20px;
+    line-height:1;
+  }
+
+  .counter span {
+    display:block;
+    margin-top:3px;
+    color:#b9a9c0;
+    font-family:system-ui, sans-serif;
+    font-size:8px;
+    font-weight:900;
+    letter-spacing:.8px;
+  }
+
+  #status {
+    min-width:116px;
+    max-width:170px;
+    padding:8px 10px;
+    border-radius:7px;
+    background:#efe5c7;
+    color:#2a1531;
+    box-shadow:3px 3px 0 #08050b;
+    font-family:system-ui, sans-serif;
+    font-size:10px;
+    font-weight:900;
+    line-height:1.15;
+    text-align:center;
+    text-transform:uppercase;
+  }
+
+  #stage {
+    position:relative;
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
+
+  canvas {
+    display:block;
+    width:100%;
+    height:100%;
+    touch-action:none;
+  }
+
+  #help {
+    position:absolute;
+    top:7px;
+    left:50%;
+    z-index:5;
+    transform:translateX(-50%);
+    max-width:calc(100% - 350px);
+    padding:6px 11px;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;
+    background:rgba(12,8,17,.9);
+    color:#f3e9c8;
+    box-shadow:0 3px 12px rgba(0,0,0,.45);
+    font-family:system-ui, sans-serif;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.2;
+    text-align:center;
+    pointer-events:none;
+  }
+
+  .nowKey { color:#ff6375; }
+  .nextKey { color:#ffe075; }
+
+  #dpad {
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    z-index:7;
+    width:160px;
+    height:160px;
+    filter:drop-shadow(0 5px 5px rgba(0,0,0,.5));
+    touch-action:none;
+  }
+
+  .pad {
+    position:absolute;
+    width:52px;
+    height:52px;
+    min-width:52px;
+    min-height:52px;
+    margin:0;
+    padding:0;
+    border:2px solid #ad93b7;
+    border-radius:11px;
+    background:linear-gradient(#4c3657, #271c2e);
+    color:#fff4d2;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.14), 0 4px 0 #0b0710;
+    font-family:system-ui, sans-serif;
+    font-size:23px;
+    font-weight:900;
+    line-height:46px;
+    text-align:center;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .pad:active,
+  .pad.pressed {
+    transform:translateY(2px);
+    background:#65466f;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.08), 0 2px 0 #0b0710;
+  }
+
+  #up { left:54px; top:0; }
+  #left { left:0; top:54px; }
+  #right { right:0; top:54px; }
+  #down { left:54px; bottom:0; }
+
+  #center {
+    position:absolute;
+    left:59px;
+    top:59px;
+    width:42px;
+    height:42px;
+    border:2px solid #4d3856;
+    border-radius:50%;
+    background:#150f1a;
+    box-shadow:inset 0 0 9px #08050c;
+    pointer-events:none;
+  }
+
+  @media (max-width:760px) {
+    header {
+      min-height:67px;
+      gap:6px;
+      padding:6px 8px;
+    }
+
+    .brand { min-width:135px; }
+    .brand h1 { font-size:27px; }
+    .tagline {
+      max-width:145px;
+      margin-top:5px;
+      font-size:8px;
+    }
+
+    #hud { gap:3px; }
+
+    .counter {
+      min-width:49px;
+      padding:5px 3px;
+    }
+
+    .counter b { font-size:17px; }
+    .counter span {
+      font-size:6.5px;
+      letter-spacing:.35px;
+    }
+
+    #status { display:none; }
+
+    #help {
+      left:7px;
+      transform:none;
+      max-width:calc(100% - 180px);
+      border-radius:7px;
+      padding:5px 7px;
+      font-size:8.5px;
+      text-align:left;
+    }
+  }
+
+  /*
+    Short landscape layout: controls become a row, but never scale down.
+    Every directional button remains at least 48 by 48 CSS pixels.
+  */
+  @media (max-height:500px) {
+    header {
+      min-height:52px;
+      padding-top:4px;
+      padding-bottom:4px;
+    }
+
+    .brand { min-width:128px; }
+    .brand h1 { font-size:24px; }
+    .tagline { display:none; }
+
+    .counter {
+      min-width:47px;
+      padding:4px 3px;
+    }
+
+    .counter b { font-size:16px; }
+
+    #help {
+      top:3px;
+      left:5px;
+      max-width:calc(100% - 220px);
+      padding:4px 6px;
+      transform:none;
+      border-radius:6px;
+      font-size:8px;
+    }
+
+    #dpad {
+      right:5px;
+      bottom:5px;
+      width:auto;
+      height:50px;
+      display:flex;
+      align-items:flex-start;
+      gap:3px;
+      filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));
+    }
+
+    .pad {
+      position:static;
+      flex:0 0 48px;
+      width:48px;
+      height:48px;
+      min-width:48px;
+      min-height:48px;
+      border-radius:9px;
+      font-size:20px;
+      line-height:42px;
+    }
+
+    #left { order:1; }
+    #up { order:2; }
+    #down { order:3; }
+    #right { order:4; }
+    #center { display:none; }
+  }
+
+  @media (max-height:500px) and (max-width:220px) {
+    #dpad { gap:2px; }
+
+    .pad {
+      flex-basis:44px;
+      width:44px;
+      height:44px;
+      min-width:44px;
+      min-height:44px;
+      line-height:38px;
+    }
+
+    #help { display:none; }
+  }
+
+  @media (max-width:360px) and (min-height:501px) {
+    .brand { min-width:112px; }
+    .brand h1 { font-size:22px; }
+    .tagline { display:none; }
+    #help { max-width:calc(100% - 170px); }
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <header>
+    <div class="brand">
+      <h1>CHEAP SCARE</h1>
+      <div class="tagline">Get the monster to its mark without making actual cinema.</div>
+    </div>
+
+    <div id="hud" aria-label="Game score">
+      <div class="counter"><b id="scoreValue">0</b><span>SCENES</span></div>
+      <div class="counter"><b id="nerveValue">0</b><span>NERVE</span></div>
+      <div class="counter"><b id="takeValue">0</b><span>RETAKES</span></div>
+      <div id="status" aria-live="polite">Check NOW and NEXT</div>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="canvas" aria-label="Cheap Scare game board. Use arrow keys, WASD, the direction pad, or tap the board in the direction you want to move."></canvas>
+
+    <div id="help">
+      Arrow/WASD, D-pad, or tap the board in a direction. Avoid
+      <span class="nowKey">solid NOW</span> and
+      <span class="nextKey">dashed NEXT</span>; reach the taped X.
+    </div>
+
+    <div id="dpad" role="group" aria-label="Touch direction controls">
+      <button class="pad" id="up" type="button" aria-label="Move up">▲</button>
+      <button class="pad" id="left" type="button" aria-label="Move left">◀</button>
+      <div id="center" aria-hidden="true"></div>
+      <button class="pad" id="right" type="button" aria-label="Move right">▶</button>
+      <button class="pad" id="down" type="button" aria-label="Move down">▼</button>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var stage = document.getElementById("stage");
+  var scoreEl = document.getElementById("scoreValue");
+  var nerveEl = document.getElementById("nerveValue");
+  var takeEl = document.getElementById("takeValue");
+  var statusEl = document.getElementById("status");
+
+  var GRID_W = 9;
+  var GRID_H = 7;
+  var viewW = 1;
+  var viewH = 1;
+  var dpr = 1;
+  var cell = 40;
+  var boardX = 0;
+  var boardY = 0;
+  var shortLayout = false;
+
+  var score = 0;
+  var nerve = 0;
+  var retakes = 0;
+  var turn = 0;
+  var scene = null;
+  var solution = [];
+  var player = { x:0, y:0 };
+  var mode = "ready";
+  var locked = false;
+  var animation = null;
+  var message = "";
+  var messageUntil = 0;
+  var shakeUntil = 0;
+  var caughtAt = 0;
+  var successAt = 0;
+
+  var DIRS = {
+    U:{ x:0, y:-1, angle:-Math.PI / 2 },
+    D:{ x:0, y:1, angle:Math.PI / 2 },
+    L:{ x:-1, y:0, angle:Math.PI },
+    R:{ x:1, y:0, angle:0 }
+  };
+
+  function parseScene(name, rows, cameras, palette) {
+    var walls = [];
+    var start = { x:0, y:0 };
+    var goal = { x:8, y:0 };
+
+    for (var y = 0; y < rows.length; y++) {
+      for (var x = 0; x < rows[y].length; x++) {
+        var symbol = rows[y].charAt(x);
+        if (symbol === "#") walls.push({ x:x, y:y });
+        if (symbol === "S") start = { x:x, y:y };
+        if (symbol === "G") goal = { x:x, y:y };
+      }
+    }
+
+    return {
+      name:name,
+      rows:rows,
+      walls:walls,
+      start:start,
+      goal:goal,
+      cameras:cameras,
+      palette:palette
+    };
+  }
+
+  var templates = [
+    parseScene(
+      "Scene 1: The Very Obvious Mark",
+      [
+        ".........",
+        ".........",
+        ".....#...",
+        "..####...",
+        ".....#...",
+        "..S.G#...",
+        "........."
+      ],
+      [
+        { x:7, y:1, states:["L","L","D","D","R","R","U","U"], offset:0 }
+      ],
+      0
+    ),
+    parseScene(
+      "Scene 2: Pan Left, Eventually",
+      [
+        ".........",
+        ".........",
+        "..#...#..",
+        "..#...#..",
+        ".........",
+        ".S.....G.",
+        "........."
+      ],
+      [
+        { x:4, y:1, states:["D","D","R","R","U","U","L","L"], offset:0 }
+      ],
+      1
+    ),
+    parseScene(
+      "Scene 3: Two Cameras, No Budget",
+      [
+        ".......G.",
+        "..#...#..",
+        "..#.#....",
+        ".........",
+        ".#..#..#.",
+        ".#.....#.",
+        ".S......."
+      ],
+      [
+        { x:0, y:2, states:["R","R","D","D","L","L","U","U"], offset:0 },
+        { x:8, y:4, states:["L","L","U","U","R","R","D","D"], offset:2 }
+      ],
+      2
+    ),
+    parseScene(
+      "Scene 4: Crossing the Coverage",
+      [
+        "........G",
+        "...#.....",
+        "......#..",
+        ".#.......",
+        ".....#...",
+        "..#......",
+        "S........"
+      ],
+      [
+        { x:4, y:0, states:["D","D","R","R","U","U","L","L"], offset:0 },
+        { x:8, y:3, states:["L","L","U","U","R","R","D","D"], offset:2 }
+      ],
+      3
+    ),
+    parseScene(
+      "Scene 5: One-Take Nightmare",
+      [
+        "........G",
+        ".....#...",
+        "..#......",
+        ".......#.",
+        "....#....",
+        ".#.......",
+        "S........"
+      ],
+      [
+        { x:4, y:0, states:["D","R","R","U","L","L","D","D"], offset:0 },
+        { x:8, y:3, states:["L","U","U","R","D","D","L","L"], offset:1 },
+        { x:1, y:1, states:["R","D","D","L","U","U","R","R"], offset:3 }
+      ],
+      4
+    )
+  ];
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function key(x, y) {
+    return x + "," + y;
+  }
+
+  function wallLookup(s) {
+    var lookup = {};
+    for (var i = 0; i < s.walls.length; i++) {
+      lookup[key(s.walls[i].x, s.walls[i].y)] = true;
+    }
+    return lookup;
+  }
+
+  function cameraState(camera, atTurn) {
+    var index = ((atTurn + camera.offset) % camera.states.length + camera.states.length) % camera.states.length;
+    return {
+      x:camera.x,
+      y:camera.y,
+      dir:camera.states[index]
+    };
+  }
+
+  function cameraCells(s, camera, atTurn) {
+    var state = cameraState(camera, atTurn);
+    var direction = DIRS[state.dir];
+    var walls = wallLookup(s);
+    var cells = [];
+    var x = state.x + direction.x;
+    var y = state.y + direction.y;
+
+    while (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H) {
+      if (walls[key(x, y)]) break;
+      cells.push({ x:x, y:y });
+      x += direction.x;
+      y += direction.y;
+    }
+
+    return cells;
+  }
+
+  function dangerLookup(s, atTurn) {
+    var lookup = {};
+
+    for (var i = 0; i < s.cameras.length; i++) {
+      var cells = cameraCells(s, s.cameras[i], atTurn);
+      for (var j = 0; j < cells.length; j++) {
+        lookup[key(cells[j].x, cells[j].y)] = i;
+      }
+    }
+
+    return lookup;
+  }
+
+  function occupiedLookup(s) {
+    var lookup = {};
+    for (var i = 0; i < s.cameras.length; i++) {
+      lookup[key(s.cameras[i].x, s.cameras[i].y)] = i;
+    }
+    return lookup;
+  }
+
+  function gcd(a, b) {
+    while (b) {
+      var t = a % b;
+      a = b;
+      b = t;
+    }
+    return a;
+  }
+
+  function lcm(a, b) {
+    return a * b / gcd(a, b);
+  }
+
+  function scenePeriod(s) {
+    var period = 1;
+    for (var i = 0; i < s.cameras.length; i++) {
+      period = lcm(period, s.cameras[i].states.length);
+      if (period > 128) return 128;
+    }
+    return period;
+  }
+
+  function solveScene(s) {
+    var walls = wallLookup(s);
+    var occupied = occupiedLookup(s);
+    var period = scenePeriod(s);
+    var queue = [{ x:s.start.x, y:s.start.y, t:0, path:[] }];
+    var seen = {};
+    var moves = [
+      { x:0, y:-1, name:"U" },
+      { x:1, y:0, name:"R" },
+      { x:0, y:1, name:"D" },
+      { x:-1, y:0, name:"L" }
+    ];
+
+    if (dangerLookup(s, 0)[key(s.start.x, s.start.y)] !== undefined) return null;
+    if (occupied[key(s.start.x, s.start.y)] !== undefined) return null;
+
+    seen[key(s.start.x, s.start.y) + ",0"] = true;
+
+    while (queue.length) {
+      var node = queue.shift();
+      var dangerNow = dangerLookup(s, node.t);
+      var dangerNext = dangerLookup(s, node.t + 1);
+
+      for (var i = 0; i < moves.length; i++) {
+        var nx = node.x + moves[i].x;
+        var ny = node.y + moves[i].y;
+        var tileKey = key(nx, ny);
+
+        if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) continue;
+        if (walls[tileKey] || occupied[tileKey] !== undefined) continue;
+        if (dangerNow[tileKey] !== undefined || dangerNext[tileKey] !== undefined) continue;
+
+        var nextPath = node.path.concat([moves[i].name]);
+        if (nx === s.goal.x && ny === s.goal.y) return nextPath;
+
+        var seenKey = tileKey + "," + ((node.t + 1) % period);
+        if (!seen[seenKey] && nextPath.length < 160) {
+          seen[seenKey] = true;
+          queue.push({
+            x:nx,
+            y:ny,
+            t:node.t + 1,
+            path:nextPath
+          });
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function prepareScene() {
+    var templateIndex = score % templates.length;
+    var candidate = clone(templates[templateIndex]);
+    var found = null;
+    var difficultyCycle = Math.floor(score / templates.length);
+
+    for (var attempt = 0; attempt < 128; attempt++) {
+      for (var i = 0; i < candidate.cameras.length; i++) {
+        candidate.cameras[i].offset =
+          (attempt + i * 3 + difficultyCycle * 2) % candidate.cameras[i].states.length;
+      }
+
+      found = solveScene(candidate);
+      if (found) break;
+    }
+
+    while (!found && candidate.cameras.length > 0) {
+      candidate.cameras.pop();
+      found = solveScene(candidate);
+    }
+
+    scene = candidate;
+    solution = found || [];
+    player.x = scene.start.x;
+    player.y = scene.start.y;
+    turn = 0;
+    mode = "ready";
+    locked = false;
+    animation = null;
+    caughtAt = 0;
+    successAt = 0;
+
+    if (score === 0) {
+      flash("REHEARSAL: FOLLOW THE BLUE NUMBERS", 1700);
+      setStatus("Check NOW and NEXT");
+    } else {
+      flash(scene.name.toUpperCase(), 1200);
+      setStatus("Check NOW and NEXT");
+    }
+
+    updateHud();
+  }
+
+  function updateHud() {
+    scoreEl.textContent = String(score);
+    nerveEl.textContent = String(nerve);
+    takeEl.textContent = String(retakes);
+  }
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  function flash(text, duration) {
+    message = text;
+    messageUntil = performance.now() + duration;
+  }
+
+  function resize() {
+    var rect = stage.getBoundingClientRect();
+    viewW = Math.max(1, rect.width);
+    viewH = Math.max(1, rect.height);
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    shortLayout = viewH <= 500;
+
+    canvas.width = Math.max(1, Math.floor(viewW * dpr));
+    canvas.height = Math.max(1, Math.floor(viewH * dpr));
+    canvas.style.width = viewW + "px";
+    canvas.style.height = viewH + "px";
+
+    calculateBoard();
+  }
+
+  function calculateBoard() {
+    var topSpace = viewH < 150 ? 3 : 32;
+    var bottomSpace;
+    var rightSpace;
+
+    if (shortLayout) {
+      bottomSpace = viewH < 115 ? 3 : 59;
+      rightSpace = 0;
+    } else if (viewW < 620) {
+      bottomSpace = 174;
+      rightSpace = 0;
+    } else {
+      bottomSpace = 22;
+      rightSpace = 172;
+    }
+
+    var usableW = Math.max(20, viewW - rightSpace - 16);
+    var usableH = Math.max(20, viewH - topSpace - bottomSpace);
+
+    cell = Math.floor(Math.min(usableW / GRID_W, usableH / GRID_H, 76));
+    cell = Math.max(3, cell);
+
+    boardX = Math.floor(8 + (usableW - cell * GRID_W) / 2);
+    boardY = Math.floor(topSpace + (usableH - cell * GRID_H) / 2);
+  }
+
+  function isBlocked(x, y) {
+    if (x < 0 || x >= GRID_W || y < 0 || y >= GRID_H) return true;
+
+    for (var i = 0; i < scene.walls.length; i++) {
+      if (scene.walls[i].x === x && scene.walls[i].y === y) return true;
+    }
+
+    for (var j = 0; j < scene.cameras.length; j++) {
+      if (scene.cameras[j].x === x && scene.cameras[j].y === y) return true;
+    }
+
+    return false;
+  }
+
+  function findCatcher(atTurn, x, y) {
+    var danger = dangerLookup(scene, atTurn);
+    var result = danger[key(x, y)];
+    return result === undefined ? -1 : result;
+  }
+
+  function nearDanger(atTurn, x, y) {
+    var danger = dangerLookup(scene, atTurn);
+    var neighbors = [
+      key(x + 1, y),
+      key(x - 1, y),
+      key(x, y + 1),
+      key(x, y - 1)
+    ];
+
+    for (var i = 0; i < neighbors.length; i++) {
+      if (danger[neighbors[i]] !== undefined) return true;
+    }
+
+    return false;
+  }
+
+  function bump() {
+    shakeUntil = performance.now() + 170;
+    flash("PAINTED CARDBOARD!", 500);
+    setStatus("That way is blocked");
+  }
+
+  function tryMove(dx, dy) {
+    if (!scene || locked || mode !== "ready") return;
+
+    var nx = player.x + dx;
+    var ny = player.y + dy;
+
+    if (isBlocked(nx, ny)) {
+      bump();
+      return;
+    }
+
+    locked = true;
+    mode = "moving";
+    setStatus("The set takes its turn");
+
+    var oldX = player.x;
+    var oldY = player.y;
+    player.x = nx;
+    player.y = ny;
+
+    animation = {
+      fromX:oldX,
+      fromY:oldY,
+      toX:nx,
+      toY:ny,
+      started:performance.now(),
+      duration:145
+    };
+
+    var currentCatcher = findCatcher(turn, nx, ny);
+
+    setTimeout(function () {
+      if (mode !== "moving") return;
+
+      if (currentCatcher >= 0) {
+        triggerCaught(currentCatcher);
+        return;
+      }
+
+      turn += 1;
+
+      var nextCatcher = findCatcher(turn, player.x, player.y);
+      if (nextCatcher >= 0) {
+        triggerCaught(nextCatcher);
+        return;
+      }
+
+      if (nearDanger(turn, player.x, player.y)) {
+        nerve += 1;
+        updateHud();
+        flash("CLOSE SHAVE! +1 NERVE", 700);
+      }
+
+      if (player.x === scene.goal.x && player.y === scene.goal.y) {
+        triggerSuccess();
+        return;
+      }
+
+      mode = "ready";
+      locked = false;
+      setStatus("Check NOW and NEXT");
+    }, 175);
+  }
+
+  function triggerCaught(cameraIndex) {
+    if (mode === "caught" || mode === "success") return;
+
+    mode = "caught";
+    locked = true;
+    retakes += 1;
+    caughtAt = performance.now();
+    updateHud();
+    setStatus("CUT! Monster in shot");
+    flash("ACTUAL CINEMA DETECTED", 1050);
+
+    setTimeout(function () {
+      player.x = scene.start.x;
+      player.y = scene.start.y;
+      turn = 0;
+      animation = null;
+      caughtAt = 0;
+      mode = "ready";
+      locked = false;
+      setStatus("Retake: check the preview");
+      flash("QUICK RESET — TAKE " + (retakes + 1), 750);
+    }, 1250);
+  }
+
+  function triggerSuccess() {
+    if (mode === "success") return;
+
+    mode = "success";
+    locked = true;
+    successAt = performance.now();
+    score += 1;
+    updateHud();
+    setStatus("Scene in the can");
+    flash("CLAP! SCENE COMPLETE +1", 1200);
+
+    setTimeout(function () {
+      prepareScene();
+    }, 1400);
+  }
+
+  function roundedRect(x, y, width, height, radius) {
+    var r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  }
+
+  function tileCenter(x, y) {
+    return {
+      x:boardX + x * cell + cell / 2,
+      y:boardY + y * cell + cell / 2
+    };
+  }
+
+  function floorColor(x, y) {
+    var palettes = [
+      ["#68645c", "#747067"],
+      ["#5e685f", "#69736a"],
+      ["#665f6b", "#716976"],
+      ["#6b6258", "#776d62"],
+      ["#5d636b", "#686f77"]
+    ];
+    var palette = palettes[scene.palette % palettes.length];
+    return palette[(x + y) % 2];
+  }
+
+  function drawBackground(now) {
+    var gradient = ctx.createRadialGradient(
+      viewW * .5, viewH * .2, 5,
+      viewW * .5, viewH * .4, Math.max(viewW, viewH) * .75
+    );
+    gradient.addColorStop(0, "#3a2643");
+    gradient.addColorStop(.55, "#1b1223");
+    gradient.addColorStop(1, "#09070e");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, viewW, viewH);
+
+    ctx.strokeStyle = "rgba(255,218,124,.12)";
+    ctx.lineWidth = 2;
+
+    for (var i = 0; i < 5; i++) {
+      var offset = 18 + i * 35;
+
+      ctx.beginPath();
+      ctx.moveTo(offset, 0);
+      ctx.quadraticCurveTo(offset + 18, viewH / 2, offset - 5, viewH);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(viewW - offset, 0);
+      ctx.quadraticCurveTo(viewW - offset - 18, viewH / 2, viewW - offset + 5, viewH);
+      ctx.stroke();
+    }
+
+    var shake = now < shakeUntil ? Math.sin(now * .15) * 4 : 0;
+
+    ctx.save();
+    ctx.translate(shake, 0);
+    ctx.fillStyle = "rgba(0,0,0,.58)";
+    roundedRect(boardX - 8, boardY - 8, cell * GRID_W + 16, cell * GRID_H + 16, 10);
+    ctx.fill();
+
+    ctx.fillStyle = "#382c35";
+    roundedRect(boardX - 4, boardY - 4, cell * GRID_W + 8, cell * GRID_H + 8, 7);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFloor() {
+    for (var y = 0; y < GRID_H; y++) {
+      for (var x = 0; x < GRID_W; x++) {
+        var px = boardX + x * cell;
+        var py = boardY + y * cell;
+
+        ctx.fillStyle = floorColor(x, y);
+        ctx.fillRect(px, py, cell, cell);
+
+        ctx.strokeStyle = "rgba(24,18,24,.28)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + .5, py + .5, Math.max(0, cell - 1), Math.max(0, cell - 1));
+      }
+    }
+  }
+
+  function drawBeamCell(tile, next) {
+    var x = boardX + tile.x * cell;
+    var y = boardY + tile.y * cell;
+    var inset = Math.max(1, cell * .06);
+
+    if (next) {
+      ctx.fillStyle = "rgba(255,225,103,.10)";
+      ctx.fillRect(x + inset, y + inset, cell - inset * 2, cell - inset * 2);
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,232,132,.92)";
+      ctx.lineWidth = Math.max(1.5, cell * .055);
+      ctx.setLineDash([Math.max(3, cell * .16), Math.max(2, cell * .11)]);
+      ctx.strokeRect(
+        x + inset * 1.4,
+        y + inset * 1.4,
+        Math.max(0, cell - inset * 2.8),
+        Math.max(0, cell - inset * 2.8)
+      );
+      ctx.restore();
+    } else {
+      var gradient = ctx.createLinearGradient(x, y, x + cell, y + cell);
+      gradient.addColorStop(0, "rgba(255,55,87,.28)");
+      gradient.addColorStop(1, "rgba(255,143,65,.42)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x + 1, y + 1, Math.max(0, cell - 2), Math.max(0, cell - 2));
+
+      ctx.strokeStyle = "rgba(255,83,100,.8)";
+      ctx.lineWidth = Math.max(1, cell * .045);
+      ctx.strokeRect(x + 2, y + 2, Math.max(0, cell - 4), Math.max(0, cell - 4));
+    }
+  }
+
+  function drawGazes() {
+    var i;
+    var j;
+    var cells;
+
+    for (i = 0; i < scene.cameras.length; i++) {
+      cells = cameraCells(scene, scene.cameras[i], turn + 1);
+      for (j = 0; j < cells.length; j++) drawBeamCell(cells[j], true);
+    }
+
+    for (i = 0; i < scene.cameras.length; i++) {
+      cells = cameraCells(scene, scene.cameras[i], turn);
+      for (j = 0; j < cells.length; j++) drawBeamCell(cells[j], false);
+    }
+  }
+
+  function drawGoal() {
+    var x = boardX + scene.goal.x * cell;
+    var y = boardY + scene.goal.y * cell;
+    var padding = cell * .2;
+
+    ctx.save();
+    ctx.translate(x + cell / 2, y + cell / 2);
+    ctx.rotate(-.07);
+    ctx.strokeStyle = "#f2dfaa";
+    ctx.lineWidth = Math.max(2, cell * .085);
+    ctx.lineCap = "square";
+    ctx.beginPath();
+    ctx.moveTo(-cell / 2 + padding, -cell / 2 + padding);
+    ctx.lineTo(cell / 2 - padding, cell / 2 - padding);
+    ctx.moveTo(cell / 2 - padding, -cell / 2 + padding);
+    ctx.lineTo(-cell / 2 + padding, cell / 2 - padding);
+    ctx.stroke();
+    ctx.restore();
+
+    if (cell >= 24) {
+      ctx.fillStyle = "#fff1b8";
+      ctx.font = "900 " + Math.max(7, cell * .14) + "px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("MARK", x + cell / 2, y + cell - 3);
+    }
+  }
+
+  function drawWall(wall) {
+    var x = boardX + wall.x * cell;
+    var y = boardY + wall.y * cell;
+    var variant = (wall.x * 7 + wall.y * 11 + scene.palette) % 3;
+
+    ctx.fillStyle = "rgba(0,0,0,.34)";
+    ctx.fillRect(x + cell * .12, y + cell * .76, cell * .76, cell * .13);
+
+    if (variant === 0) {
+      ctx.fillStyle = "#3a3d40";
+      ctx.beginPath();
+      ctx.moveTo(x + cell * .2, y + cell * .84);
+      ctx.lineTo(x + cell * .26, y + cell * .31);
+      ctx.quadraticCurveTo(x + cell * .5, y + cell * .08, x + cell * .74, y + cell * .31);
+      ctx.lineTo(x + cell * .82, y + cell * .84);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#969087";
+      ctx.lineWidth = Math.max(1, cell * .04);
+      ctx.stroke();
+
+      if (cell >= 24) {
+        ctx.fillStyle = "#b5aea4";
+        ctx.font = "900 " + Math.max(6, cell * .15) + "px serif";
+        ctx.textAlign = "center";
+        ctx.fillText("RIP", x + cell * .5, y + cell * .55);
+      }
+    } else if (variant === 1) {
+      ctx.fillStyle = "#795034";
+      ctx.fillRect(x + cell * .14, y + cell * .17, cell * .72, cell * .68);
+      ctx.strokeStyle = "#c79760";
+      ctx.lineWidth = Math.max(1, cell * .045);
+      ctx.strokeRect(x + cell * .17, y + cell * .2, cell * .66, cell * .62);
+      ctx.beginPath();
+      ctx.moveTo(x + cell * .18, y + cell * .21);
+      ctx.lineTo(x + cell * .82, y + cell * .82);
+      ctx.moveTo(x + cell * .82, y + cell * .21);
+      ctx.lineTo(x + cell * .18, y + cell * .82);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "#315344";
+      ctx.beginPath();
+      ctx.moveTo(x + cell * .15, y + cell * .87);
+      ctx.lineTo(x + cell * .28, y + cell * .22);
+      ctx.lineTo(x + cell * .42, y + cell * .43);
+      ctx.lineTo(x + cell * .54, y + cell * .13);
+      ctx.lineTo(x + cell * .66, y + cell * .45);
+      ctx.lineTo(x + cell * .83, y + cell * .25);
+      ctx.lineTo(x + cell * .86, y + cell * .87);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#86a173";
+      ctx.lineWidth = Math.max(1, cell * .04);
+      ctx.stroke();
+    }
+  }
+
+  function drawDirectionArrow(cx, cy, direction, color) {
+    var vector = DIRS[direction];
+    var size = Math.max(2, cell * .16);
+    var x = cx + vector.x * cell * .3;
+    var y = cy + vector.y * cell * .3;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(vector.angle);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(-size * .55, -size * .58);
+    ctx.lineTo(-size * .55, size * .58);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawCamera(camera) {
+    var state = cameraState(camera, turn);
+    var next = cameraState(camera, turn + 1);
+    var center = tileCenter(state.x, state.y);
+    var radius = cell * .18;
+
+    ctx.strokeStyle = "#25202b";
+    ctx.lineWidth = Math.max(1.5, cell * .045);
+    ctx.beginPath();
+    ctx.moveTo(center.x, center.y + radius * .35);
+    ctx.lineTo(center.x - radius, center.y + cell * .34);
+    ctx.moveTo(center.x, center.y + radius * .35);
+    ctx.lineTo(center.x + radius, center.y + cell * .34);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(center.x, center.y - cell * .06);
+    ctx.rotate(DIRS[state.dir].angle);
+
+    ctx.fillStyle = "#1d2023";
+    roundedRect(-radius * 1.15, -radius * .72, radius * 2.1, radius * 1.44, 3);
+    ctx.fill();
+
+    ctx.fillStyle = "#4c5253";
+    ctx.fillRect(radius * .55, -radius * .45, radius * .8, radius * .9);
+
+    ctx.fillStyle = "#eb6371";
+    ctx.beginPath();
+    ctx.arc(-radius * .42, -radius * .83, Math.max(1.5, radius * .16), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    drawDirectionArrow(center.x, center.y, next.dir, "#ffe477");
+  }
+
+  function animatedPlayerPosition(now) {
+    if (!animation) return { x:player.x, y:player.y, bounce:0 };
+
+    var progress = Math.max(0, Math.min(1, (now - animation.started) / animation.duration));
+    var result = {
+      x:animation.fromX + (animation.toX - animation.fromX) * progress,
+      y:animation.fromY + (animation.toY - animation.fromY) * progress,
+      bounce:Math.sin(progress * Math.PI)
+    };
+
+    if (progress >= 1) animation = null;
+    return result;
+  }
+
+  function drawMonster(now) {
+    var position = animatedPlayerPosition(now);
+    var center = tileCenter(position.x, position.y);
+    var bounce = position.bounce;
+    var bodyW = cell * (.28 + bounce * .025);
+    var bodyH = cell * (.31 - bounce * .035);
+    var celebrating = mode === "success";
+
+    ctx.save();
+    ctx.translate(center.x, center.y + cell * .04);
+
+    ctx.fillStyle = "rgba(0,0,0,.34)";
+    ctx.beginPath();
+    ctx.ellipse(0, cell * .32, cell * .27, cell * .08, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#73b43d";
+    ctx.lineWidth = Math.max(2, cell * .07);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+
+    if (celebrating) {
+      ctx.moveTo(-bodyW * .7, 0);
+      ctx.lineTo(-bodyW * 1.35, -bodyH);
+      ctx.moveTo(bodyW * .7, 0);
+      ctx.lineTo(bodyW * 1.35, -bodyH);
+    } else {
+      ctx.moveTo(-bodyW * .75, 0);
+      ctx.lineTo(-bodyW * 1.18, bodyH * .48);
+      ctx.moveTo(bodyW * .75, 0);
+      ctx.lineTo(bodyW * 1.18, bodyH * .48);
+    }
+
+    ctx.stroke();
+
+    ctx.fillStyle = "#8bd34b";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, bodyW, bodyH, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#345d2d";
+    ctx.lineWidth = Math.max(1, cell * .04);
+    ctx.stroke();
+
+    ctx.fillStyle = "#8bd34b";
+    ctx.beginPath();
+    ctx.moveTo(-bodyW * .7, -bodyH * .72);
+    ctx.lineTo(-bodyW * .86, -bodyH * 1.36);
+    ctx.lineTo(-bodyW * .24, -bodyH * .9);
+    ctx.closePath();
+    ctx.moveTo(bodyW * .7, -bodyH * .72);
+    ctx.lineTo(bodyW * .86, -bodyH * 1.36);
+    ctx.lineTo(bodyW * .24, -bodyH * .9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#f7f5de";
+    ctx.beginPath();
+    ctx.arc(-bodyW * .38, -bodyH * .28, Math.max(1.5, cell * .095), 0, Math.PI * 2);
+    ctx.arc(bodyW * .38, -bodyH * .28, Math.max(1.5, cell * .095), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#211827";
+    ctx.beginPath();
+    ctx.arc(-bodyW * .36, -bodyH * .27, Math.max(1, cell * .036), 0, Math.PI * 2);
+    ctx.arc(bodyW * .4, -bodyH * .27, Math.max(1, cell * .036), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#31522a";
+    ctx.lineWidth = Math.max(1, cell * .025);
+    ctx.beginPath();
+
+    if (celebrating) {
+      ctx.arc(0, bodyH * .07, cell * .105, .1, Math.PI - .1);
+    } else if (mode === "caught") {
+      ctx.arc(0, bodyH * .32, cell * .1, Math.PI + .2, Math.PI * 2 - .2);
+    } else {
+      ctx.moveTo(-cell * .08, bodyH * .12);
+      ctx.quadraticCurveTo(0, bodyH * .2, cell * .08, bodyH * .12);
+    }
+
+    ctx.stroke();
+
+    ctx.strokeStyle = "#365b2d";
+    ctx.lineWidth = Math.max(2, cell * .06);
+    ctx.beginPath();
+    ctx.moveTo(-bodyW * .45, bodyH * .82);
+    ctx.lineTo(-bodyW * .5, bodyH * 1.14);
+    ctx.moveTo(bodyW * .45, bodyH * .82);
+    ctx.lineTo(bodyW * .5, bodyH * 1.14);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawTutorialPath() {
+    if (score !== 0 || turn !== 0 || solution.length < 1) return;
+
+    var x = scene.start.x;
+    var y = scene.start.y;
+    var count = Math.min(2, solution.length);
+
+    for (var i = 0; i < count; i++) {
+      var direction = DIRS[solution[i]];
+      x += direction.x;
+      y += direction.y;
+
+      var px = boardX + x * cell;
+      var py = boardY + y * cell;
+      var inset = Math.max(2, cell * .13);
+
+      ctx.fillStyle = "rgba(112,231,255,.17)";
+      ctx.fillRect(px + inset, py + inset, cell - inset * 2, cell - inset * 2);
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(144,243,255,.9)";
+      ctx.lineWidth = Math.max(1, cell * .04);
+      ctx.setLineDash([Math.max(2, cell * .12), Math.max(2, cell * .09)]);
+      ctx.strokeRect(px + inset, py + inset, cell - inset * 2, cell - inset * 2);
+      ctx.restore();
+
+      if (cell >= 16) {
+        ctx.fillStyle = "#c2f8ff";
+        ctx.font = "900 " + Math.max(8, cell * .24) + "px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(String(i + 1), px + cell / 2, py + cell * .62);
+      }
+    }
+  }
+
+  function drawTapHints() {
+    if (mode !== "ready" || cell < 10) return;
+
+    var center = tileCenter(player.x, player.y);
+    var options = [
+      { dx:0, dy:-1, angle:-Math.PI / 2 },
+      { dx:1, dy:0, angle:0 },
+      { dx:0, dy:1, angle:Math.PI / 2 },
+      { dx:-1, dy:0, angle:Math.PI }
+    ];
+
+    ctx.fillStyle = "rgba(185,247,255,.48)";
+
+    for (var i = 0; i < options.length; i++) {
+      var option = options[i];
+      var tx = player.x + option.dx;
+      var ty = player.y + option.dy;
+
+      if (isBlocked(tx, ty)) continue;
+
+      ctx.save();
+      ctx.translate(
+        center.x + option.dx * cell * .43,
+        center.y + option.dy * cell * .43
+      );
+      ctx.rotate(option.angle);
+      ctx.beginPath();
+      ctx.moveTo(cell * .1, 0);
+      ctx.lineTo(-cell * .07, -cell * .07);
+      ctx.lineTo(-cell * .07, cell * .07);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawLegend() {
+    if (cell < 12 || viewH < 95) return;
+
+    var width = Math.min(221, Math.max(150, cell * 4.1));
+    var height = 23;
+    var x = Math.max(6, boardX);
+    var y = Math.max(3, boardY - 28);
+
+    ctx.fillStyle = "rgba(10,7,14,.86)";
+    roundedRect(x, y, width, height, 6);
+    ctx.fill();
+
+    ctx.fillStyle = "#ff6375";
+    ctx.fillRect(x + 7, y + 7, 14, 9);
+
+    ctx.fillStyle = "#fff1d1";
+    ctx.font = "900 8px system-ui";
+    ctx.textAlign = "left";
+    ctx.fillText("NOW", x + 25, y + 15);
+
+    ctx.save();
+    ctx.strokeStyle = "#ffe477";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 2]);
+    ctx.strokeRect(x + 62, y + 7, 14, 9);
+    ctx.restore();
+
+    ctx.fillStyle = "#fff1d1";
+    ctx.fillText("NEXT AFTER YOUR MOVE", x + 81, y + 15);
+  }
+
+  function drawSceneLabel() {
+    var y = boardY + GRID_H * cell + 17;
+
+    if (cell < 13 || y > viewH - (shortLayout ? 57 : 8)) return;
+
+    ctx.fillStyle = "rgba(239,226,195,.92)";
+    ctx.font = "900 " + Math.max(8, Math.min(13, cell * .21)) + "px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(scene.name.toUpperCase(), boardX + GRID_W * cell / 2, y);
+  }
+
+  function drawMessage(now) {
+    if (!message || now > messageUntil || viewH < 45) return;
+
+    var fade = Math.min(1, (messageUntil - now) / 160);
+    var width = Math.min(viewW - 12, Math.max(150, message.length * 7.4));
+    var height = viewH < 100 ? 25 : 32;
+    var x = (viewW - width) / 2;
+    var y = Math.max(3, boardY + 6);
+
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "rgba(18,10,23,.94)";
+    roundedRect(x, y, width, height, 7);
+    ctx.fill();
+
+    ctx.strokeStyle = "#f4d863";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff2bd";
+    ctx.font = "900 " + Math.min(13, Math.max(8, cell * .21)) + "px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(message, viewW / 2, y + height / 2 + 1);
+    ctx.textBaseline = "alphabetic";
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCaughtOverlay(now) {
+    if (mode !== "caught" || !caughtAt) return;
+
+    var progress = Math.min(1, (now - caughtAt) / 180);
+    var center = tileCenter(player.x, player.y);
+
+    ctx.fillStyle = "rgba(5,3,8," + (progress * .64) + ")";
+    ctx.fillRect(0, 0, viewW, viewH);
+
+    var spotlight = ctx.createRadialGradient(
+      center.x, center.y, Math.max(1, cell * .05),
+      center.x, center.y, Math.max(8, cell * 1.4)
+    );
+    spotlight.addColorStop(0, "rgba(255,255,230,.95)");
+    spotlight.addColorStop(.42, "rgba(255,234,160,.44)");
+    spotlight.addColorStop(1, "rgba(255,220,100,0)");
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = spotlight;
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, Math.max(8, cell * 1.4), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = "#ffec78";
+    ctx.strokeStyle = "#381529";
+    ctx.lineWidth = 5;
+    ctx.font = "900 " + Math.min(32, Math.max(15, cell * .46)) + "px Impact, sans-serif";
+    ctx.textAlign = "center";
+
+    var textY = Math.max(25, boardY + cell * .7);
+    ctx.strokeText("YOU'RE IN THE SHOT!", viewW / 2, textY);
+    ctx.fillText("YOU'RE IN THE SHOT!", viewW / 2, textY);
+  }
+
+  function drawSuccess(now) {
+    if (mode !== "success" || !successAt) return;
+
+    var center = tileCenter(player.x, player.y);
+    var progress = Math.min(1, (now - successAt) / 240);
+    var width = Math.max(24, cell * 1.55);
+    var height = Math.max(12, cell * .63);
+    var x = center.x - width / 2;
+    var y = center.y - cell * 1.2 - Math.sin(progress * Math.PI) * cell * .18;
+
+    ctx.save();
+    ctx.translate(x + width / 2, y + height / 2);
+    ctx.rotate(-.08);
+    ctx.translate(-width / 2, -height / 2);
+
+    ctx.fillStyle = "#16151a";
+    ctx.fillRect(0, height * .21, width, height * .79);
+
+    ctx.strokeStyle = "#f1e9cf";
+    ctx.lineWidth = Math.max(1, cell * .035);
+    ctx.strokeRect(0, height * .21, width, height * .79);
+
+    ctx.fillStyle = "#f5ead1";
+    ctx.fillRect(0, 0, width, height * .23);
+
+    ctx.fillStyle = "#1c1a20";
+    for (var i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * width / 5, 0);
+      ctx.lineTo(i * width / 5 + width / 10, 0);
+      ctx.lineTo(i * width / 5 + width / 5, height * .23);
+      ctx.lineTo(i * width / 5 + width / 10, height * .23);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if (cell >= 15) {
+      ctx.fillStyle = "#fff4ce";
+      ctx.font = "900 " + Math.max(6, cell * .14) + "px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("CHEAP SCARE", width / 2, height * .72);
+    }
+
+    ctx.restore();
+  }
+
+  function draw(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, viewW, viewH);
+
+    if (!scene) {
+      requestAnimationFrame(draw);
+      return;
+    }
+
+    drawBackground(now);
+
+    ctx.save();
+
+    if (now < shakeUntil) {
+      ctx.translate(Math.sin(now * .16) * 4, 0);
+    }
+
+    drawFloor();
+    drawGazes();
+    drawTutorialPath();
+    drawGoal();
+
+    for (var i = 0; i < scene.walls.length; i++) {
+      drawWall(scene.walls[i]);
+    }
+
+    for (var j = 0; j < scene.cameras.length; j++) {
+      drawCamera(scene.cameras[j]);
+    }
+
+    drawTapHints();
+    drawMonster(now);
+    ctx.restore();
+
+    drawLegend();
+    drawSceneLabel();
+    drawMessage(now);
+    drawSuccess(now);
+    drawCaughtOverlay(now);
+
+    requestAnimationFrame(draw);
+  }
+
+  /*
+    Canvas touch input uses broad directional sectors around the monster.
+    A user does not need to hit a potentially tiny visual grid cell:
+    any board tap predominantly above, below, left, or right moves one step.
+  */
+  function handleCanvasDirection(event) {
+    if (!scene || locked || mode !== "ready") return;
+
+    var rect = canvas.getBoundingClientRect();
+    var px = event.clientX - rect.left;
+    var py = event.clientY - rect.top;
+
+    if (
+      px < boardX ||
+      px > boardX + GRID_W * cell ||
+      py < boardY ||
+      py > boardY + GRID_H * cell
+    ) {
+      return;
+    }
+
+    var center = tileCenter(player.x, player.y);
+    var dx = px - center.x;
+    var dy = py - center.y;
+    var deadZone = Math.max(7, Math.min(18, cell * .25));
+
+    if (Math.abs(dx) < deadZone && Math.abs(dy) < deadZone) {
+      flash("TAP IN A DIRECTION", 450);
+      return;
+    }
+
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      tryMove(dx < 0 ? -1 : 1, 0);
+    } else {
+      tryMove(0, dy < 0 ? -1 : 1);
+    }
+  }
+
+  canvas.addEventListener("pointerdown", function (event) {
+    event.preventDefault();
+    handleCanvasDirection(event);
+  });
+
+  window.addEventListener("keydown", function (event) {
+    var move = null;
+
+    if (event.key === "ArrowUp" || event.key === "w" || event.key === "W") {
+      move = [0, -1];
+    } else if (event.key === "ArrowDown" || event.key === "s" || event.key === "S") {
+      move = [0, 1];
+    } else if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
+      move = [-1, 0];
+    } else if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
+      move = [1, 0];
+    }
+
+    if (move) {
+      event.preventDefault();
+      tryMove(move[0], move[1]);
+    }
+  });
+
+  function bindPad(id, dx, dy) {
+    var button = document.getElementById(id);
+
+    button.addEventListener("pointerdown", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      button.classList.add("pressed");
+
+      if (button.setPointerCapture) {
+        try {
+          button.setPointerCapture(event.pointerId);
+        } catch (error) {
+          /* Pointer capture is optional. */
+        }
+      }
+
+      tryMove(dx, dy);
+    });
+
+    function release(event) {
+      if (event) event.preventDefault();
+      button.classList.remove("pressed");
+    }
+
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("lostpointercapture", release);
+  }
+
+  bindPad("up", 0, -1);
+  bindPad("down", 0, 1);
+  bindPad("left", -1, 0);
+  bindPad("right", 1, 0);
+
+  window.addEventListener("resize", resize);
+
+  resize();
+  prepareScene();
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

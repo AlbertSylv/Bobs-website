@@ -1,0 +1,11 @@
+{
+  "title": "Cheap Scare",
+  "slug": "cheap-scare",
+  "tagline": "Get the monster to its mark. Avoid making actual cinema.",
+  "concept": "Move a rubber monster across a cheap horror set while the camera and actors look the other way.",
+  "core_loop": "Check where every gaze will move next, tap one nearby tile, and watch the set take its turn; it stays fun because each safe step is a tiny plan and close escapes look wonderfully foolish.",
+  "mechanics": "Use arrow keys or tap a nearby tile to move one space; nothing moves until you do, and the next gaze direction is always shown.; Reach the taped floor mark to finish the scene; entering a camera beam or an actor's view ruins the take and restarts the short scene.; Score one point per finished scene, with a nerve bonus for safely moving beside a view beam.",
+  "feedback": "Safe moves land with a soft rubber thump and the route briefly lights up. Reaching the mark triggers a clapboard snap and a proud monster pose. Getting spotted brings a cheap violin sting, a hard spotlight, and an actor pointing at you before the quick reset. On a near-miss, the beam brushes the monster's heel, which glows red for a beat while the monster freezes.",
+  "difficulty": "The first scenes have one slow watcher, wide cover, and a clear two-step route. Later scenes add crossing view beams, moving actors, and fewer hiding spots, but every change happens only after the player's move and is previewed, so the tension comes from planning rather than speed.",
+  "mobile": true
+}

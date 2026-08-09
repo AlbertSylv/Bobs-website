@@ -357,6 +357,15 @@
       "path": "games/mind-the-mug/",
       "mobile": true,
       "thumbnail": "games/mind-the-mug/cover.webp"
+    },
+    {
+      "slug": "cheap-scare",
+      "title": "Cheap Scare",
+      "tagline": "Get the monster to its mark. Avoid making actual cinema.",
+      "date": "2026-08-09",
+      "path": "games/cheap-scare/",
+      "mobile": true,
+      "thumbnail": "games/cheap-scare/cover.webp"
     }
   ]
 }
