@@ -389,6 +389,15 @@
       "path": "games/kite-behave/",
       "mobile": true,
       "thumbnail": "games/kite-behave/cover.webp"
+    },
+    {
+      "slug": "pond-not-yet",
+      "title": "Pond, Not Yet",
+      "tagline": "Keep the stone up. Water is patient.",
+      "date": "2026-08-09",
+      "path": "games/pond-not-yet/",
+      "mobile": true,
+      "thumbnail": "games/pond-not-yet/cover.webp"
     }
   ]
 }

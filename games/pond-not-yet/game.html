@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Pond, Not Yet</title>
+<style>
+  html, body { margin:0; height:100%; }
+  * { box-sizing:border-box; }
+  body {
+    overflow:hidden;
+    background:#0c2931;
+    color:#f4fbf2;
+    font-family:Inter, ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #game {
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    isolation:isolate;
+    background:#17434d;
+  }
+  canvas {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  #shade {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(to bottom, rgba(3,17,23,.16), transparent 25%, transparent 72%, rgba(3,18,23,.3)),
+      radial-gradient(ellipse at center, transparent 45%, rgba(1,12,17,.3) 115%);
+  }
+  #topbar {
+    position:absolute;
+    z-index:4;
+    top:0;
+    left:0;
+    width:100%;
+    padding:calc(15px + env(safe-area-inset-top)) max(16px, 3vw) 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    pointer-events:none;
+    text-shadow:0 2px 10px rgba(0,18,24,.5);
+  }
+  #brand {
+    min-width:0;
+  }
+  #title {
+    margin:0;
+    color:#fffdf2;
+    font-size:clamp(20px, 3.3vw, 38px);
+    line-height:.95;
+    letter-spacing:-.045em;
+    font-weight:850;
+  }
+  #tagline {
+    margin-top:7px;
+    color:rgba(230,247,238,.78);
+    font-size:clamp(10px, 1.45vw, 14px);
+    letter-spacing:.04em;
+    white-space:nowrap;
+  }
+  #stats {
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+  }
+  .stat {
+    min-width:72px;
+    padding:8px 12px 9px;
+    border:1px solid rgba(225,255,244,.2);
+    border-radius:15px;
+    background:rgba(5,34,40,.34);
+    box-shadow:0 8px 24px rgba(0,18,22,.12), inset 0 1px rgba(255,255,255,.06);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .stat span {
+    display:block;
+    color:rgba(221,245,237,.68);
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .stat b {
+    display:block;
+    margin-top:2px;
+    color:#fffef3;
+    font-size:clamp(15px, 2vw, 21px);
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  #center {
+    position:absolute;
+    z-index:5;
+    left:50%;
+    top:43%;
+    width:min(86vw, 480px);
+    transform:translate(-50%,-50%);
+    text-align:center;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .16s ease, transform .16s ease;
+  }
+  #center.show {
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+  }
+  #center:not(.show) {
+    transform:translate(-50%,-47%) scale(.98);
+  }
+  #eyebrow {
+    color:#bce9d9;
+    font-size:11px;
+    line-height:1;
+    font-weight:900;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    text-shadow:0 2px 12px #092b32;
+  }
+  #message {
+    margin:9px 0 7px;
+    color:#fffdf1;
+    font-size:clamp(30px, 6vw, 62px);
+    line-height:.93;
+    font-weight:900;
+    letter-spacing:-.055em;
+    text-shadow:0 5px 28px rgba(3,26,32,.55);
+  }
+  #detail {
+    margin:0 auto;
+    max-width:390px;
+    color:rgba(236,250,241,.82);
+    font-size:clamp(12px, 2vw, 16px);
+    line-height:1.4;
+    text-shadow:0 2px 12px #082d35;
+  }
+  #cue {
+    position:absolute;
+    z-index:5;
+    left:50%;
+    bottom:calc(78px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    min-width:130px;
+    padding:9px 15px;
+    border:1px solid rgba(235,255,247,.17);
+    border-radius:999px;
+    background:rgba(4,34,40,.3);
+    color:rgba(234,250,244,.72);
+    text-align:center;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    text-shadow:0 1px 8px rgba(0,20,27,.8);
+    backdrop-filter:blur(7px);
+    -webkit-backdrop-filter:blur(7px);
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .14s, color .1s, border-color .1s, transform .1s;
+  }
+  #cue.show { opacity:1; }
+  #cue.hot {
+    color:#fffde6;
+    border-color:rgba(255,249,184,.68);
+    background:rgba(61,97,71,.47);
+    transform:translateX(-50%) scale(1.08);
+    box-shadow:0 0 28px rgba(225,255,181,.17);
+  }
+  #progress {
+    position:absolute;
+    z-index:5;
+    left:50%;
+    bottom:calc(48px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    gap:7px;
+    pointer-events:none;
+  }
+  .pip {
+    width:8px;
+    height:8px;
+    border:1px solid rgba(224,249,239,.55);
+    border-radius:50%;
+    background:rgba(4,35,40,.4);
+    box-shadow:0 2px 8px rgba(1,22,27,.3);
+    transition:transform .18s, background .18s, box-shadow .18s;
+  }
+  .pip.done {
+    background:#e9ffd1;
+    border-color:#f7ffe7;
+    transform:scale(1.18);
+    box-shadow:0 0 13px rgba(227,255,191,.56);
+  }
+  .pip.weak {
+    background:#c5a97b;
+    border-color:#ead4aa;
+  }
+  #how {
+    position:absolute;
+    z-index:5;
+    left:0;
+    bottom:0;
+    width:100%;
+    padding:10px max(14px, 3vw) calc(12px + env(safe-area-inset-bottom));
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    color:rgba(226,245,237,.68);
+    font-size:clamp(9px, 1.35vw, 12px);
+    letter-spacing:.025em;
+    text-align:center;
+    pointer-events:none;
+  }
+  #how .key {
+    padding:3px 7px;
+    border:1px solid rgba(228,250,242,.24);
+    border-radius:6px;
+    color:rgba(250,255,247,.85);
+    background:rgba(3,29,35,.28);
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.1em;
+  }
+  #live {
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+  @media (max-width:560px) {
+    #topbar { padding-left:14px; padding-right:14px; }
+    #tagline { white-space:normal; max-width:180px; line-height:1.2; }
+    .stat { min-width:58px; padding:7px 9px 8px; }
+    .stat:nth-child(2) { display:none; }
+    #center { top:40%; }
+  }
+  @media (max-height:480px) {
+    #tagline { display:none; }
+    #topbar { padding-top:10px; }
+    .stat { padding:6px 9px; }
+    #center { top:41%; }
+    #message { font-size:clamp(27px, 7vw, 46px); }
+    #cue { bottom:52px; }
+    #progress { bottom:31px; }
+    #how { padding-bottom:6px; padding-top:5px; }
+  }
+</style>
+</head>
+<body>
+<div id="game" aria-label="Pond, Not Yet stone skipping game">
+  <canvas id="canvas"></canvas>
+  <div id="shade"></div>
+
+  <header id="topbar">
+    <div id="brand">
+      <h1 id="title">Pond, Not Yet</h1>
+      <div id="tagline">Keep the stone up. Water is patient.</div>
+    </div>
+    <div id="stats" aria-label="Game statistics">
+      <div class="stat"><span>Score</span><b id="score">0</b></div>
+      <div class="stat"><span>Pond</span><b id="level">1</b></div>
+      <div class="stat"><span>Streak</span><b id="streak">0</b></div>
+    </div>
+  </header>
+
+  <main id="center" class="show" aria-hidden="true">
+    <div id="eyebrow">Pond 1 · Still Water</div>
+    <div id="message">Tap to launch</div>
+    <p id="detail">Meet each growing ripple to keep the stone above water.</p>
+  </main>
+
+  <div id="cue">Watch the ripple</div>
+  <div id="progress" aria-hidden="true"></div>
+
+  <div id="how">
+    <span>Tap or click at each splash</span>
+    <span class="key">SPACE</span>
+    <span>Launch · skip · survive</span>
+  </div>
+  <div id="live" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var game = document.getElementById("game");
+  var scoreEl = document.getElementById("score");
+  var levelEl = document.getElementById("level");
+  var streakEl = document.getElementById("streak");
+  var centerEl = document.getElementById("center");
+  var eyebrowEl = document.getElementById("eyebrow");
+  var messageEl = document.getElementById("message");
+  var detailEl = document.getElementById("detail");
+  var cueEl = document.getElementById("cue");
+  var progressEl = document.getElementById("progress");
+  var liveEl = document.getElementById("live");
+
+  var W = 0;
+  var H = 0;
+  var DPR = 1;
+  var waterY = 0;
+  var baseArcHeight = 90;
+  var lastFrame = performance.now();
+
+  var state = "ready";
+  var level = 1;
+  var score = 0;
+  var streak = 0;
+  var bestStreak = 0;
+  var requiredSkips = 4;
+  var skipIndex = 0;
+  var weakFlags = [];
+  var cleanCross = true;
+  var arc = null;
+  var queuedTap = null;
+  var sink = null;
+  var stateStarted = performance.now();
+  var flash = { born: -9999, color: "255,255,255", strength: 0 };
+  var ambientTime = 0;
+
+  var ripples = [];
+  var droplets = [];
+  var floaters = [];
+
+  var audioContext = null;
+  var noiseBuffer = null;
+
+  var pondNames = [
+    "Still Water",
+    "Reed Whisper",
+    "Short Echoes",
+    "Alternating Sky",
+    "Patient Current",
+    "Silver Reach",
+    "Nervous Water",
+    "Long Dusk",
+    "Glass and Rush"
+  ];
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function easeOutCubic(t) {
+    t = clamp(t, 0, 1);
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function resize() {
+    W = Math.max(1, game.clientWidth);
+    H = Math.max(1, game.clientHeight);
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    waterY = H * (H < 500 ? 0.64 : 0.61);
+    baseArcHeight = clamp(Math.min(H * 0.2, W * 0.15), 48, 145);
+  }
+
+  function pondName() {
+    return pondNames[Math.min(pondNames.length - 1, level - 1)];
+  }
+
+  function setupCrossing() {
+    requiredSkips = Math.min(8, 4 + Math.floor((level - 1) / 2));
+    skipIndex = 0;
+    weakFlags = [];
+    cleanCross = true;
+    queuedTap = null;
+    arc = null;
+    sink = null;
+    updatePips();
+    updateHUD();
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = String(score);
+    levelEl.textContent = String(level);
+    streakEl.textContent = String(streak);
+  }
+
+  function updatePips() {
+    var html = "";
+    var i;
+    for (i = 0; i < requiredSkips; i++) {
+      var cls = "pip";
+      if (i < skipIndex) {
+        cls += weakFlags[i] ? " done weak" : " done";
+      }
+      html += '<span class="' + cls + '"></span>';
+    }
+    progressEl.innerHTML = html;
+  }
+
+  function setPanel(eyebrow, message, detail, visible) {
+    eyebrowEl.textContent = eyebrow;
+    messageEl.textContent = message;
+    detailEl.textContent = detail;
+    if (visible) {
+      centerEl.classList.add("show");
+    } else {
+      centerEl.classList.remove("show");
+    }
+  }
+
+  function announce(text) {
+    liveEl.textContent = text;
+  }
+
+  function showReady() {
+    state = "ready";
+    stateStarted = performance.now();
+    cueEl.className = "";
+    setPanel(
+      "Pond " + level + " · " + pondName(),
+      level === 1 ? "Tap to launch" : "The next pond",
+      "Meet each growing ripple to keep the stone above water.",
+      true
+    );
+    announce("Pond " + level + ". Tap, click, or press Space to launch.");
+  }
+
+  function startX() {
+    return 0.105;
+  }
+
+  function endX() {
+    return 0.91;
+  }
+
+  function contactX(index) {
+    return startX() + (endX() - startX()) * ((index + 1) / (requiredSkips + 1));
+  }
+
+  function patternFor(index) {
+    if (level < 3) {
+      return 1;
+    }
+    return ((index + level) % 2 === 0) ? 0.7 : 1.12;
+  }
+
+  function durationFor(index, finalArc) {
+    var base = Math.max(535, 880 - (level - 1) * 34);
+    var pattern = finalArc ? 0.84 : patternFor(index);
+    var factor = 1;
+    if (pattern < 0.85) {
+      factor = 0.72;
+    } else if (pattern > 1.05) {
+      factor = 1.04;
+    }
+    if (finalArc) {
+      factor = 0.77;
+    }
+    return base * factor;
+  }
+
+  function timingWindow() {
+    return Math.max(112, 238 - (level - 1) * 14);
+  }
+
+  function createArc(x0, x1, index, heightMultiplier, finalArc, now) {
+    var pattern = finalArc ? 0.76 : patternFor(index);
+    return {
+      x0: x0,
+      x1: x1,
+      index: index,
+      start: now,
+      duration: durationFor(index, finalArc),
+      height: pattern * heightMultiplier,
+      finalArc: finalArc,
+      wobble: heightMultiplier < 0.7
+    };
+  }
+
+  function launch(now) {
+    setupCrossing();
+    state = "flying";
+    stateStarted = now;
+    centerEl.classList.remove("show");
+    cueEl.className = "show";
+    arc = createArc(startX(), contactX(0), 0, 1, false, now);
+    addFloater(startX() * W, waterY - 16, "SKIP", "#dff8df", 0.72);
+    playLaunch();
+    announce("Stone launched. Tap as it meets the water.");
+  }
+
+  function nextPond(now) {
+    level += 1;
+    setupCrossing();
+    state = "flying";
+    stateStarted = now;
+    centerEl.classList.remove("show");
+    cueEl.className = "show";
+    arc = createArc(startX(), contactX(0), 0, 1, false, now);
+    playLaunch();
+    announce("Pond " + level + " launched.");
+  }
+
+  function retry(now) {
+    streak = 0;
+    updateHUD();
+    setupCrossing();
+    state = "flying";
+    stateStarted = now;
+    centerEl.classList.remove("show");
+    cueEl.className = "show";
+    arc = createArc(startX(), contactX(0), 0, 1, false, now);
+    playLaunch();
+    announce("Retry launched.");
+  }
+
+  function arcPosition(now) {
+    if (!arc) {
+      return { x: startX() * W, y: waterY, t: 0, rotation: 0 };
+    }
+    var raw = (now - arc.start) / arc.duration;
+    var t = clamp(raw, 0, 1);
+    var xNorm = arc.x0 + (arc.x1 - arc.x0) * t;
+    var late = Math.max(0, raw - 1);
+    if (late > 0 && !arc.finalArc) {
+      xNorm += Math.min(0.009, late * 0.012);
+    }
+    var y = waterY - Math.sin(Math.PI * t) * baseArcHeight * arc.height;
+    if (late > 0 && !arc.finalArc) {
+      y = waterY + Math.sin(late * 25) * 1.7;
+    }
+    var rotation = t * Math.PI * 7 + (arc.wobble ? Math.sin(t * 18) * 0.6 : 0);
+    return { x: xNorm * W, y: y, t: raw, rotation: rotation };
+  }
+
+  function handleInput(event) {
+    if (event) {
+      event.preventDefault();
+    }
+    ensureAudio();
+    var now = performance.now();
+
+    if (state === "ready") {
+      launch(now);
+      return;
+    }
+
+    if (state === "cleared") {
+      nextPond(now);
+      return;
+    }
+
+    if (state === "sinking" || state === "sunk") {
+      retry(now);
+      return;
+    }
+
+    if (state !== "flying" || !arc || arc.finalArc || queuedTap) {
+      return;
+    }
+
+    var target = arc.start + arc.duration;
+    var windowSize = timingWindow();
+    var error = now - target;
+
+    if (error < -windowSize) {
+      failCrossing("TOO EARLY", now);
+    } else if (error <= 0) {
+      queuedTap = { error: error };
+      cueEl.textContent = "Timed";
+      cueEl.className = "show hot";
+      playTick();
+    } else if (error <= windowSize) {
+      resolveSkip(error, now);
+    } else {
+      failCrossing("TOO LATE", now);
+    }
+  }
+
+  function resolveSkip(error, now) {
+    if (!arc || arc.finalArc || state !== "flying") {
+      return;
+    }
+
+    var windowSize = timingWindow();
+    var accuracy = Math.abs(error) / windowSize;
+    var quality;
+    var multiplier;
+    var points;
+    var label;
+    var color;
+    var weak = false;
+
+    if (accuracy <= 0.29) {
+      quality = "clean";
+      multiplier = 1.13;
+      streak += 1;
+      points = 120 + streak * 18;
+      label = "CLEAN PLIP  +" + points;
+      color = "#f2ffd2";
+      playPlip(1);
+      flashScreen("229,255,191", 0.13);
+    } else if (accuracy <= 0.64) {
+      quality = "good";
+      multiplier = 0.96;
+      streak += 1;
+      points = 90 + streak * 14;
+      label = "PLIP  +" + points;
+      color = "#d7fff0";
+      playPlip(0.74);
+      flashScreen("191,255,230", 0.08);
+    } else if (accuracy <= 0.84) {
+      quality = "weak";
+      multiplier = 0.57;
+      weak = true;
+      streak = 0;
+      points = 55;
+      label = "WEAK BOUNCE  +" + points;
+      color = "#e7c999";
+      playWeak();
+    } else {
+      quality = "scrape";
+      multiplier = 0.42;
+      weak = true;
+      streak = 0;
+      points = 35;
+      label = "SCRAPE  +" + points;
+      color = "#e0b984";
+      playScrape();
+    }
+
+    bestStreak = Math.max(bestStreak, streak);
+    score += points;
+    cleanCross = cleanCross && !weak;
+    weakFlags.push(weak);
+
+    var xNorm = arc.x1;
+    var x = xNorm * W;
+    addRipple(x, waterY, quality);
+    addDroplets(x, waterY, quality);
+    addFloater(x, waterY - 19, label, color, quality === "clean" ? 1.05 : 0.9);
+
+    skipIndex += 1;
+    queuedTap = null;
+    updatePips();
+    updateHUD();
+
+    if (skipIndex >= requiredSkips) {
+      arc = createArc(xNorm, endX(), skipIndex, Math.max(0.82, multiplier), true, now);
+      cueEl.textContent = "Bank ahead";
+      cueEl.className = "show";
+      announce("Final skip. The far bank is ahead.");
+    } else {
+      arc = createArc(xNorm, contactX(skipIndex), skipIndex, multiplier, false, now);
+      cueEl.textContent = "Watch the ripple";
+      cueEl.className = "show";
+      announce(label.replace("  ", " "));
+    }
+  }
+
+  function failCrossing(reason, now) {
+    if (state !== "flying") {
+      return;
+    }
+
+    var p = arcPosition(now);
+    state = "sinking";
+    stateStarted = now;
+    sink = {
+      x: p.x,
+      y0: p.y,
+      rotation: p.rotation,
+      rippleMade: p.y >= waterY - 3
+    };
+    queuedTap = null;
+    streak = 0;
+    cleanCross = false;
+    updateHUD();
+
+    if (sink.rippleMade) {
+      addRipple(sink.x, waterY, "sink");
+      addDroplets(sink.x, waterY, "sink");
+    }
+
+    playGlug();
+    flashScreen("95,137,146", 0.15);
+    cueEl.className = "";
+    setPanel(reason, "Glug.", "Tap immediately to retry this pond.", true);
+    announce(reason + ". The stone sank. Tap to retry.");
+  }
+
+  function clearCrossing(now) {
+    state = "cleared";
+    stateStarted = now;
+    var bonus = cleanCross ? 500 + level * 100 : 200 + level * 55;
+    score += bonus;
+    updateHUD();
+    cueEl.className = "";
+    addRipple(endX() * W, waterY, "shore");
+    playShore(cleanCross);
+    flashScreen("240,255,203", cleanCross ? 0.2 : 0.11);
+
+    if (cleanCross) {
+      setPanel(
+        "Clean crossing · +" + bonus,
+        "Far bank.",
+        "No weak bounces. Tap for Pond " + (level + 1) + ".",
+        true
+      );
+      announce("Clean crossing. Bonus " + bonus + ". Tap for the next pond.");
+    } else {
+      setPanel(
+        "Crossing clear · +" + bonus,
+        "Still above.",
+        "A nervous crossing, but it counts. Tap for Pond " + (level + 1) + ".",
+        true
+      );
+      announce("Crossing clear. Tap for the next pond.");
+    }
+  }
+
+  function update(now, dt) {
+    ambientTime += dt;
+
+    if (state === "flying" && arc) {
+      var target = arc.start + arc.duration;
+      if (arc.finalArc) {
+        if (now >= target) {
+          clearCrossing(now);
+        }
+      } else {
+        if (queuedTap && now >= target) {
+          var tap = queuedTap;
+          queuedTap = null;
+          resolveSkip(tap.error, now);
+        } else if (!queuedTap && now > target + timingWindow()) {
+          failCrossing("TOO LATE", now);
+        }
+      }
+    }
+
+    if (state === "sinking" && sink) {
+      var st = (now - stateStarted) / 720;
+      var sy = sink.y0 + easeOutCubic(st) * (waterY + 86 - sink.y0);
+      if (!sink.rippleMade && sy >= waterY) {
+        sink.rippleMade = true;
+        addRipple(sink.x, waterY, "sink");
+        addDroplets(sink.x, waterY, "sink");
+      }
+      if (st >= 1) {
+        state = "sunk";
+      }
+    }
+
+    updateCue(now);
+    pruneEffects(now);
+  }
+
+  function updateCue(now) {
+    if (state !== "flying" || !arc) {
+      return;
+    }
+
+    if (arc.finalArc) {
+      cueEl.textContent = "Bank ahead";
+      cueEl.className = "show";
+      return;
+    }
+
+    if (queuedTap) {
+      cueEl.textContent = "Timed";
+      cueEl.className = "show hot";
+      return;
+    }
+
+    var remaining = arc.start + arc.duration - now;
+    var w = timingWindow();
+
+    if (remaining <= w && remaining >= -w) {
+      cueEl.textContent = "Tap now";
+      cueEl.className = "show hot";
+    } else {
+      cueEl.textContent = "Watch the ripple";
+      cueEl.className = "show";
+    }
+  }
+
+  function addRipple(x, y, quality) {
+    var color = "201,247,229";
+    var life = 800;
+    var max = 58;
+    if (quality === "clean") {
+      color = "238,255,195";
+      life = 900;
+      max = 72;
+    } else if (quality === "weak" || quality === "scrape") {
+      color = "205,180,138";
+      max = 48;
+    } else if (quality === "sink") {
+      color = "139,190,194";
+      life = 1050;
+      max = 78;
+    } else if (quality === "shore") {
+      color = "232,255,204";
+      life = 1200;
+      max = 90;
+    }
+    ripples.push({
+      x: x,
+      y: y,
+      born: performance.now(),
+      life: life,
+      max: max,
+      color: color
+    });
+  }
+
+  function addDroplets(x, y, quality) {
+    var count = quality === "clean" ? 9 : quality === "sink" ? 12 : quality === "good" ? 6 : 4;
+    var power = quality === "clean" ? 1.25 : quality === "sink" ? 0.8 : quality === "good" ? 1 : 0.55;
+    var i;
+    for (i = 0; i < count; i++) {
+      droplets.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y - 2,
+        vx: (Math.random() - 0.5) * 95 * power,
+        vy: -(35 + Math.random() * 105) * power,
+        born: performance.now(),
+        life: 500 + Math.random() * 230,
+        size: 1 + Math.random() * 2
+      });
+    }
+  }
+
+  function addFloater(x, y, text, color, scale) {
+    floaters.push({
+      x: x,
+      y: y,
+      text: text,
+      color: color,
+      scale: scale,
+      born: performance.now(),
+      life: 900
+    });
+  }
+
+  function pruneEffects(now) {
+    ripples = ripples.filter(function (r) {
+      return now - r.born < r.life;
+    });
+    droplets = droplets.filter(function (d) {
+      return now - d.born < d.life;
+    });
+    floaters = floaters.filter(function (f) {
+      return now - f.born < f.life;
+    });
+  }
+
+  function flashScreen(color, strength) {
+    flash.born = performance.now();
+    flash.color = color;
+    flash.strength = strength;
+  }
+
+  function draw(now) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    drawSky();
+    drawHills();
+    drawWater(now);
+    drawBanks();
+    drawReeds();
+    drawGuidance(now);
+    drawEffects(now);
+    drawStone(now);
+    drawForeground();
+    drawFlash(now);
+  }
+
+  function drawSky() {
+    var g = ctx.createLinearGradient(0, 0, 0, waterY);
+    g.addColorStop(0, "#315f66");
+    g.addColorStop(0.5, "#6f9890");
+    g.addColorStop(1, "#b8b99a");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, waterY + 2);
+
+    var sunX = W * 0.73;
+    var sunY = H * 0.19;
+    var r = clamp(Math.min(W, H) * 0.055, 23, 54);
+    var sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, r * 3.4);
+    sg.addColorStop(0, "rgba(255,243,190,.42)");
+    sg.addColorStop(0.28, "rgba(255,236,180,.18)");
+    sg.addColorStop(1, "rgba(255,236,180,0)");
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, r * 3.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,242,194,.7)";
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(239,246,224,.11)";
+    ctx.beginPath();
+    ctx.ellipse(W * 0.24, H * 0.18, W * 0.13, 9, -0.04, 0, Math.PI * 2);
+    ctx.ellipse(W * 0.35, H * 0.26, W * 0.09, 6, 0.03, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHills() {
+    ctx.fillStyle = "#456f68";
+    ctx.beginPath();
+    ctx.moveTo(0, waterY);
+    ctx.lineTo(0, waterY - H * 0.16);
+    ctx.bezierCurveTo(W * 0.13, waterY - H * 0.26, W * 0.27, waterY - H * 0.07, W * 0.4, waterY - H * 0.15);
+    ctx.bezierCurveTo(W * 0.55, waterY - H * 0.24, W * 0.7, waterY - H * 0.08, W * 0.82, waterY - H * 0.15);
+    ctx.bezierCurveTo(W * 0.9, waterY - H * 0.2, W, waterY - H * 0.13, W, waterY);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#315a55";
+    ctx.beginPath();
+    ctx.moveTo(0, waterY);
+    ctx.lineTo(0, waterY - H * 0.08);
+    ctx.bezierCurveTo(W * 0.18, waterY - H * 0.13, W * 0.32, waterY - H * 0.04, W * 0.48, waterY - H * 0.095);
+    ctx.bezierCurveTo(W * 0.64, waterY - H * 0.13, W * 0.79, waterY - H * 0.035, W, waterY - H * 0.09);
+    ctx.lineTo(W, waterY);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(18,63,57,.65)";
+    ctx.lineWidth = 2;
+    var i;
+    for (i = 0; i < 24; i++) {
+      var x = (i / 23) * W;
+      var h = 7 + ((i * 13) % 19);
+      ctx.beginPath();
+      ctx.moveTo(x, waterY - 4);
+      ctx.lineTo(x + Math.sin(i) * 3, waterY - h);
+      ctx.stroke();
+    }
+  }
+
+  function drawWater(now) {
+    var g = ctx.createLinearGradient(0, waterY, 0, H);
+    g.addColorStop(0, "#467b79");
+    g.addColorStop(0.43, "#245d64");
+    g.addColorStop(1, "#103944");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, waterY, W, H - waterY);
+
+    ctx.fillStyle = "rgba(249,239,189,.12)";
+    ctx.beginPath();
+    ctx.moveTo(W * 0.65, waterY);
+    ctx.lineTo(W * 0.81, waterY);
+    ctx.lineTo(W * 0.91, H);
+    ctx.lineTo(W * 0.5, H);
+    ctx.closePath();
+    ctx.fill();
+
+    var bands = Math.max(7, Math.floor((H - waterY) / 33));
+    var b;
+    for (b = 0; b < bands; b++) {
+      var y = waterY + 14 + b * ((H - waterY - 15) / bands);
+      var alpha = 0.07 + b * 0.005;
+      ctx.strokeStyle = "rgba(203,237,220," + alpha + ")";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      var x;
+      for (x = -20; x <= W + 20; x += 20) {
+        var yy = y + Math.sin(x * 0.018 + ambientTime * 0.00055 + b * 1.7) * (1.2 + b * 0.12);
+        if (x === -20) {
+          ctx.moveTo(x, yy);
+        } else {
+          ctx.lineTo(x, yy);
+        }
+      }
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = "rgba(235,247,219,.25)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, waterY + 0.5);
+    ctx.lineTo(W, waterY + 0.5);
+    ctx.stroke();
+  }
+
+  function drawBanks() {
+    ctx.fillStyle = "#263f36";
+    ctx.beginPath();
+    ctx.moveTo(0, waterY - 24);
+    ctx.bezierCurveTo(W * 0.045, waterY - 17, W * 0.075, waterY - 5, W * 0.12, waterY + 16);
+    ctx.lineTo(W * 0.09, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#526247";
+    ctx.beginPath();
+    ctx.moveTo(0, waterY - 26);
+    ctx.bezierCurveTo(W * 0.05, waterY - 20, W * 0.087, waterY - 7, W * 0.118, waterY + 9);
+    ctx.bezierCurveTo(W * 0.075, waterY + 3, W * 0.04, waterY, 0, waterY + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#263f36";
+    ctx.beginPath();
+    ctx.moveTo(W, waterY - 30);
+    ctx.bezierCurveTo(W * 0.96, waterY - 18, W * 0.93, waterY - 5, W * 0.895, waterY + 16);
+    ctx.lineTo(W * 0.92, H);
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#647054";
+    ctx.beginPath();
+    ctx.moveTo(W, waterY - 34);
+    ctx.bezierCurveTo(W * 0.96, waterY - 25, W * 0.925, waterY - 8, W * 0.895, waterY + 10);
+    ctx.bezierCurveTo(W * 0.935, waterY + 2, W * 0.97, waterY - 1, W, waterY + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(220,203,155,.5)";
+    var stones = [
+      [0.052, -8, 13, 5],
+      [0.082, 2, 10, 4],
+      [0.948, -10, 15, 5],
+      [0.916, 4, 9, 4]
+    ];
+    var i;
+    for (i = 0; i < stones.length; i++) {
+      ctx.beginPath();
+      ctx.ellipse(stones[i][0] * W, waterY + stones[i][1], stones[i][2], stones[i][3], 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawReeds() {
+    ctx.lineCap = "round";
+    var sides = [0.035, 0.07, 0.945, 0.975];
+    var i;
+    var j;
+    for (i = 0; i < sides.length; i++) {
+      for (j = 0; j < 4; j++) {
+        var x = sides[i] * W + (j - 1.5) * 5;
+        var h = 26 + ((i * 17 + j * 11) % 35);
+        ctx.strokeStyle = j % 2 ? "#324f39" : "#405f40";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, waterY + 11);
+        ctx.quadraticCurveTo(x + Math.sin(i + j) * 7, waterY - h * 0.55, x + Math.sin(i * 2 + j) * 5, waterY - h);
+        ctx.stroke();
+      }
+    }
+    ctx.lineCap = "butt";
+  }
+
+  function drawGuidance(now) {
+    if (state !== "flying" || !arc || arc.finalArc) {
+      return;
+    }
+
+    var raw = (now - arc.start) / arc.duration;
+    var approach = clamp((raw - 0.4) / 0.6, 0, 1);
+    var tx = arc.x1 * W;
+    var pulse = 0.5 + 0.5 * Math.sin(now * 0.014);
+    var windowSize = timingWindow();
+    var inWindow = Math.abs(arc.start + arc.duration - now) <= windowSize;
+
+    ctx.save();
+    ctx.strokeStyle = inWindow ? "rgba(246,255,201,.75)" : "rgba(213,247,229," + (0.14 + approach * 0.3) + ")";
+    ctx.lineWidth = inWindow ? 2 : 1.2;
+
+    var ringCount = 3;
+    var i;
+    for (i = 0; i < ringCount; i++) {
+      var radius = 8 + i * 9 + approach * 8 + pulse * (inWindow ? 3 : 1);
+      ctx.beginPath();
+      ctx.ellipse(tx, waterY + 1, radius, radius * 0.24, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    var currentT = clamp(raw, 0, 1);
+    ctx.fillStyle = inWindow ? "rgba(248,255,213,.72)" : "rgba(222,249,235,.3)";
+    for (i = 1; i <= 6; i++) {
+      var t = currentT + (1 - currentT) * (i / 7);
+      var x = (arc.x0 + (arc.x1 - arc.x0) * t) * W;
+      var y = waterY - Math.sin(Math.PI * t) * baseArcHeight * arc.height;
+      ctx.beginPath();
+      ctx.arc(x, y, inWindow ? 2 : 1.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawEffects(now) {
+    var i;
+
+    for (i = 0; i < ripples.length; i++) {
+      var r = ripples[i];
+      var t = clamp((now - r.born) / r.life, 0, 1);
+      var radius = 5 + r.max * easeOutCubic(t);
+      var alpha = (1 - t) * 0.72;
+      ctx.strokeStyle = "rgba(" + r.color + "," + alpha + ")";
+      ctx.lineWidth = 1.5 * (1 - t) + 0.5;
+      ctx.beginPath();
+      ctx.ellipse(r.x, r.y + 1, radius, radius * 0.23, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      if (t < 0.72) {
+        ctx.strokeStyle = "rgba(" + r.color + "," + alpha * 0.54 + ")";
+        ctx.beginPath();
+        ctx.ellipse(r.x, r.y + 1, radius * 0.62, radius * 0.14, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    for (i = 0; i < droplets.length; i++) {
+      var d = droplets[i];
+      var age = (now - d.born) / 1000;
+      var lifeT = clamp((now - d.born) / d.life, 0, 1);
+      var x = d.x + d.vx * age;
+      var y = d.y + d.vy * age + 220 * age * age;
+      ctx.fillStyle = "rgba(218,249,239," + (1 - lifeT) * 0.8 + ")";
+      ctx.beginPath();
+      ctx.arc(x, y, d.size * (1 - lifeT * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (i = 0; i < floaters.length; i++) {
+      var f = floaters[i];
+      var ft = clamp((now - f.born) / f.life, 0, 1);
+      var fy = f.y - ft * 36;
+      var alphaF = ft < 0.18 ? ft / 0.18 : 1 - (ft - 0.18) / 0.82;
+      ctx.save();
+      ctx.globalAlpha = clamp(alphaF, 0, 1);
+      ctx.fillStyle = f.color;
+      ctx.font = "900 " + Math.round(11 * f.scale + 2) + "px system-ui, sans-serif";
+      ctx.shadowColor = "rgba(4,31,36,.7)";
+      ctx.shadowBlur = 8;
+      ctx.fillText(f.text, f.x, fy);
+      ctx.restore();
+    }
+  }
+
+  function drawStone(now) {
+    var p = null;
+    var alpha = 1;
+
+    if (state === "ready") {
+      p = {
+        x: startX() * W,
+        y: waterY - 10 - Math.sin(now * 0.003) * 2,
+        rotation: -0.15
+      };
+    } else if (state === "flying" && arc) {
+      p = arcPosition(now);
+    } else if ((state === "sinking" || state === "sunk") && sink) {
+      var t = clamp((now - stateStarted) / 720, 0, 1);
+      p = {
+        x: sink.x + t * 8,
+        y: sink.y0 + easeOutCubic(t) * (waterY + 86 - sink.y0),
+        rotation: sink.rotation + t * 5
+      };
+      alpha = 1 - clamp((p.y - waterY) / 78, 0, 0.9);
+    } else if (state === "cleared") {
+      p = {
+        x: endX() * W,
+        y: waterY - 5,
+        rotation: 0.2
+      };
+    }
+
+    if (!p) {
+      return;
+    }
+
+    var altitude = Math.max(0, waterY - p.y);
+    var shadowAlpha = clamp(0.3 - altitude / 550, 0.06, 0.3);
+    var shadowW = clamp(18 - altitude * 0.045, 8, 18);
+
+    ctx.fillStyle = "rgba(5,31,35," + shadowAlpha + ")";
+    ctx.beginPath();
+    ctx.ellipse(p.x, waterY + 4, shadowW, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+
+    ctx.fillStyle = "rgba(5,23,25,.3)";
+    ctx.beginPath();
+    ctx.ellipse(1.5, 3, 11, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    var sg = ctx.createLinearGradient(-8, -5, 9, 5);
+    sg.addColorStop(0, "#d5d0b5");
+    sg.addColorStop(0.45, "#888b78");
+    sg.addColorStop(1, "#444f49");
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11, 4.5, 0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(245,244,218,.48)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(-1, -0.4, 7, Math.PI * 1.05, Math.PI * 1.78);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawForeground() {
+    var g = ctx.createLinearGradient(0, H * 0.82, 0, H);
+    g.addColorStop(0, "rgba(3,24,29,0)");
+    g.addColorStop(1, "rgba(2,20,26,.28)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H * 0.8, W, H * 0.2);
+  }
+
+  function drawFlash(now) {
+    var t = (now - flash.born) / 250;
+    if (t >= 0 && t < 1) {
+      ctx.fillStyle = "rgba(" + flash.color + "," + (1 - t) * flash.strength + ")";
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function ensureAudio() {
+    if (!audioContext) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) {
+        return;
+      }
+      audioContext = new AC();
+      noiseBuffer = audioContext.createBuffer(1, Math.floor(audioContext.sampleRate * 0.22), audioContext.sampleRate);
+      var data = noiseBuffer.getChannelData(0);
+      var i;
+      for (i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      }
+    }
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }
+
+  function tone(freq, endFreq, duration, volume, type, delay) {
+    if (!audioContext) {
+      return;
+    }
+    var t = audioContext.currentTime + (delay || 0);
+    var osc = audioContext.createOscillator();
+    var gain = audioContext.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t + duration);
+    gain.gain.setValueAtTime(0.001, t);
+    gain.gain.exponentialRampToValueAtTime(volume, t + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(t);
+    osc.stop(t + duration + 0.02);
+  }
+
+  function noise(duration, volume, lowpass, delay) {
+    if (!audioContext || !noiseBuffer) {
+      return;
+    }
+    var t = audioContext.currentTime + (delay || 0);
+    var source = audioContext.createBufferSource();
+    var filter = audioContext.createBiquadFilter();
+    var gain = audioContext.createGain();
+    source.buffer = noiseBuffer;
+    filter.type = "lowpass";
+    filter.frequency.value = lowpass;
+    gain.gain.setValueAtTime(volume, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioContext.destination);
+    source.start(t);
+    source.stop(t + duration);
+  }
+
+  function playLaunch() {
+    tone(210, 410, 0.12, 0.045, "sine", 0);
+    noise(0.05, 0.025, 1200, 0);
+  }
+
+  function playTick() {
+    tone(920, 760, 0.035, 0.022, "sine", 0);
+  }
+
+  function playPlip(amount) {
+    tone(760 + amount * 250, 1280 + amount * 270, 0.085, 0.06, "sine", 0);
+    tone(430, 620, 0.065, 0.025, "triangle", 0.018);
+    noise(0.045, 0.025, 2400, 0);
+  }
+
+  function playWeak() {
+    tone(250, 170, 0.14, 0.055, "triangle", 0);
+    noise(0.12, 0.055, 850, 0);
+  }
+
+  function playScrape() {
+    noise(0.17, 0.07, 1500, 0);
+    tone(340, 130, 0.17, 0.04, "sawtooth", 0);
+  }
+
+  function playGlug() {
+    tone(145, 52, 0.38, 0.09, "sine", 0);
+    tone(92, 43, 0.42, 0.05, "triangle", 0.04);
+    noise(0.22, 0.055, 520, 0);
+  }
+
+  function playShore(clean) {
+    if (clean) {
+      tone(520, 740, 0.2, 0.05, "sine", 0);
+      tone(660, 980, 0.24, 0.045, "sine", 0.1);
+      tone(820, 1220, 0.3, 0.04, "sine", 0.2);
+    } else {
+      tone(420, 580, 0.2, 0.045, "sine", 0);
+      tone(560, 760, 0.24, 0.04, "sine", 0.12);
+    }
+  }
+
+  function frame(now) {
+    var dt = Math.min(40, now - lastFrame);
+    lastFrame = now;
+    update(now, dt);
+    draw(now);
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener("resize", resize);
+
+  game.addEventListener("pointerdown", function (event) {
+    handleInput(event);
+  }, { passive: false });
+
+  window.addEventListener("keydown", function (event) {
+    if ((event.code === "Space" || event.key === " ") && !event.repeat) {
+      handleInput(event);
+    }
+  }, { passive: false });
+
+  game.addEventListener("contextmenu", function (event) {
+    event.preventDefault();
+  });
+
+  resize();
+  setupCrossing();
+  showReady();
+  requestAnimationFrame(frame);
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "title": "Pond, Not Yet",
+  "slug": "pond-not-yet",
+  "tagline": "Keep the stone up. Water is patient.",
+  "concept": "Tap at each splash to skip a flat stone across a quiet pond.",
+  "core_loop": "Launch the stone, watch each short arc, and tap as it meets the water to earn another skip; the changing rhythm makes every five-second crossing feel tense and satisfying.",
+  "mechanics": "Controls: Tap, click, or press Space to launch, then use the same input at each water contact to skip again.; Win/lose: Reach the far bank to clear a crossing; tap too early or late and the stone sinks, with an instant retry.; Scoring: Gain points for every skip, build a streak with well-timed taps, and earn a clean-cross bonus for reaching shore without a weak bounce.",
+  "feedback": "A good tap makes a sharp plip, a bright round ripple, and a high clean hop; a weak tap makes a dull splash and a low wobble; a miss sends the stone under with one blunt glug, while a near-miss scrapes the surface and survives with a nervous little bounce.",
+  "difficulty": "The first crossings use slow, even arcs and wide timing windows; later ponds add shorter hops, alternating high and low arcs, and longer crossings, all shown clearly by the stone’s path and growing contact ripple.",
+  "mobile": true
+}
