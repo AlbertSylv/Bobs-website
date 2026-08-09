@@ -1,0 +1,11 @@
+{
+  "title": "Kite, Behave",
+  "slug": "kite-behave",
+  "tagline": "Thread the hoops. Blame the wind.",
+  "concept": "Guide one stubborn kite through hoops above a sunny park using only its string.",
+  "core_loop": "Each 6–10 second sweep, hold to reel the circling kite inward and release to let it drift outward, lining it up with the next hoop; the simple timing stays fun because clean centers, quick corrections, and close scrapes all feel different.",
+  "mechanics": "Controls: Hold the screen or Space to reel inward; release to drift outward; tap or press Enter to restart.; Win/lose: Clear 18 hoops to win; three snags tear off all three tail bows and end the run.; Scoring: Each hoop scores one point, and passing through its bright center adds a clearly shown perfect bonus.",
+  "feedback": "A clean pass makes the hoop pop into ribbons with a light clap; a perfect pass flashes gold and rings a clear chime. A snag jerks the string, creases the kite, and knocks off one visible tail bow with a dull twang. On a near-miss, the hoop rattles and the kite tail curls around it for a moment without costing a life.",
+  "difficulty": "The first six hoops are wide and still. Later hoops narrow or sway slowly, and clearly marked rival kites cross the outer lanes. The speed stays readable, but safe openings become tighter near the final hoops.",
+  "mobile": true
+}

@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kite, Behave</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+body {
+  overflow:hidden;
+  background:#79d6ff;
+  color:#17334a;
+  font-family:Arial, Helvetica, sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  overscroll-behavior:none;
+}
+#game {
+  position:relative;
+  width:100%;
+  height:100%;
+  min-height:100%;
+  overflow:hidden;
+  touch-action:none;
+}
+canvas {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  touch-action:none;
+}
+#topbar {
+  position:absolute;
+  z-index:4;
+  left:0;
+  right:0;
+  top:0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  padding:calc(10px + env(safe-area-inset-top)) 12px 0;
+  pointer-events:none;
+}
+.brand {
+  padding:8px 11px;
+  border:2px solid rgba(23,51,74,.18);
+  border-radius:14px;
+  background:rgba(255,255,255,.78);
+  box-shadow:0 5px 15px rgba(20,74,102,.14);
+  backdrop-filter:blur(4px);
+  white-space:nowrap;
+}
+.brand strong {
+  display:block;
+  font-size:clamp(16px, 3.3vw, 25px);
+  line-height:1;
+  letter-spacing:-.5px;
+}
+.brand small {
+  display:block;
+  margin-top:4px;
+  font-size:clamp(9px, 1.7vw, 12px);
+  font-weight:700;
+  color:#567185;
+}
+#stats {
+  display:flex;
+  align-items:stretch;
+  justify-content:flex-end;
+  gap:6px;
+  flex-wrap:wrap;
+  max-width:72%;
+}
+.stat {
+  min-width:68px;
+  padding:7px 9px 6px;
+  border-radius:12px;
+  background:rgba(255,255,255,.82);
+  border:2px solid rgba(23,51,74,.15);
+  box-shadow:0 5px 15px rgba(20,74,102,.13);
+  text-align:center;
+  backdrop-filter:blur(4px);
+}
+.stat b {
+  display:block;
+  font-size:clamp(15px, 3vw, 21px);
+  line-height:1.05;
+}
+.stat span {
+  display:block;
+  margin-top:3px;
+  color:#557185;
+  font-weight:800;
+  font-size:9px;
+  letter-spacing:.8px;
+}
+#tailStat {
+  min-width:91px;
+}
+#bows {
+  height:20px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+}
+.bow {
+  position:relative;
+  width:19px;
+  height:15px;
+  transition:transform .25s, opacity .25s;
+}
+.bow:before, .bow:after {
+  content:"";
+  position:absolute;
+  top:2px;
+  width:9px;
+  height:10px;
+  background:#f05b72;
+  border:2px solid #9e2941;
+}
+.bow:before {
+  left:0;
+  border-radius:8px 3px 3px 8px;
+  transform:rotate(12deg);
+}
+.bow:after {
+  right:0;
+  border-radius:3px 8px 8px 3px;
+  transform:rotate(-12deg);
+}
+.bow.gone {
+  opacity:.15;
+  transform:translateY(7px) rotate(25deg);
+}
+#toast {
+  position:absolute;
+  z-index:5;
+  top:22%;
+  left:50%;
+  width:max-content;
+  max-width:88%;
+  padding:9px 17px 8px;
+  border:2px solid rgba(23,51,74,.18);
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  color:#17334a;
+  text-align:center;
+  box-shadow:0 7px 22px rgba(23,51,74,.18);
+  transform:translate(-50%, -12px) scale(.92);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .14s, transform .14s;
+}
+#toast.show {
+  opacity:1;
+  transform:translate(-50%, 0) scale(1);
+}
+#toast strong {
+  display:block;
+  font-size:clamp(16px, 3.5vw, 23px);
+  line-height:1;
+}
+#toast small {
+  display:block;
+  margin-top:4px;
+  font-size:11px;
+  font-weight:800;
+  color:#61798b;
+  letter-spacing:.5px;
+}
+#toast.gold {
+  color:#8e5800;
+  background:#fff5b8;
+  border-color:#f0b62c;
+}
+#toast.bad {
+  color:#8c2738;
+  background:#fff0ef;
+  border-color:#e56d71;
+}
+#reel {
+  position:absolute;
+  z-index:5;
+  right:12px;
+  bottom:calc(48px + env(safe-area-inset-bottom));
+  padding:8px 12px;
+  border-radius:999px;
+  color:#fff;
+  background:#e95761;
+  border:2px solid rgba(117,26,40,.35);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:1px;
+  box-shadow:0 5px 12px rgba(117,26,40,.23);
+  opacity:0;
+  transform:scale(.85);
+  transition:opacity .12s, transform .12s;
+  pointer-events:none;
+}
+#reel.on {
+  opacity:1;
+  transform:scale(1);
+}
+#help {
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  width:max-content;
+  max-width:95%;
+  transform:translateX(-50%);
+  padding:7px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.79);
+  border:1px solid rgba(23,51,74,.16);
+  color:#3d6075;
+  font-size:clamp(10px, 2.2vw, 13px);
+  font-weight:800;
+  text-align:center;
+  pointer-events:none;
+  box-shadow:0 4px 12px rgba(20,74,102,.12);
+}
+#overlay {
+  position:absolute;
+  z-index:8;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:22px;
+  background:rgba(31,105,139,.16);
+  pointer-events:none;
+  transition:opacity .2s;
+}
+#overlay.hidden {
+  opacity:0;
+}
+.card {
+  width:min(520px, 92vw);
+  padding:25px 24px 22px;
+  border-radius:24px;
+  text-align:center;
+  background:rgba(255,255,255,.95);
+  border:3px solid rgba(23,51,74,.17);
+  box-shadow:0 18px 55px rgba(22,73,100,.26);
+}
+.card h1 {
+  margin:0;
+  font-size:clamp(34px, 9vw, 64px);
+  line-height:.95;
+  letter-spacing:-2px;
+}
+.card .tagline {
+  margin:10px 0 16px;
+  color:#517184;
+  font-size:clamp(14px, 3.5vw, 19px);
+  font-weight:800;
+}
+.card .lead {
+  margin:0 auto 14px;
+  max-width:420px;
+  font-size:clamp(14px, 3vw, 17px);
+  line-height:1.4;
+}
+.card .rules {
+  margin:0 auto 18px;
+  max-width:430px;
+  color:#5b7485;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:700;
+}
+.fakeButton {
+  display:inline-block;
+  padding:12px 22px;
+  border-radius:999px;
+  color:#fff;
+  background:#e95661;
+  border:3px solid #bb3549;
+  box-shadow:0 5px 0 #92283a;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.6px;
+}
+@media (max-width:600px) {
+  #topbar { padding-left:7px; padding-right:7px; gap:5px; }
+  .brand { padding:7px 8px; }
+  .brand small { display:none; }
+  #stats { gap:4px; }
+  .stat { min-width:55px; padding:6px 6px 5px; }
+  #tailStat { min-width:73px; }
+  .bow { transform:scale(.86); margin:-1px; }
+  .bow.gone { transform:scale(.86) translateY(7px) rotate(25deg); }
+  #help { white-space:normal; width:94%; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Kite, Behave game canvas"></canvas>
+
+  <div id="topbar">
+    <div class="brand">
+      <strong>Kite, Behave</strong>
+      <small>Thread the hoops. Blame the wind.</small>
+    </div>
+    <div id="stats">
+      <div class="stat"><b id="score">0</b><span>SCORE</span></div>
+      <div class="stat"><b id="hoops">0/18</b><span>HOOPS</span></div>
+      <div class="stat"><b id="perfects">0</b><span>PERFECT +2</span></div>
+      <div class="stat" id="tailStat">
+        <div id="bows">
+          <i class="bow"></i><i class="bow"></i><i class="bow"></i>
+        </div>
+        <span>TAIL BOWS</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"><strong id="toastMain"></strong><small id="toastSub"></small></div>
+  <div id="reel">REELING IN</div>
+  <div id="help">Hold screen or Space to reel inward • Release to drift outward • Enter restarts</div>
+
+  <div id="overlay">
+    <div class="card">
+      <h1 id="overlayTitle">Kite, Behave</h1>
+      <div class="tagline" id="overlayTag">Thread the hoops. Blame the wind.</div>
+      <p class="lead" id="overlayLead">Guide one stubborn kite through 18 hoops using only its string.</p>
+      <p class="rules" id="overlayRules">Hold to reel inward. Release to drift outward. Gold centers give +2 bonus. Three snags tear off all three tail bows.</p>
+      <div class="fakeButton" id="overlayButton">HOLD TO START</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var scoreEl = document.getElementById("score");
+  var hoopsEl = document.getElementById("hoops");
+  var perfectsEl = document.getElementById("perfects");
+  var bowEls = document.querySelectorAll(".bow");
+  var toast = document.getElementById("toast");
+  var toastMain = document.getElementById("toastMain");
+  var toastSub = document.getElementById("toastSub");
+  var reelEl = document.getElementById("reel");
+  var overlay = document.getElementById("overlay");
+  var overlayTitle = document.getElementById("overlayTitle");
+  var overlayTag = document.getElementById("overlayTag");
+  var overlayLead = document.getElementById("overlayLead");
+  var overlayRules = document.getElementById("overlayRules");
+  var overlayButton = document.getElementById("overlayButton");
+
+  var W = 0;
+  var H = 0;
+  var DPR = 1;
+  var scale = 1;
+  var pivot = { x:0, y:0 };
+  var rMin = 100;
+  var rMax = 300;
+  var range = 200;
+
+  var A_MIN = -140 * Math.PI / 180;
+  var A_MAX = -40 * Math.PI / 180;
+  var ANGULAR_SPEED = (A_MAX - A_MIN) / 7.2;
+
+  var state = "ready";
+  var held = false;
+  var angle = A_MIN;
+  var direction = 1;
+  var radiusQ = 0.62;
+  var score = 0;
+  var cleared = 0;
+  var perfects = 0;
+  var lives = 3;
+  var creases = 0;
+  var hoop = null;
+  var particles = [];
+  var ringEffects = [];
+  var rivals = [];
+  var gameTime = 0;
+  var rivalTimer = 3;
+  var lastTime = 0;
+  var toastUntil = 0;
+  var flash = 0;
+  var shake = 0;
+  var jerk = 0;
+  var endTimer = 0;
+  var endResult = "";
+  var collisionCooldown = 0;
+  var audioCtx = null;
+
+  function clamp(v, lo, hi) {
+    return Math.max(lo, Math.min(hi, v));
+  }
+
+  function randomBetween(a, b) {
+    return a + Math.random() * (b - a);
+  }
+
+  function resize() {
+    W = Math.max(1, window.innerWidth);
+    H = Math.max(1, window.innerHeight);
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    scale = clamp(Math.min(W, H) / 650, 0.68, 1.35);
+    pivot.x = W * 0.5;
+    pivot.y = H * 0.88;
+
+    rMax = Math.min(H * 0.67, W * 0.72);
+    rMin = Math.max(78 * scale, rMax * 0.42);
+    if (rMax < rMin + 55) {
+      rMin = rMax * 0.38;
+    }
+    range = Math.max(1, rMax - rMin);
+  }
+
+  function radiusFromQ(q) {
+    return rMin + clamp(q, 0, 1) * range;
+  }
+
+  function polarPosition(a, q) {
+    var r = radiusFromQ(q);
+    return {
+      x:pivot.x + Math.cos(a) * r,
+      y:pivot.y + Math.sin(a) * r
+    };
+  }
+
+  function hoopQNow(target) {
+    if (!target) {
+      return 0.5;
+    }
+    var q = target.baseQ;
+    if (target.sway > 0) {
+      q += Math.sin(gameTime * 1.45 + target.phase) * target.sway;
+    }
+    return clamp(q, 0.06, 0.96);
+  }
+
+  function updateHud() {
+    scoreEl.textContent = String(score);
+    hoopsEl.textContent = cleared + "/18";
+    perfectsEl.textContent = String(perfects);
+    for (var i = 0; i < bowEls.length; i++) {
+      if (i < lives) {
+        bowEls[i].classList.remove("gone");
+      } else {
+        bowEls[i].classList.add("gone");
+      }
+    }
+  }
+
+  function showOverlay(title, tag, lead, rules, button) {
+    overlayTitle.textContent = title;
+    overlayTag.textContent = tag;
+    overlayLead.textContent = lead;
+    overlayRules.textContent = rules;
+    overlayButton.textContent = button;
+    overlay.classList.remove("hidden");
+  }
+
+  function hideOverlay() {
+    overlay.classList.add("hidden");
+  }
+
+  function showToast(main, sub, kind, duration) {
+    toastMain.textContent = main;
+    toastSub.textContent = sub;
+    toast.className = "";
+    if (kind) {
+      toast.classList.add(kind);
+    }
+    toast.classList.add("show");
+    toastUntil = gameTime + duration;
+  }
+
+  function initAudio() {
+    if (audioCtx) {
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return;
+    }
+    var AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) {
+      return;
+    }
+    try {
+      audioCtx = new AudioCtor();
+    } catch (e) {
+      audioCtx = null;
+    }
+  }
+
+  function tone(type, startFreq, endFreq, duration, volume, delay) {
+    if (!audioCtx) {
+      return;
+    }
+    var now = audioCtx.currentTime + (delay || 0);
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), now + duration);
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.02);
+  }
+
+  function noiseBurst(duration, volume, delay) {
+    if (!audioCtx) {
+      return;
+    }
+    var sampleRate = audioCtx.sampleRate;
+    var length = Math.floor(sampleRate * duration);
+    var buffer = audioCtx.createBuffer(1, length, sampleRate);
+    var data = buffer.getChannelData(0);
+    for (var i = 0; i < length; i++) {
+      var falloff = 1 - i / length;
+      data[i] = (Math.random() * 2 - 1) * falloff * falloff;
+    }
+    var src = audioCtx.createBufferSource();
+    var gain = audioCtx.createGain();
+    src.buffer = buffer;
+    gain.gain.value = volume;
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
+    src.start(audioCtx.currentTime + (delay || 0));
+  }
+
+  function soundClap() {
+    noiseBurst(0.07, 0.16, 0);
+    noiseBurst(0.06, 0.10, 0.055);
+    tone("sine", 520, 430, 0.09, 0.04, 0);
+  }
+
+  function soundPerfect() {
+    soundClap();
+    tone("sine", 880, 880, 0.28, 0.11, 0.04);
+    tone("sine", 1320, 1320, 0.34, 0.08, 0.12);
+    tone("triangle", 1760, 1760, 0.3, 0.045, 0.19);
+  }
+
+  function soundSnag() {
+    tone("sawtooth", 170, 58, 0.43, 0.15, 0);
+    tone("triangle", 92, 48, 0.37, 0.12, 0.03);
+  }
+
+  function soundRattle() {
+    noiseBurst(0.18, 0.08, 0);
+    tone("square", 180, 145, 0.12, 0.025, 0);
+  }
+
+  function startGame() {
+    state = "running";
+    angle = A_MIN;
+    direction = 1;
+    radiusQ = 0.62;
+    score = 0;
+    cleared = 0;
+    perfects = 0;
+    lives = 3;
+    creases = 0;
+    particles = [];
+    ringEffects = [];
+    rivals = [];
+    gameTime = 0;
+    rivalTimer = 2.8;
+    toastUntil = 0;
+    flash = 0;
+    shake = 0;
+    jerk = 0;
+    endTimer = 0;
+    endResult = "";
+    collisionCooldown = 0;
+    toast.className = "";
+    hideOverlay();
+    updateHud();
+    spawnHoop();
+  }
+
+  function spawnHoop() {
+    if (cleared >= 18 || state !== "running") {
+      hoop = null;
+      return;
+    }
+
+    var ahead = randomBetween(0.35, 0.54);
+    var boundary = direction > 0 ? A_MAX : A_MIN;
+    var remaining = Math.abs(boundary - angle);
+    var targetAngle;
+    var expectedDirection;
+    var travel;
+
+    if (remaining > ahead + 0.09) {
+      targetAngle = angle + direction * ahead;
+      expectedDirection = direction;
+      travel = ahead;
+    } else {
+      expectedDirection = -direction;
+      targetAngle = boundary - direction * ahead;
+      travel = remaining + ahead;
+    }
+
+    var timeAvailable = travel / ANGULAR_SPEED;
+    var inwardReach = 0.57 * timeAvailable * 0.82;
+    var outwardReach = 0.40 * timeAvailable * 0.82;
+    var low = Math.max(0.08, radiusQ - inwardReach);
+    var high = Math.min(0.94, radiusQ + outwardReach);
+
+    if (high < low + 0.04) {
+      low = clamp(radiusQ - 0.05, 0.08, 0.89);
+      high = clamp(radiusQ + 0.05, low + 0.03, 0.94);
+    }
+
+    var wide = cleared < 6;
+    var late = cleared >= 12;
+    var outer = wide ? 45 * scale : (late ? 32 * scale : 38 * scale);
+    var sway = wide ? 0 : (late ? 0.052 : 0.028);
+
+    hoop = {
+      angle:targetAngle,
+      expectedDirection:expectedDirection,
+      baseQ:randomBetween(low, high),
+      sway:sway,
+      phase:Math.random() * Math.PI * 2,
+      outer:outer,
+      wide:wide,
+      late:late
+    };
+  }
+
+  function createRibbons(pos, gold) {
+    var colors = gold ?
+      ["#ffd33d", "#fff4a4", "#ff9d21", "#ffffff"] :
+      ["#f05a70", "#20b8ae", "#ffd33d", "#ffffff", "#7656d6"];
+
+    for (var i = 0; i < 23; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var speed = randomBetween(55, 185) * scale;
+      particles.push({
+        type:"ribbon",
+        x:pos.x,
+        y:pos.y,
+        vx:Math.cos(a) * speed,
+        vy:Math.sin(a) * speed - 20 * scale,
+        life:randomBetween(0.55, 1.05),
+        maxLife:1.05,
+        rot:Math.random() * Math.PI,
+        vr:randomBetween(-8, 8),
+        color:colors[Math.floor(Math.random() * colors.length)],
+        size:randomBetween(4, 8) * scale
+      });
+    }
+  }
+
+  function detachBow(pos) {
+    particles.push({
+      type:"bow",
+      x:pos.x,
+      y:pos.y,
+      vx:randomBetween(-80, 80) * scale,
+      vy:randomBetween(-145, -80) * scale,
+      life:1.65,
+      maxLife:1.65,
+      rot:Math.random() * 2,
+      vr:randomBetween(-6, 6),
+      color:"#ee536d",
+      size:11 * scale
+    });
+  }
+
+  function addRingEffect(type, oldHoop, oldQ) {
+    ringEffects.push({
+      type:type,
+      angle:oldHoop.angle,
+      q:oldQ,
+      outer:oldHoop.outer,
+      life:type === "near" ? 0.82 : 0.52,
+      maxLife:type === "near" ? 0.82 : 0.52,
+      phase:Math.random() * 5
+    });
+  }
+
+  function snagAt(pos, source) {
+    if (state !== "running" || collisionCooldown > 0) {
+      return;
+    }
+    collisionCooldown = 0.75;
+    lives--;
+    creases++;
+    shake = 0.55;
+    jerk = 0.5;
+    flash = Math.max(flash, 0.22);
+    detachBow(pos);
+    soundSnag();
+    showToast("SNAG! BOW LOST", source === "RIVAL" ? "Rival kite clipped the tail" : "The hoop caught the kite", "bad", 1.05);
+    updateHud();
+
+    if (lives <= 0) {
+      state = "ending";
+      endTimer = 0.85;
+      endResult = "lost";
+      hoop = null;
+    }
+  }
+
+  function evaluateHoop() {
+    if (!hoop || state !== "running") {
+      return;
+    }
+
+    var old = hoop;
+    var qCenter = hoopQNow(old);
+    var pos = polarPosition(old.angle, qCenter);
+    var radialDifference = Math.abs(radiusQ - qCenter) * range;
+    var kiteAllowance = 11 * scale;
+    var clearRadius = Math.max(14 * scale, old.outer - kiteAllowance);
+    var perfectRadius = 7.5 * scale;
+    var collisionEdge = old.outer + 10 * scale;
+    var nearEdge = old.outer + 27 * scale;
+
+    hoop = null;
+
+    if (radialDifference <= clearRadius) {
+      var perfect = radialDifference <= perfectRadius;
+      cleared++;
+      score += 1;
+
+      if (perfect) {
+        perfects++;
+        score += 2;
+        flash = 0.46;
+        createRibbons(pos, true);
+        soundPerfect();
+        showToast("PERFECT! +3", "1 hoop point + 2 gold bonus", "gold", 1.15);
+      } else {
+        createRibbons(pos, false);
+        soundClap();
+        showToast("CLEAN PASS +1", "Hoop popped into ribbons", "", 0.85);
+      }
+
+      updateHud();
+
+      if (cleared >= 18) {
+        state = "ending";
+        endTimer = 1.0;
+        endResult = "won";
+        hoop = null;
+        return;
+      }
+    } else if (radialDifference <= collisionEdge) {
+      addRingEffect("snag", old, qCenter);
+      snagAt(pos, "HOOP");
+      if (state !== "running") {
+        return;
+      }
+    } else if (radialDifference <= nearEdge) {
+      addRingEffect("near", old, qCenter);
+      soundRattle();
+      showToast("CLOSE SCRAPE", "Tail curled around it — no bow lost", "", 0.9);
+    } else {
+      addRingEffect("miss", old, qCenter);
+      showToast("CAUGHT BY THE WIND", "No snag — line up the next hoop", "", 0.7);
+    }
+
+    if (state === "running") {
+      spawnHoop();
+    }
+  }
+
+  function spawnRival() {
+    var fromLeft = Math.random() < 0.5;
+    rivals.push({
+      angle:fromLeft ? A_MIN : A_MAX,
+      direction:fromLeft ? 1 : -1,
+      q:randomBetween(0.78, 0.96),
+      speed:randomBetween(0.15, 0.20),
+      delay:0.75,
+      alive:true,
+      stripe:Math.random() < 0.5 ? "#fff3a4" : "#f9c9d1"
+    });
+  }
+
+  function updateMovement(dt) {
+    var inwardSpeed = 0.57;
+    var outwardSpeed = 0.40;
+
+    if (held) {
+      radiusQ -= inwardSpeed * dt;
+    } else {
+      radiusQ += outwardSpeed * dt;
+    }
+    radiusQ = clamp(radiusQ, 0.02, 0.98);
+
+    var remainingMove = ANGULAR_SPEED * dt;
+    var guard = 0;
+
+    while (remainingMove > 0.000001 && guard < 8) {
+      guard++;
+      var boundary = direction > 0 ? A_MAX : A_MIN;
+      var distanceToBoundary = Math.abs(boundary - angle);
+      var distanceToTarget = Infinity;
+
+      if (hoop && hoop.expectedDirection === direction) {
+        var directedDistance = (hoop.angle - angle) * direction;
+        if (directedDistance >= -0.00001 && directedDistance <= distanceToBoundary + 0.00001) {
+          distanceToTarget = Math.max(0, directedDistance);
+        }
+      }
+
+      if (distanceToTarget <= remainingMove && distanceToTarget <= distanceToBoundary) {
+        angle += direction * distanceToTarget;
+        remainingMove -= distanceToTarget;
+        evaluateHoop();
+        if (state !== "running") {
+          return;
+        }
+        remainingMove = Math.max(0, remainingMove - 0.00001);
+      } else if (distanceToBoundary <= remainingMove) {
+        angle = boundary;
+        remainingMove -= distanceToBoundary;
+        direction *= -1;
+        remainingMove = Math.max(0, remainingMove - 0.00001);
+      } else {
+        angle += direction * remainingMove;
+        remainingMove = 0;
+      }
+    }
+  }
+
+  function updateRivals(dt) {
+    if (cleared >= 6) {
+      rivalTimer -= dt;
+      var maxRivals = cleared >= 14 ? 2 : 1;
+      if (rivalTimer <= 0 && rivals.length < maxRivals) {
+        spawnRival();
+        rivalTimer = cleared >= 12 ? randomBetween(3.4, 4.8) : randomBetween(4.6, 6.2);
+      }
+    }
+
+    var kitePos = polarPosition(angle, radiusQ);
+
+    for (var i = rivals.length - 1; i >= 0; i--) {
+      var rival = rivals[i];
+      if (rival.delay > 0) {
+        rival.delay -= dt;
+      } else {
+        rival.angle += rival.direction * rival.speed * dt;
+      }
+
+      if (rival.angle < A_MIN - 0.1 || rival.angle > A_MAX + 0.1 || !rival.alive) {
+        rivals.splice(i, 1);
+        continue;
+      }
+
+      if (rival.delay <= 0 && collisionCooldown <= 0) {
+        var rp = polarPosition(rival.angle, rival.q);
+        var dx = rp.x - kitePos.x;
+        var dy = rp.y - kitePos.y;
+        var hitDistance = 26 * scale;
+        if (dx * dx + dy * dy < hitDistance * hitDistance) {
+          rival.alive = false;
+          snagAt(kitePos, "RIVAL");
+        }
+      }
+    }
+  }
+
+  function updateEffects(dt) {
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 190 * scale * dt;
+      p.rot += p.vr * dt;
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+
+    for (var j = ringEffects.length - 1; j >= 0; j--) {
+      ringEffects[j].life -= dt;
+      if (ringEffects[j].life <= 0) {
+        ringEffects.splice(j, 1);
+      }
+    }
+
+    flash = Math.max(0, flash - dt);
+    shake = Math.max(0, shake - dt);
+    jerk = Math.max(0, jerk - dt);
+    collisionCooldown = Math.max(0, collisionCooldown - dt);
+
+    if (toastUntil > 0 && gameTime >= toastUntil) {
+      toast.classList.remove("show");
+      toastUntil = 0;
+    }
+  }
+
+  function update(dt) {
+    gameTime += dt;
+
+    if (state === "running") {
+      updateMovement(dt);
+      if (state === "running") {
+        updateRivals(dt);
+      }
+    }
+
+    updateEffects(dt);
+
+    if (state === "ending") {
+      endTimer -= dt;
+      if (endTimer <= 0) {
+        if (endResult === "won") {
+          state = "won";
+          showOverlay(
+            "Kite Behaved!",
+            "All 18 hoops cleared.",
+            "Final score: " + score + " • Perfect centers: " + perfects,
+            "The wind denies everything. Tap the screen or press Enter to fly again.",
+            "TAP TO FLY AGAIN"
+          );
+        } else {
+          state = "lost";
+          showOverlay(
+            "Tail Overboard",
+            "Three snags. Three bows gone.",
+            "You cleared " + cleared + " of 18 hoops and scored " + score + ".",
+            "Tap the screen or press Enter to blame the wind and restart.",
+            "TAP TO RETRY"
+          );
+        }
+      }
+    }
+
+    reelEl.classList.toggle("on", held && state === "running");
+  }
+
+  function drawCloud(x, y, size, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.28, 0, Math.PI * 2);
+    ctx.arc(x + size * 0.27, y - size * 0.12, size * 0.36, 0, Math.PI * 2);
+    ctx.arc(x + size * 0.58, y, size * 0.27, 0, Math.PI * 2);
+    ctx.arc(x + size * 0.3, y + size * 0.1, size * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBackground() {
+    var sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#69caf7");
+    sky.addColorStop(0.7, "#b9edff");
+    sky.addColorStop(1, "#edf9d1");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    var sunX = W * 0.83;
+    var sunY = H * 0.18;
+    var sunR = Math.max(27, Math.min(W, H) * 0.06);
+    var glow = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, sunR * 2.8);
+    glow.addColorStop(0, "rgba(255,244,132,.95)");
+    glow.addColorStop(0.42, "rgba(255,224,73,.55)");
+    glow.addColorStop(1, "rgba(255,224,73,0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunR * 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffe65c";
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawCloud(W * 0.09, H * 0.18, 86 * scale, 0.72);
+    drawCloud(W * 0.56, H * 0.12, 60 * scale, 0.54);
+    drawCloud(W * 0.72, H * 0.38, 75 * scale, 0.44);
+
+    var hillY = H * 0.81;
+    ctx.fillStyle = "#73c96a";
+    ctx.beginPath();
+    ctx.moveTo(0, hillY);
+    ctx.quadraticCurveTo(W * 0.2, hillY - H * 0.07, W * 0.46, hillY);
+    ctx.quadraticCurveTo(W * 0.74, hillY - H * 0.09, W, hillY - H * 0.01);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#48a94e";
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.88);
+    ctx.quadraticCurveTo(W * 0.27, H * 0.82, W * 0.54, H * 0.9);
+    ctx.quadraticCurveTo(W * 0.78, H * 0.84, W, H * 0.9);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+
+    drawTree(W * 0.08, H * 0.84, 0.8 * scale);
+    drawTree(W * 0.9, H * 0.82, 1.0 * scale);
+    drawTree(W * 0.2, H * 0.88, 0.55 * scale);
+
+    ctx.strokeStyle = "rgba(255,255,255,.35)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.62, H);
+    ctx.quadraticCurveTo(W * 0.56, H * 0.9, W * 0.66, H * 0.83);
+    ctx.stroke();
+  }
+
+  function drawTree(x, y, s) {
+    ctx.fillStyle = "#81512f";
+    ctx.fillRect(x - 5 * s, y - 36 * s, 10 * s, 39 * s);
+    ctx.fillStyle = "#2c8f48";
+    ctx.beginPath();
+    ctx.arc(x, y - 48 * s, 25 * s, 0, Math.PI * 2);
+    ctx.arc(x - 18 * s, y - 40 * s, 18 * s, 0, Math.PI * 2);
+    ctx.arc(x + 17 * s, y - 39 * s, 20 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHoopAt(pos, outer, alpha, shakeAmount, label, centerVisible) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    var sx = shakeAmount ? Math.sin(gameTime * 48) * shakeAmount : 0;
+    var sy = shakeAmount ? Math.cos(gameTime * 39) * shakeAmount * 0.45 : 0;
+    ctx.translate(pos.x + sx, pos.y + sy);
+
+    ctx.shadowColor = "rgba(45,85,108,.25)";
+    ctx.shadowBlur = 7 * scale;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 9 * scale;
+    ctx.beginPath();
+    ctx.arc(0, 0, outer, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    var ringGradient = ctx.createLinearGradient(-outer, -outer, outer, outer);
+    ringGradient.addColorStop(0, "#ff6572");
+    ringGradient.addColorStop(0.3, "#ffcc3d");
+    ringGradient.addColorStop(0.58, "#25bcae");
+    ringGradient.addColorStop(0.82, "#7962d8");
+    ringGradient.addColorStop(1, "#ff6572");
+    ctx.strokeStyle = ringGradient;
+    ctx.lineWidth = 5 * scale;
+    ctx.beginPath();
+    ctx.arc(0, 0, outer, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (centerVisible) {
+      ctx.fillStyle = "rgba(255,216,45,.18)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 13 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(240,165,12,.7)";
+      ctx.lineWidth = 1.5 * scale;
+      ctx.beginPath();
+      ctx.arc(0, 0, 8 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffd42f";
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.8 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = "900 " + Math.max(9, 10 * scale) + "px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(92,77,17,.85)";
+      ctx.fillText("+2", 0, -outer - 7 * scale);
+    }
+
+    if (label) {
+      ctx.font = "900 " + Math.max(9, 10 * scale) + "px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "rgba(40,66,82,.75)";
+      ctx.fillText(label, 0, outer + 9 * scale);
+    }
+    ctx.restore();
+  }
+
+  function drawActiveHoop() {
+    if (!hoop) {
+      return;
+    }
+    var q = hoopQNow(hoop);
+    var pos = polarPosition(hoop.angle, q);
+    var label = hoop.wide ? "WIDE • STILL" : (hoop.late ? "NARROW • SWAY" : "SWAY");
+    drawHoopAt(pos, hoop.outer, 1, 0, label, true);
+
+    if (hoop.sway > 0) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(43,91,112,.38)";
+      ctx.lineWidth = 1.5 * scale;
+      ctx.setLineDash([4 * scale, 5 * scale]);
+      var p1 = polarPosition(hoop.angle, clamp(hoop.baseQ - hoop.sway, 0, 1));
+      var p2 = polarPosition(hoop.angle, clamp(hoop.baseQ + hoop.sway, 0, 1));
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawRingEffects(kitePos) {
+    for (var i = 0; i < ringEffects.length; i++) {
+      var e = ringEffects[i];
+      var ratio = e.life / e.maxLife;
+      var pos = polarPosition(e.angle, e.q);
+      drawHoopAt(pos, e.outer, ratio * 0.75, e.type === "miss" ? 0 : 4 * scale, "", false);
+
+      if (e.type === "near") {
+        ctx.save();
+        ctx.globalAlpha = ratio * 0.8;
+        ctx.strokeStyle = "#ed5d72";
+        ctx.lineWidth = 2.5 * scale;
+        ctx.beginPath();
+        ctx.moveTo(kitePos.x, kitePos.y);
+        ctx.bezierCurveTo(
+          kitePos.x - 20 * scale,
+          kitePos.y + 35 * scale,
+          pos.x + e.outer * 1.2,
+          pos.y + e.outer * 0.8,
+          pos.x,
+          pos.y + e.outer
+        );
+        ctx.arc(pos.x, pos.y, e.outer * 0.78, Math.PI / 2, Math.PI * 2.25);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  function drawString(kitePos) {
+    ctx.save();
+    ctx.strokeStyle = jerk > 0 ? "#9c4d4d" : "rgba(66,61,55,.75)";
+    ctx.lineWidth = (jerk > 0 ? 2.4 : 1.5) * scale;
+    ctx.beginPath();
+    ctx.moveTo(pivot.x, pivot.y);
+
+    if (jerk > 0) {
+      var segments = 9;
+      for (var i = 1; i < segments; i++) {
+        var t = i / segments;
+        var x = pivot.x + (kitePos.x - pivot.x) * t;
+        var y = pivot.y + (kitePos.y - pivot.y) * t;
+        var nx = -(kitePos.y - pivot.y);
+        var ny = kitePos.x - pivot.x;
+        var nl = Math.sqrt(nx * nx + ny * ny) || 1;
+        var wiggle = Math.sin(i * 4.2 + gameTime * 45) * 4.5 * scale * Math.sin(t * Math.PI);
+        ctx.lineTo(x + nx / nl * wiggle, y + ny / nl * wiggle);
+      }
+    }
+
+    ctx.lineTo(kitePos.x, kitePos.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBow(x, y, rotation, size, alpha) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.scale(size, size);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#ee536d";
+    ctx.strokeStyle = "#9c2840";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-5, -6, -11, -5, -10, 2);
+    ctx.bezierCurveTo(-8, 7, -3, 5, 0, 1);
+    ctx.bezierCurveTo(3, 5, 8, 7, 10, 2);
+    ctx.bezierCurveTo(11, -5, 5, -6, 0, 0);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#ffd05a";
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKite(pos, rival, rivalDirection, stripe) {
+    var travelDirection = rival ? rivalDirection : direction;
+    var tx = -Math.sin(rival ? pos.angleValue : angle) * travelDirection;
+    var ty = Math.cos(rival ? pos.angleValue : angle) * travelDirection;
+    var nx = -ty;
+    var ny = tx;
+    var size = rival ? 0.78 * scale : scale;
+
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+
+    ctx.shadowColor = "rgba(34,73,95,.25)";
+    ctx.shadowBlur = 8 * scale;
+
+    ctx.beginPath();
+    ctx.moveTo(tx * 24 * size, ty * 24 * size);
+    ctx.lineTo(nx * 15 * size, ny * 15 * size);
+    ctx.lineTo(-tx * 19 * size, -ty * 19 * size);
+    ctx.lineTo(-nx * 15 * size, -ny * 15 * size);
+    ctx.closePath();
+    ctx.fillStyle = rival ? "#d8404f" : "#ffd13d";
+    ctx.fill();
+    ctx.strokeStyle = rival ? "#7c2630" : "#9e6e19";
+    ctx.lineWidth = 2 * scale;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(tx * 24 * size, ty * 24 * size);
+    ctx.lineTo(-tx * 19 * size, -ty * 19 * size);
+    ctx.moveTo(nx * 15 * size, ny * 15 * size);
+    ctx.lineTo(-nx * 15 * size, -ny * 15 * size);
+    ctx.strokeStyle = rival ? stripe : "#f08b35";
+    ctx.lineWidth = rival ? 4 * scale : 2 * scale;
+    ctx.stroke();
+
+    if (!rival) {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(tx * 5 * size + nx * 5 * size, ty * 5 * size + ny * 5 * size, 2.5 * scale, 0, Math.PI * 2);
+      ctx.arc(tx * 5 * size - nx * 5 * size, ty * 5 * size - ny * 5 * size, 2.5 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#8c5d2a";
+      ctx.lineWidth = 1.2 * scale;
+      ctx.beginPath();
+      ctx.arc(tx * 7 * size, ty * 7 * size, 7 * scale, 0.15, Math.PI - 0.15);
+      ctx.stroke();
+
+      if (creases > 0) {
+        ctx.strokeStyle = "rgba(110,72,43,.75)";
+        ctx.lineWidth = 1.3 * scale;
+        for (var c = 0; c < Math.min(3, creases); c++) {
+          var offset = (c - 1) * 5 * scale;
+          ctx.beginPath();
+          ctx.moveTo(nx * offset - tx * 5 * scale, ny * offset - ty * 5 * scale);
+          ctx.lineTo(nx * (offset + 4 * scale) + tx * 9 * scale, ny * (offset + 4 * scale) + ty * 9 * scale);
+          ctx.stroke();
+        }
+      }
+    }
+
+    ctx.restore();
+
+    if (!rival) {
+      drawTail(pos, tx, ty, nx, ny);
+    }
+  }
+
+  function drawTail(pos, tx, ty, nx, ny) {
+    var startX = pos.x - tx * 17 * scale;
+    var startY = pos.y - ty * 17 * scale;
+    ctx.save();
+    ctx.strokeStyle = "#df5067";
+    ctx.lineWidth = 2.2 * scale;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+
+    for (var i = 1; i <= 14; i++) {
+      var d = i * 5.2 * scale;
+      var wiggle = Math.sin(gameTime * 5 + i * 0.8) * 4.2 * scale;
+      var x = startX - tx * d + nx * wiggle;
+      var y = startY - ty * d + ny * wiggle;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    for (var b = 0; b < lives; b++) {
+      var bd = (25 + b * 20) * scale;
+      var bw = Math.sin(gameTime * 5 + bd * 0.11) * 4 * scale;
+      var bx = startX - tx * bd + nx * bw;
+      var by = startY - ty * bd + ny * bw;
+      drawBow(bx, by, Math.atan2(ty, tx) + Math.PI / 2, scale, 1);
+    }
+    ctx.restore();
+  }
+
+  function drawRivals() {
+    for (var i = 0; i < rivals.length; i++) {
+      var r = rivals[i];
+      var pos = polarPosition(r.angle, r.q);
+      pos.angleValue = r.angle;
+
+      if (r.delay > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.55 + Math.sin(gameTime * 16) * 0.3;
+        ctx.fillStyle = "#a92f3d";
+        ctx.font = "900 " + Math.max(10, 12 * scale) + "px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("RIVAL INCOMING!", pos.x, pos.y - 28 * scale);
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(164,39,54,.38)";
+      ctx.lineWidth = 2 * scale;
+      ctx.setLineDash([5 * scale, 5 * scale]);
+      var trail = polarPosition(r.angle - r.direction * 0.25, r.q);
+      ctx.beginPath();
+      ctx.moveTo(trail.x, trail.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      ctx.restore();
+
+      drawKite(pos, true, r.direction, r.stripe);
+
+      ctx.save();
+      ctx.fillStyle = "rgba(132,27,40,.88)";
+      ctx.font = "900 " + Math.max(8, 9 * scale) + "px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("RIVAL", pos.x, pos.y - 25 * scale);
+      ctx.restore();
+    }
+  }
+
+  function drawSpool() {
+    ctx.save();
+    ctx.translate(pivot.x, pivot.y);
+    ctx.fillStyle = "#f3b985";
+    ctx.beginPath();
+    ctx.arc(0, 2 * scale, 11 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#a76c48";
+    ctx.lineWidth = 2 * scale;
+    ctx.stroke();
+
+    ctx.fillStyle = "#456fa4";
+    ctx.fillRect(-16 * scale, 10 * scale, 32 * scale, 28 * scale);
+
+    ctx.fillStyle = "#ef6268";
+    ctx.beginPath();
+    ctx.arc(0, 0, 8 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff4c8";
+    ctx.beginPath();
+    ctx.arc(0, 0, 3 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var alpha = clamp(p.life / p.maxLife, 0, 1);
+      if (p.type === "bow") {
+        drawBow(p.x, p.y, p.rot, p.size / 11, alpha);
+      } else {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size * 0.5, -p.size * 0.22, p.size, p.size * 0.44);
+        ctx.restore();
+      }
+    }
+  }
+
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+
+    var shakeX = shake > 0 ? (Math.random() * 2 - 1) * 7 * scale * (shake / 0.55) : 0;
+    var shakeY = shake > 0 ? (Math.random() * 2 - 1) * 5 * scale * (shake / 0.55) : 0;
+
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+
+    drawActiveHoop();
+
+    var kitePos = polarPosition(angle, radiusQ);
+    drawRingEffects(kitePos);
+    drawRivals();
+    drawString(kitePos);
+    drawKite(kitePos, false, direction, "");
+    drawSpool();
+    drawParticles();
+
+    ctx.restore();
+
+    if (flash > 0) {
+      var maxFlash = endResult === "lost" ? 0.22 : 0.46;
+      var a = clamp(flash / maxFlash, 0, 1);
+      ctx.fillStyle = endResult === "lost" || lives < 3 && flash <= 0.22 ?
+        "rgba(235,77,84," + (a * 0.16) + ")" :
+        "rgba(255,225,68," + (a * 0.24) + ")";
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function frame(timestamp) {
+    if (!lastTime) {
+      lastTime = timestamp;
+    }
+    var dt = Math.min(0.034, Math.max(0, (timestamp - lastTime) / 1000));
+    lastTime = timestamp;
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  function pressStart(e) {
+    if (e && e.cancelable) {
+      e.preventDefault();
+    }
+    initAudio();
+
+    if (state === "ready" || state === "won" || state === "lost") {
+      startGame();
+    }
+    if (state === "running") {
+      held = true;
+    }
+  }
+
+  function pressEnd(e) {
+    if (e && e.cancelable) {
+      e.preventDefault();
+    }
+    held = false;
+  }
+
+  if ("PointerEvent" in window) {
+    document.addEventListener("pointerdown", pressStart, { passive:false });
+    document.addEventListener("pointerup", pressEnd, { passive:false });
+    document.addEventListener("pointercancel", pressEnd, { passive:false });
+  } else {
+    document.addEventListener("touchstart", pressStart, { passive:false });
+    document.addEventListener("touchend", pressEnd, { passive:false });
+    document.addEventListener("touchcancel", pressEnd, { passive:false });
+    document.addEventListener("mousedown", pressStart, false);
+    document.addEventListener("mouseup", pressEnd, false);
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+      initAudio();
+      if (state === "ready" || state === "won" || state === "lost") {
+        startGame();
+      }
+      if (state === "running") {
+        held = true;
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      initAudio();
+      startGame();
+      held = false;
+    }
+  }, false);
+
+  document.addEventListener("keyup", function (e) {
+    if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+      held = false;
+    }
+  }, false);
+
+  window.addEventListener("blur", function () {
+    held = false;
+  });
+
+  window.addEventListener("resize", resize, false);
+
+  resize();
+  updateHud();
+  requestAnimationFrame(frame);
+}());
+</script>
+</body>
+</html>
