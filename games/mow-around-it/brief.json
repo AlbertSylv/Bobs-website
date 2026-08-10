@@ -1,0 +1,11 @@
+{
+  "title": "Mow Around It",
+  "slug": "mow-around-it",
+  "tagline": "Cut the grass. The daisies live here.",
+  "concept": "Steer a small mower across a sunny lawn, clearing enough grass without chewing up the flowers.",
+  "core_loop": "Pick a strip of long grass, steer through it for a few seconds, then stop and turn before hitting a daisy; neat cuts and risky close passes make each new strip satisfying.",
+  "mechanics": "Controls: Drag anywhere to steer and release to stop; use arrow keys or WASD on a keyboard.; Win/lose: Fill the visible cut meter to finish the lawn; hitting three daisies means an instant retry.; Scoring: Earn points for every patch cut, extra points for passing close to flowers, and a clean-lawn bonus for finishing without a hit.",
+  "feedback": "Cut grass becomes a dark, tidy stripe and the meter fills with a soft mower hum; a close pass makes the daisy lean away and gives a bright ping; a hit sprays petals, jolts the mower, and visibly crosses out one of three flower marks.",
+  "difficulty": "The first lawns have wide open strips, sparse flowers, and instant stopping; later lawns add rocks, curved beds, narrow gaps, and higher cut targets that force careful close passes without adding a timer.",
+  "mobile": true
+}

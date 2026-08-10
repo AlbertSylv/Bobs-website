@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Mow Around It</title>
+  <style>
+    html, body { margin:0; height:100%; }
+    * { box-sizing:border-box; }
+    body {
+      overflow:hidden;
+      background:#f6d978;
+      color:#173f2c;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
+    }
+    button { font:inherit; }
+    #game {
+      position:relative;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,.55), transparent 28%),
+        linear-gradient(#f7df87, #e9c96d);
+    }
+    canvas {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      touch-action:none;
+    }
+    #hud {
+      position:absolute;
+      z-index:3;
+      top:0;
+      left:0;
+      right:0;
+      padding:10px max(12px, env(safe-area-inset-right)) 7px max(12px, env(safe-area-inset-left));
+      pointer-events:none;
+      background:linear-gradient(to bottom, rgba(255,246,198,.97), rgba(255,246,198,.88) 76%, rgba(255,246,198,0));
+      text-shadow:0 1px rgba(255,255,255,.75);
+    }
+    .topline {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand {
+      min-width:0;
+      line-height:1;
+    }
+    .brand h1 {
+      margin:0;
+      font-size:clamp(22px, 4.1vw, 36px);
+      letter-spacing:-1.2px;
+      color:#17452f;
+    }
+    .tagline {
+      margin-top:5px;
+      font-size:clamp(11px, 1.65vw, 15px);
+      font-weight:700;
+      color:#53703b;
+      white-space:nowrap;
+    }
+    .actions {
+      display:flex;
+      gap:7px;
+      pointer-events:auto;
+      flex:0 0 auto;
+    }
+    .icon-button {
+      min-width:41px;
+      height:38px;
+      border:2px solid rgba(37,91,55,.22);
+      border-radius:13px;
+      padding:0 10px;
+      color:#215637;
+      background:rgba(255,255,255,.72);
+      box-shadow:0 3px 0 rgba(78,101,44,.12);
+      font-weight:900;
+      cursor:pointer;
+    }
+    .icon-button:active {
+      transform:translateY(2px);
+      box-shadow:0 1px 0 rgba(78,101,44,.12);
+    }
+    .hudrow {
+      display:grid;
+      grid-template-columns:minmax(94px, .72fr) minmax(160px, 2fr) auto;
+      align-items:center;
+      gap:10px;
+      margin-top:7px;
+    }
+    .stat {
+      font-size:12px;
+      line-height:1.15;
+      font-weight:800;
+      color:#5a733e;
+      white-space:nowrap;
+    }
+    .stat strong {
+      display:block;
+      color:#173f2c;
+      font-size:clamp(14px, 2vw, 18px);
+      margin-top:1px;
+    }
+    .meter-wrap { min-width:0; }
+    .meter-label {
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:3px;
+      color:#47653b;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+    }
+    .meter {
+      height:15px;
+      overflow:hidden;
+      border:2px solid rgba(29,76,45,.24);
+      border-radius:999px;
+      background:rgba(255,255,255,.64);
+      box-shadow:inset 0 2px 4px rgba(29,76,45,.12);
+    }
+    #meterFill {
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, #2f7540, #73b348);
+      box-shadow:inset 0 2px rgba(255,255,255,.2);
+      transition:width .12s linear;
+    }
+    .flower-box {
+      text-align:right;
+    }
+    .flower-label {
+      color:#647641;
+      font-size:10px;
+      font-weight:900;
+      text-transform:uppercase;
+    }
+    #flowerMarks {
+      display:flex;
+      justify-content:flex-end;
+      gap:5px;
+      height:25px;
+    }
+    .flower-mark {
+      position:relative;
+      display:inline-grid;
+      place-items:center;
+      width:22px;
+      color:#fff;
+      font-size:22px;
+      line-height:22px;
+      filter:drop-shadow(0 1px 1px rgba(45,86,44,.35));
+      -webkit-text-stroke:1px #e3a93e;
+    }
+    .flower-mark.hit {
+      color:#c8b59c;
+      opacity:.72;
+      filter:none;
+    }
+    .flower-mark.hit::after {
+      content:"";
+      position:absolute;
+      width:25px;
+      height:3px;
+      border-radius:3px;
+      background:#d34d42;
+      transform:rotate(-43deg);
+      box-shadow:0 1px rgba(255,255,255,.8);
+    }
+    #how {
+      margin-top:5px;
+      overflow:hidden;
+      color:#4e6c3d;
+      font-size:clamp(10px, 1.4vw, 12px);
+      font-weight:700;
+      text-align:center;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    #overlay {
+      position:absolute;
+      z-index:8;
+      inset:0;
+      display:grid;
+      place-items:center;
+      padding:20px;
+      background:rgba(27,61,39,.28);
+      backdrop-filter:blur(3px);
+      -webkit-backdrop-filter:blur(3px);
+      transition:opacity .16s ease;
+    }
+    #overlay.hidden {
+      opacity:0;
+      pointer-events:none;
+    }
+    .card {
+      width:min(470px, 92vw);
+      padding:25px 24px 22px;
+      border:3px solid rgba(60,99,52,.18);
+      border-radius:25px;
+      background:#fff8d9;
+      box-shadow:0 18px 55px rgba(30,65,37,.28), inset 0 2px white;
+      text-align:center;
+    }
+    .card .daisy {
+      font-size:48px;
+      line-height:1;
+      color:#fff;
+      -webkit-text-stroke:2px #e8b53c;
+      filter:drop-shadow(0 3px 0 rgba(74,104,48,.18));
+    }
+    #overlayTitle {
+      margin:8px 0 7px;
+      color:#194b33;
+      font-size:clamp(27px, 7vw, 42px);
+      line-height:1;
+      letter-spacing:-1px;
+    }
+    #overlayText {
+      margin:0 auto 18px;
+      max-width:390px;
+      color:#567044;
+      font-size:15px;
+      line-height:1.45;
+      font-weight:650;
+    }
+    #primaryButton {
+      min-width:170px;
+      border:0;
+      border-radius:15px;
+      padding:13px 22px;
+      color:white;
+      background:linear-gradient(#4e994d, #33753e);
+      box-shadow:0 5px 0 #235d34, 0 8px 18px rgba(29,82,45,.22);
+      font-weight:950;
+      letter-spacing:.02em;
+      cursor:pointer;
+    }
+    #primaryButton:active {
+      transform:translateY(3px);
+      box-shadow:0 2px 0 #235d34;
+    }
+    #live {
+      position:absolute;
+      width:1px;
+      height:1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+    }
+    @media (max-width:540px) {
+      #hud { padding-top:7px; }
+      .tagline { max-width:190px; overflow:hidden; text-overflow:ellipsis; }
+      .hudrow { grid-template-columns:78px minmax(115px,1fr) 70px; gap:6px; }
+      .icon-button { height:34px; min-width:36px; padding:0 8px; }
+      #how { margin-top:3px; }
+    }
+    @media (max-height:450px) {
+      .tagline { display:none; }
+      .hudrow { margin-top:3px; }
+      #how { margin-top:2px; }
+      .meter { height:12px; }
+      .flower-label { display:none; }
+      #flowerMarks { height:21px; }
+      .flower-mark { font-size:19px; height:20px; }
+    }
+  </style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Mow Around It game lawn"></canvas>
+
+  <div id="hud">
+    <div class="topline">
+      <div class="brand">
+        <h1>Mow Around It</h1>
+        <div class="tagline">Cut the grass. The daisies live here.</div>
+      </div>
+      <div class="actions">
+        <button id="muteButton" class="icon-button" type="button" aria-label="Mute sound">♪</button>
+        <button id="restartButton" class="icon-button" type="button" aria-label="Restart current lawn">↻ Lawn</button>
+      </div>
+    </div>
+
+    <div class="hudrow">
+      <div class="stat">Score<strong id="score">0</strong></div>
+      <div class="meter-wrap">
+        <div class="meter-label">
+          <span id="levelLabel">Lawn 1 · Open Meadow</span>
+          <span id="meterText">0%</span>
+        </div>
+        <div class="meter"><div id="meterFill"></div></div>
+      </div>
+      <div class="flower-box">
+        <div class="flower-label">Flower hits</div>
+        <div id="flowerMarks" aria-label="Three flower hit marks">
+          <span class="flower-mark">✿</span>
+          <span class="flower-mark">✿</span>
+          <span class="flower-mark">✿</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="how">How to play: Drag in a direction and release to stop — or use Arrow keys / WASD. Avoid hitting daisies; three flower hits ends the lawn.</div>
+  </div>
+
+  <div id="overlay">
+    <div class="card">
+      <div class="daisy">✿</div>
+      <h2 id="overlayTitle">Mow Around It</h2>
+      <p id="overlayText">Fill the cut meter, steer around the daisies, and earn bright close-pass bonuses. Hitting any daisy adds a strike, and three flower hits ends the lawn.</p>
+      <button id="primaryButton" type="button">Start mowing</button>
+    </div>
+  </div>
+
+  <div id="live" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var hud = document.getElementById("hud");
+  var scoreEl = document.getElementById("score");
+  var meterFill = document.getElementById("meterFill");
+  var meterText = document.getElementById("meterText");
+  var levelLabel = document.getElementById("levelLabel");
+  var marks = document.querySelectorAll(".flower-mark");
+  var overlay = document.getElementById("overlay");
+  var overlayTitle = document.getElementById("overlayTitle");
+  var overlayText = document.getElementById("overlayText");
+  var primaryButton = document.getElementById("primaryButton");
+  var muteButton = document.getElementById("muteButton");
+  var restartButton = document.getElementById("restartButton");
+  var live = document.getElementById("live");
+
+  var w = 0;
+  var h = 0;
+  var dpr = 1;
+  var lawn = { x: 12, y: 110, w: 600, h: 400 };
+  var grid = null;
+  var level = 1;
+  var levelStartScore = 0;
+  var score = 0;
+  var hits = 0;
+  var cutCount = 0;
+  var requiredCut = 1;
+  var totalCuttable = 1;
+  var state = "intro";
+  var currentAction = null;
+  var particles = [];
+  var floaters = [];
+  var flowers = [];
+  var rocks = [];
+  var beds = [];
+  var lastTime = 0;
+  var shake = 0;
+  var jolt = 0;
+  var bumpCooldown = 0;
+  var movingAmount = 0;
+
+  var pointer = {
+    active: false,
+    id: null,
+    ax: 0,
+    ay: 0,
+    x: 0,
+    y: 0
+  };
+
+  var keys = {};
+  var mower = {
+    x: 0,
+    y: 0,
+    radius: 14,
+    angle: 0,
+    speed: 0
+  };
+
+  var levelData = [
+    {
+      name: "Open Meadow",
+      target: 0.58,
+      flowers: [[.31,.25],[.67,.23],[.49,.53],[.79,.69],[.29,.79]],
+      rocks: [],
+      beds: []
+    },
+    {
+      name: "Rock Garden",
+      target: 0.68,
+      flowers: [[.24,.22],[.51,.19],[.78,.25],[.34,.48],[.68,.51],[.24,.77],[.76,.79]],
+      rocks: [[.48,.36,1],[.57,.69,.9],[.84,.51,.75]],
+      beds: []
+    },
+    {
+      name: "Curved Beds",
+      target: 0.77,
+      flowers: [[.20,.22],[.43,.20],[.76,.19],[.29,.43],[.78,.45],[.20,.70],[.46,.76],[.70,.72],[.87,.65]],
+      rocks: [[.38,.56,.8],[.83,.31,.85]],
+      beds: [[.58,.44,.13,.095],[.63,.68,.10,.075]]
+    },
+    {
+      name: "Daisy Maze",
+      target: 0.86,
+      flowers: [[.19,.18],[.40,.19],[.66,.18],[.84,.25],[.27,.38],[.53,.37],[.77,.46],[.18,.61],[.42,.62],[.67,.69],[.86,.76]],
+      rocks: [[.34,.51,.75],[.60,.54,.85],[.79,.32,.72]],
+      beds: [[.50,.27,.11,.065],[.27,.75,.105,.075],[.72,.78,.12,.07]]
+    }
+  ];
+
+  var audioContext = null;
+  var humOsc = null;
+  var humGain = null;
+  var humFilter = null;
+  var muted = false;
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function roundedRectPath(c, x, y, width, height, radius) {
+    var r = Math.min(radius, width / 2, height / 2);
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + width - r, y);
+    c.quadraticCurveTo(x + width, y, x + width, y + r);
+    c.lineTo(x + width, y + height - r);
+    c.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    c.lineTo(x + r, y + height);
+    c.quadraticCurveTo(x, y + height, x, y + height - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.closePath();
+  }
+
+  function initAudio() {
+    if (audioContext) {
+      if (audioContext.state === "suspended") audioContext.resume();
+      return;
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioContext = new AC();
+    humOsc = audioContext.createOscillator();
+    humGain = audioContext.createGain();
+    humFilter = audioContext.createBiquadFilter();
+    humOsc.type = "sawtooth";
+    humOsc.frequency.value = 62;
+    humFilter.type = "lowpass";
+    humFilter.frequency.value = 260;
+    humGain.gain.value = 0.0001;
+    humOsc.connect(humFilter);
+    humFilter.connect(humGain);
+    humGain.connect(audioContext.destination);
+    humOsc.start();
+  }
+
+  function updateHum() {
+    if (!audioContext || !humGain || !humOsc) return;
+    var active = state === "playing" && movingAmount > 0.04 && !muted;
+    var target = active ? 0.033 + movingAmount * 0.012 : 0.0001;
+    humGain.gain.setTargetAtTime(target, audioContext.currentTime, 0.045);
+    humOsc.frequency.setTargetAtTime(61 + movingAmount * 19, audioContext.currentTime, 0.06);
+  }
+
+  function sound(type) {
+    if (muted) return;
+    initAudio();
+    if (!audioContext) return;
+
+    var osc = audioContext.createOscillator();
+    var gain = audioContext.createGain();
+    var now = audioContext.currentTime;
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    if (type === "ping") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(760, now);
+      osc.frequency.exponentialRampToValueAtTime(1250, now + 0.12);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.14, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.27);
+    } else if (type === "hit") {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(65, now + 0.23);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      osc.start(now);
+      osc.stop(now + 0.28);
+    } else if (type === "bonk") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(105, now);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    } else if (type === "win") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(660, now + 0.12);
+      osc.frequency.setValueAtTime(880, now + 0.24);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    }
+  }
+
+  function showOverlay(title, text, buttonText, action) {
+    overlayTitle.textContent = title;
+    overlayText.textContent = text;
+    primaryButton.textContent = buttonText;
+    currentAction = action;
+    overlay.classList.remove("hidden");
+  }
+
+  function hideOverlay() {
+    overlay.classList.add("hidden");
+  }
+
+  function announce(text) {
+    live.textContent = text;
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = score.toLocaleString();
+    var progress = requiredCut > 0 ? cutCount / requiredCut : 0;
+    var shown = Math.floor(clamp(progress, 0, 1) * 100);
+    meterFill.style.width = shown + "%";
+    meterText.textContent = shown + "%";
+    var data = levelData[level - 1];
+    levelLabel.textContent = "Lawn " + level + " · " + data.name;
+    for (var i = 0; i < marks.length; i++) {
+      if (i < hits) marks[i].classList.add("hit");
+      else marks[i].classList.remove("hit");
+    }
+  }
+
+  function snapshotGame() {
+    if (!grid) return null;
+    return {
+      lawn: { x: lawn.x, y: lawn.y, w: lawn.w, h: lawn.h },
+      cols: grid.cols,
+      rows: grid.rows,
+      cut: grid.cut.slice(0),
+      mowerX: (mower.x - lawn.x) / lawn.w,
+      mowerY: (mower.y - lawn.y) / lawn.h,
+      flowerStates: flowers.map(function (f) {
+        return { hit: f.hit, close: f.close };
+      })
+    };
+  }
+
+  function resizeCanvas() {
+    var old = snapshotGame();
+    w = Math.max(280, window.innerWidth);
+    h = Math.max(280, window.innerHeight);
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var hudBottom = hud.getBoundingClientRect().bottom;
+    var top = Math.max(91, hudBottom + 4);
+    if (top > h - 150) top = Math.max(72, h - 150);
+    lawn.x = 12;
+    lawn.y = top;
+    lawn.w = Math.max(256, w - 24);
+    lawn.h = Math.max(130, h - top - 12);
+
+    buildLevel(old);
+  }
+
+  function pointInsideRock(x, y, rock, extra) {
+    var rr = rock.r + extra;
+    var dx = x - rock.x;
+    var dy = y - rock.y;
+    return dx * dx + dy * dy < rr * rr;
+  }
+
+  function pointInsideBed(x, y, bed, extra) {
+    var rx = bed.rx + extra;
+    var ry = bed.ry + extra;
+    var dx = (x - bed.x) / rx;
+    var dy = (y - bed.y) / ry;
+    return dx * dx + dy * dy < 1;
+  }
+
+  function buildLevel(preserve) {
+    var data = levelData[level - 1];
+    var minSide = Math.min(lawn.w, lawn.h);
+    mower.radius = clamp(minSide * 0.034, 11, 16);
+
+    rocks = data.rocks.map(function (r) {
+      return {
+        x: lawn.x + r[0] * lawn.w,
+        y: lawn.y + r[1] * lawn.h,
+        r: clamp(minSide * 0.042 * r[2], 11, 22)
+      };
+    });
+
+    beds = data.beds.map(function (b) {
+      return {
+        x: lawn.x + b[0] * lawn.w,
+        y: lawn.y + b[1] * lawn.h,
+        rx: Math.max(25, lawn.w * b[2]),
+        ry: Math.max(14, lawn.h * b[3])
+      };
+    });
+
+    flowers = data.flowers.map(function (f, index) {
+      var oldState = preserve && preserve.flowerStates ? preserve.flowerStates[index] : null;
+      return {
+        x: lawn.x + f[0] * lawn.w,
+        y: lawn.y + f[1] * lawn.h,
+        r: clamp(minSide * 0.024, 7.5, 10.5),
+        hit: oldState ? oldState.hit : false,
+        close: oldState ? oldState.close : false,
+        lean: 0,
+        leanX: 0,
+        leanY: 0,
+        phase: index * 1.71
+      };
+    });
+
+    var cell = clamp(minSide / 42, 8, 13);
+    var cols = Math.max(12, Math.ceil(lawn.w / cell));
+    var rows = Math.max(8, Math.ceil(lawn.h / cell));
+    var cw = lawn.w / cols;
+    var ch = lawn.h / rows;
+    var size = cols * rows;
+    var cut = new Uint8Array(size);
+    var blocked = new Uint8Array(size);
+    totalCuttable = 0;
+    cutCount = 0;
+
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var index = y * cols + x;
+        var px = lawn.x + (x + 0.5) * cw;
+        var py = lawn.y + (y + 0.5) * ch;
+        var isBlocked = false;
+        var i;
+
+        for (i = 0; i < rocks.length; i++) {
+          if (pointInsideRock(px, py, rocks[i], 1)) {
+            isBlocked = true;
+            break;
+          }
+        }
+        if (!isBlocked) {
+          for (i = 0; i < beds.length; i++) {
+            if (pointInsideBed(px, py, beds[i], 0)) {
+              isBlocked = true;
+              break;
+            }
+          }
+        }
+        if (!isBlocked) {
+          for (i = 0; i < flowers.length; i++) {
+            var dx = px - flowers[i].x;
+            var dy = py - flowers[i].y;
+            if (dx * dx + dy * dy < flowers[i].r * flowers[i].r) {
+              isBlocked = true;
+              break;
+            }
+          }
+        }
+
+        if (isBlocked) {
+          blocked[index] = 1;
+        } else {
+          totalCuttable++;
+          if (preserve && preserve.cut && preserve.lawn) {
+            var nx = (px - lawn.x) / lawn.w;
+            var ny = (py - lawn.y) / lawn.h;
+            var ox = clamp(Math.floor(nx * preserve.cols), 0, preserve.cols - 1);
+            var oy = clamp(Math.floor(ny * preserve.rows), 0, preserve.rows - 1);
+            if (preserve.cut[oy * preserve.cols + ox]) {
+              cut[index] = 1;
+              cutCount++;
+            }
+          }
+        }
+      }
+    }
+
+    grid = {
+      cols: cols,
+      rows: rows,
+      cw: cw,
+      ch: ch,
+      cut: cut,
+      blocked: blocked
+    };
+
+    requiredCut = Math.max(1, Math.floor(totalCuttable * data.target));
+
+    if (preserve) {
+      mower.x = lawn.x + clamp(preserve.mowerX, .03, .97) * lawn.w;
+      mower.y = lawn.y + clamp(preserve.mowerY, .04, .96) * lawn.h;
+    } else {
+      mower.x = lawn.x + lawn.w * 0.09;
+      mower.y = lawn.y + lawn.h * 0.53;
+      mower.angle = 0;
+    }
+
+    particles.length = 0;
+    floaters.length = 0;
+    updateHUD();
+  }
+
+  function resetCurrentLawn() {
+    score = levelStartScore;
+    hits = 0;
+    pointer.active = false;
+    keys = {};
+    jolt = 0;
+    shake = 0;
+    buildLevel(null);
+    state = "playing";
+    hideOverlay();
+    announce("Lawn restarted.");
+    updateHUD();
+  }
+
+  function startGame() {
+    initAudio();
+    state = "playing";
+    hideOverlay();
+    keys = {};
+    announce("Mowing started.");
+  }
+
+  function obstacleAt(x, y) {
+    var i;
+    for (i = 0; i < rocks.length; i++) {
+      if (pointInsideRock(x, y, rocks[i], mower.radius * .72)) return true;
+    }
+    for (i = 0; i < beds.length; i++) {
+      if (pointInsideBed(x, y, beds[i], mower.radius * .7)) return true;
+    }
+    return false;
+  }
+
+  function addFloater(x, y, text, color) {
+    floaters.push({
+      x: x,
+      y: y,
+      text: text,
+      color: color,
+      life: 1,
+      maxLife: 1
+    });
+  }
+
+  function addGrassParticles(x, y, amount) {
+    for (var i = 0; i < amount; i++) {
+      particles.push({
+        x: x + (Math.random() - .5) * mower.radius,
+        y: y + (Math.random() - .5) * mower.radius,
+        vx: (Math.random() - .5) * 35,
+        vy: (Math.random() - .5) * 35,
+        life: .35 + Math.random() * .3,
+        maxLife: .65,
+        type: "grass",
+        color: Math.random() > .5 ? "#9bd360" : "#5d9f48",
+        size: 2 + Math.random() * 2
+      });
+    }
+  }
+
+  function addPetals(flower) {
+    var colors = ["#fffdf1", "#ffffff", "#f5e8d1", "#f6c949"];
+    for (var i = 0; i < 18; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var speed = 45 + Math.random() * 95;
+      particles.push({
+        x: flower.x,
+        y: flower.y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed,
+        life: .75 + Math.random() * .55,
+        maxLife: 1.3,
+        type: "petal",
+        color: colors[i % colors.length],
+        size: 3 + Math.random() * 3
+      });
+    }
+  }
+
+  function cutGrass() {
+    if (!grid) return;
+    var blade = mower.radius * 1.2;
+    var minX = clamp(Math.floor((mower.x - blade - lawn.x) / grid.cw), 0, grid.cols - 1);
+    var maxX = clamp(Math.floor((mower.x + blade - lawn.x) / grid.cw), 0, grid.cols - 1);
+    var minY = clamp(Math.floor((mower.y - blade - lawn.y) / grid.ch), 0, grid.rows - 1);
+    var maxY = clamp(Math.floor((mower.y + blade - lawn.y) / grid.ch), 0, grid.rows - 1);
+    var newlyCut = 0;
+
+    for (var y = minY; y <= maxY; y++) {
+      for (var x = minX; x <= maxX; x++) {
+        var index = y * grid.cols + x;
+        if (grid.cut[index] || grid.blocked[index]) continue;
+        var px = lawn.x + (x + .5) * grid.cw;
+        var py = lawn.y + (y + .5) * grid.ch;
+        var dx = px - mower.x;
+        var dy = py - mower.y;
+        if (dx * dx + dy * dy <= blade * blade) {
+          grid.cut[index] = 1;
+          cutCount++;
+          newlyCut++;
+        }
+      }
+    }
+
+    if (newlyCut > 0) {
+      score += newlyCut * 3;
+      if (Math.random() < .48) addGrassParticles(mower.x, mower.y, Math.min(4, newlyCut));
+      updateHUD();
+      if (cutCount >= requiredCut) finishLawn();
+    }
+  }
+
+  function hitFlower(flower) {
+    if (flower.hit || state !== "playing") return;
+    flower.hit = true;
+    hits++;
+    shake = .42;
+    jolt = .22;
+    addPetals(flower);
+    addFloater(flower.x, flower.y - 14, "DAISY HIT", "#cf433d");
+    sound("hit");
+    updateHUD();
+    announce("Daisy hit. " + hits + " of 3 flower marks crossed out.");
+
+    if (hits >= 3) {
+      state = "failed";
+      pointer.active = false;
+      movingAmount = 0;
+      showOverlay(
+        "Three daisies hit!",
+        "This lawn needs a do-over. Your score returns to the start of this lawn, and there is still no timer.",
+        "Retry lawn",
+        resetCurrentLawn
+      );
+    }
+  }
+
+  function closePass(flower, dx, dy, distance) {
+    if (flower.close || flower.hit || state !== "playing") return;
+    flower.close = true;
+    flower.lean = .85;
+    if (distance > 0) {
+      flower.leanX = dx / distance;
+      flower.leanY = dy / distance;
+    }
+    var bonus = 100 + level * 40;
+    score += bonus;
+    addFloater(flower.x, flower.y - 18, "CLOSE +" + bonus, "#fff06a");
+    sound("ping");
+    updateHUD();
+    announce("Close pass bonus, " + bonus + " points.");
+  }
+
+  function checkFlowers() {
+    for (var i = 0; i < flowers.length; i++) {
+      var flower = flowers[i];
+      if (flower.hit) continue;
+      var dx = flower.x - mower.x;
+      var dy = flower.y - mower.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      var hitDistance = mower.radius + flower.r * .86;
+      var closeDistance = hitDistance + clamp(mower.radius * 1.55, 17, 25);
+
+      if (dist < hitDistance) {
+        hitFlower(flower);
+      } else if (dist < closeDistance && movingAmount > .28) {
+        closePass(flower, dx, dy, dist);
+      }
+    }
+  }
+
+  function finishLawn() {
+    if (state !== "playing") return;
+    state = "complete";
+    pointer.active = false;
+    movingAmount = 0;
+    var bonus = 0;
+    var message;
+
+    if (hits === 0) {
+      bonus = 800 * level;
+      score += bonus;
+      message = "Perfect mowing—no flowers hit. Clean-lawn bonus: +" + bonus.toLocaleString() + ".";
+    } else {
+      message = "Lawn finished with " + hits + " flower hit" + (hits === 1 ? "" : "s") + ".";
+    }
+
+    for (var i = 0; i < 35; i++) {
+      particles.push({
+        x: lawn.x + Math.random() * lawn.w,
+        y: lawn.y + Math.random() * lawn.h,
+        vx: (Math.random() - .5) * 25,
+        vy: -25 - Math.random() * 45,
+        life: 1 + Math.random(),
+        maxLife: 2,
+        type: "spark",
+        color: Math.random() > .5 ? "#fff16d" : "#ffffff",
+        size: 2 + Math.random() * 3
+      });
+    }
+
+    sound("win");
+    updateHUD();
+    announce(message);
+
+    if (level < levelData.length) {
+      showOverlay("Lawn complete!", message + " The next lawn has tighter gaps and a higher cut target.", "Next lawn", function () {
+        level++;
+        levelStartScore = score;
+        hits = 0;
+        buildLevel(null);
+        state = "playing";
+        hideOverlay();
+        announce("Lawn " + level + ": " + levelData[level - 1].name);
+      });
+    } else {
+      showOverlay("All lawns tidy!", message + " Final score: " + score.toLocaleString() + ". The daisies approve.", "Mow again", function () {
+        level = 1;
+        score = 0;
+        levelStartScore = 0;
+        hits = 0;
+        buildLevel(null);
+        state = "playing";
+        hideOverlay();
+        announce("New game started.");
+      });
+    }
+  }
+
+  function movementInput() {
+    var x = 0;
+    var y = 0;
+
+    if (keys.ArrowLeft || keys.a) x -= 1;
+    if (keys.ArrowRight || keys.d) x += 1;
+    if (keys.ArrowUp || keys.w) y -= 1;
+    if (keys.ArrowDown || keys.s) y += 1;
+
+    var keyboard = x !== 0 || y !== 0;
+    if (!keyboard && pointer.active) {
+      var dx = pointer.x - pointer.ax;
+      var dy = pointer.y - pointer.ay;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 7) {
+        var power = clamp((len - 7) / 48, 0, 1);
+        x = dx / len * power;
+        y = dy / len * power;
+      }
+    } else if (keyboard) {
+      var keyLen = Math.sqrt(x * x + y * y);
+      x /= keyLen;
+      y /= keyLen;
+    }
+
+    return { x: x, y: y, amount: Math.min(1, Math.sqrt(x * x + y * y)) };
+  }
+
+  function update(dt) {
+    bumpCooldown = Math.max(0, bumpCooldown - dt);
+    shake = Math.max(0, shake - dt);
+    jolt = Math.max(0, jolt - dt);
+
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.life -= dt;
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+      } else {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= Math.pow(.96, dt * 60);
+        p.vy *= Math.pow(.96, dt * 60);
+        if (p.type === "petal") p.vy += 48 * dt;
+      }
+    }
+
+    for (i = floaters.length - 1; i >= 0; i--) {
+      var f = floaters[i];
+      f.life -= dt;
+      f.y -= 25 * dt;
+      if (f.life <= 0) floaters.splice(i, 1);
+    }
+
+    for (i = 0; i < flowers.length; i++) {
+      flowers[i].lean = Math.max(0, flowers[i].lean - dt * 1.15);
+    }
+
+    movingAmount = 0;
+
+    if (state === "playing") {
+      var input = movementInput();
+      movingAmount = input.amount;
+
+      if (jolt <= 0 && input.amount > .02) {
+        var baseSpeed = clamp(Math.min(lawn.w, lawn.h) * .42, 125, 205);
+        var distance = baseSpeed * input.amount * dt;
+        var nx = mower.x + input.x * distance;
+        var ny = mower.y + input.y * distance;
+        var pad = mower.radius + 3;
+
+        nx = clamp(nx, lawn.x + pad, lawn.x + lawn.w - pad);
+        ny = clamp(ny, lawn.y + pad, lawn.y + lawn.h - pad);
+
+        var blocked = obstacleAt(nx, ny);
+        if (blocked) {
+          var slideX = !obstacleAt(nx, mower.y);
+          var slideY = !obstacleAt(mower.x, ny);
+          if (slideX) mower.x = nx;
+          if (slideY) mower.y = ny;
+          if (!slideX && !slideY && bumpCooldown <= 0) {
+            bumpCooldown = .45;
+            shake = Math.max(shake, .12);
+            sound("bonk");
+            addFloater(mower.x, mower.y - 16, "BONK", "#f2e4b0");
+          }
+        } else {
+          mower.x = nx;
+          mower.y = ny;
+        }
+
+        mower.angle = Math.atan2(input.y, input.x);
+        cutGrass();
+        checkFlowers();
+      }
+    }
+
+    updateHum();
+  }
+
+  function hash(n) {
+    var s = Math.sin(n * 12.9898) * 43758.5453;
+    return s - Math.floor(s);
+  }
+
+  function drawGrass() {
+    roundedRectPath(ctx, lawn.x, lawn.y, lawn.w, lawn.h, 20);
+    ctx.fillStyle = "#76b94e";
+    ctx.fill();
+    ctx.save();
+    roundedRectPath(ctx, lawn.x, lawn.y, lawn.w, lawn.h, 20);
+    ctx.clip();
+
+    var band = Math.max(44, lawn.w / 8);
+    for (var bx = lawn.x - band; bx < lawn.x + lawn.w + band; bx += band * 2) {
+      ctx.fillStyle = "rgba(255,255,255,.035)";
+      ctx.fillRect(bx, lawn.y, band, lawn.h);
+    }
+
+    var x, y, index, px, py;
+    for (y = 0; y < grid.rows; y++) {
+      for (x = 0; x < grid.cols; x++) {
+        index = y * grid.cols + x;
+        if (grid.cut[index] && !grid.blocked[index]) {
+          ctx.fillStyle = (x + y) % 2 ? "#3f8240" : "#397b3d";
+          ctx.fillRect(
+            lawn.x + x * grid.cw - .3,
+            lawn.y + y * grid.ch - .3,
+            grid.cw + .6,
+            grid.ch + .6
+          );
+        }
+      }
+    }
+
+    ctx.lineWidth = 1.15;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(39,105,47,.62)";
+    ctx.beginPath();
+    for (y = 0; y < grid.rows; y++) {
+      for (x = 0; x < grid.cols; x++) {
+        index = y * grid.cols + x;
+        if (grid.cut[index] || grid.blocked[index]) continue;
+        px = lawn.x + (x + .5) * grid.cw;
+        py = lawn.y + (y + .68) * grid.ch;
+        var lean = (hash(index + level * 31) - .5) * grid.cw * .45;
+        var tall = grid.ch * (.44 + hash(index * 2 + 8) * .32);
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + lean, py - tall);
+        if ((index & 3) === 0) {
+          ctx.moveTo(px + 2, py);
+          ctx.lineTo(px - lean * .5, py - tall * .72);
+        }
+      }
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(157,213,92,.55)";
+    ctx.beginPath();
+    for (y = 0; y < grid.rows; y += 2) {
+      for (x = y % 3; x < grid.cols; x += 3) {
+        index = y * grid.cols + x;
+        if (grid.cut[index] || grid.blocked[index]) continue;
+        px = lawn.x + (x + .48) * grid.cw;
+        py = lawn.y + (y + .67) * grid.ch;
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + 1.5, py - grid.ch * .6);
+      }
+    }
+    ctx.stroke();
+
+    ctx.restore();
+
+    roundedRectPath(ctx, lawn.x, lawn.y, lawn.w, lawn.h, 20);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(45,103,47,.38)";
+    ctx.stroke();
+  }
+
+  function drawBeds() {
+    for (var i = 0; i < beds.length; i++) {
+      var b = beds[i];
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.beginPath();
+      ctx.ellipse(0, 3, b.rx + 4, b.ry + 4, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(32,73,39,.18)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0, 0, b.rx, b.ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "#795a38";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#b79a67";
+      ctx.stroke();
+
+      for (var j = 0; j < 8; j++) {
+        var a = j / 8 * Math.PI * 2;
+        var lx = Math.cos(a) * b.rx * .7;
+        var ly = Math.sin(a) * b.ry * .55;
+        ctx.save();
+        ctx.translate(lx, ly);
+        ctx.rotate(a);
+        ctx.fillStyle = j % 2 ? "#416f38" : "#568941";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 7, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawRocks() {
+    for (var i = 0; i < rocks.length; i++) {
+      var r = rocks[i];
+      ctx.save();
+      ctx.translate(r.x, r.y);
+      ctx.fillStyle = "rgba(25,66,38,.22)";
+      ctx.beginPath();
+      ctx.ellipse(3, r.r * .45, r.r * .95, r.r * .5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#8e9588";
+      ctx.strokeStyle = "#697568";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-r.r * .82, r.r * .22);
+      ctx.lineTo(-r.r * .56, -r.r * .55);
+      ctx.lineTo(r.r * .18, -r.r * .82);
+      ctx.lineTo(r.r * .76, -r.r * .28);
+      ctx.lineTo(r.r * .86, r.r * .42);
+      ctx.lineTo(r.r * .18, r.r * .72);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.beginPath();
+      ctx.moveTo(-r.r * .45, -r.r * .39);
+      ctx.lineTo(r.r * .12, -r.r * .58);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawFlower(flower, time) {
+    ctx.save();
+    ctx.translate(flower.x, flower.y);
+
+    if (flower.hit) {
+      ctx.strokeStyle = "#39713c";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-3, 7);
+      ctx.quadraticCurveTo(1, 2, 7, 4);
+      ctx.stroke();
+      ctx.fillStyle = "#4d8c43";
+      ctx.beginPath();
+      ctx.ellipse(-1, 7, 5, 2.5, -.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    var sway = Math.sin(time * 1.4 + flower.phase) * 1.2;
+    var leanScale = flower.lean * 6;
+    var ox = flower.leanX * leanScale + sway;
+    var oy = flower.leanY * leanScale;
+
+    ctx.fillStyle = "rgba(26,75,39,.18)";
+    ctx.beginPath();
+    ctx.ellipse(2, 5, flower.r * 1.2, flower.r * .65, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.translate(ox, oy);
+    var petals = 8;
+    for (var i = 0; i < petals; i++) {
+      var a = i / petals * Math.PI * 2;
+      ctx.save();
+      ctx.rotate(a);
+      ctx.fillStyle = "#fffdf3";
+      ctx.strokeStyle = "rgba(211,181,104,.45)";
+      ctx.lineWidth = .8;
+      ctx.beginPath();
+      ctx.ellipse(flower.r * .72, 0, flower.r * .7, flower.r * .33, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.fillStyle = "#f2c83f";
+    ctx.beginPath();
+    ctx.arc(0, 0, flower.r * .47, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(137,101,32,.22)";
+    ctx.beginPath();
+    ctx.arc(-flower.r * .13, -flower.r * .12, flower.r * .09, 0, Math.PI * 2);
+    ctx.arc(flower.r * .16, flower.r * .05, flower.r * .08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawMower() {
+    ctx.save();
+    ctx.translate(mower.x, mower.y);
+    ctx.rotate(mower.angle);
+
+    ctx.fillStyle = "rgba(23,62,36,.25)";
+    ctx.beginPath();
+    ctx.ellipse(-1, 5, mower.radius * 1.2, mower.radius * .82, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#343a32";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-mower.radius * .6, 0);
+    ctx.lineTo(-mower.radius * 1.55, 0);
+    ctx.lineTo(-mower.radius * 1.85, -mower.radius * .55);
+    ctx.stroke();
+
+    ctx.fillStyle = "#272d29";
+    ctx.fillRect(-mower.radius * .68, -mower.radius * .92, mower.radius * .42, mower.radius * .28);
+    ctx.fillRect(-mower.radius * .68, mower.radius * .64, mower.radius * .42, mower.radius * .28);
+    ctx.fillRect(mower.radius * .25, -mower.radius * .92, mower.radius * .42, mower.radius * .28);
+    ctx.fillRect(mower.radius * .25, mower.radius * .64, mower.radius * .42, mower.radius * .28);
+
+    ctx.fillStyle = "#d84a3e";
+    ctx.strokeStyle = "#9f312f";
+    ctx.lineWidth = 2;
+    roundedRectPath(ctx, -mower.radius * .8, -mower.radius * .69, mower.radius * 1.65, mower.radius * 1.38, mower.radius * .35);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#f36b4e";
+    roundedRectPath(ctx, -mower.radius * .12, -mower.radius * .52, mower.radius * .75, mower.radius * 1.04, mower.radius * .2);
+    ctx.fill();
+
+    ctx.fillStyle = "#313c36";
+    ctx.beginPath();
+    ctx.arc(mower.radius * .12, 0, mower.radius * .28, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f4d05c";
+    ctx.beginPath();
+    ctx.moveTo(mower.radius * .78, 0);
+    ctx.lineTo(mower.radius * .53, -mower.radius * .16);
+    ctx.lineTo(mower.radius * .53, mower.radius * .16);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var alpha = clamp(p.life / p.maxLife, 0, 1);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      if (p.type === "petal") {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.x + p.y) * .04);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size, p.size * .48, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFloaters() {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 14px system-ui, sans-serif";
+    for (var i = 0; i < floaters.length; i++) {
+      var f = floaters[i];
+      var alpha = clamp(f.life / f.maxLife, 0, 1);
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(30,70,40,.55)";
+      ctx.strokeText(f.text, f.x, f.y);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawJoystick() {
+    if (!pointer.active || state !== "playing") return;
+    var dx = pointer.x - pointer.ax;
+    var dy = pointer.y - pointer.ay;
+    var len = Math.sqrt(dx * dx + dy * dy);
+    var max = 48;
+    if (len > max) {
+      dx = dx / len * max;
+      dy = dy / len * max;
+    }
+    ctx.save();
+    ctx.globalAlpha = .6;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#fff8d8";
+    ctx.fillStyle = "rgba(30,85,48,.2)";
+    ctx.beginPath();
+    ctx.arc(pointer.ax, pointer.ay, 30, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,248,216,.88)";
+    ctx.beginPath();
+    ctx.arc(pointer.ax + dx, pointer.ay + dy, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(30,85,48,.5)";
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw(time) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    var sx = shake > 0 ? (Math.random() - .5) * shake * 14 : 0;
+    var sy = shake > 0 ? (Math.random() - .5) * shake * 10 : 0;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (grid) {
+      drawGrass();
+      drawBeds();
+      drawRocks();
+      for (var i = 0; i < flowers.length; i++) drawFlower(flowers[i], time);
+      drawParticles();
+      drawMower();
+      drawFloaters();
+    }
+    ctx.restore();
+
+    drawJoystick();
+  }
+
+  function frame(timestamp) {
+    if (!lastTime) lastTime = timestamp;
+    var dt = Math.min(.033, (timestamp - lastTime) / 1000);
+    lastTime = timestamp;
+    update(dt);
+    draw(timestamp / 1000);
+    requestAnimationFrame(frame);
+  }
+
+  function pointerPosition(event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  }
+
+  canvas.addEventListener("pointerdown", function (event) {
+    if (state !== "playing") return;
+    initAudio();
+    var pos = pointerPosition(event);
+    pointer.active = true;
+    pointer.id = event.pointerId;
+    pointer.ax = pos.x;
+    pointer.ay = pos.y;
+    pointer.x = pos.x;
+    pointer.y = pos.y;
+    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointermove", function (event) {
+    if (!pointer.active || event.pointerId !== pointer.id) return;
+    var pos = pointerPosition(event);
+    pointer.x = pos.x;
+    pointer.y = pos.y;
+    event.preventDefault();
+  });
+
+  function endPointer(event) {
+    if (pointer.active && event.pointerId === pointer.id) {
+      pointer.active = false;
+      pointer.id = null;
+      movingAmount = 0;
+      event.preventDefault();
+    }
+  }
+
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+
+  window.addEventListener("keydown", function (event) {
+    var key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (key === "Enter" && !overlay.classList.contains("hidden")) {
+      event.preventDefault();
+      primaryButton.click();
+      return;
+    }
+    if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown" ||
+        key === "w" || key === "a" || key === "s" || key === "d") {
+      keys[key] = true;
+      initAudio();
+      event.preventDefault();
+    }
+  });
+
+  window.addEventListener("keyup", function (event) {
+    var key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    keys[key] = false;
+    if (!keys.ArrowLeft && !keys.ArrowRight && !keys.ArrowUp && !keys.ArrowDown &&
+        !keys.w && !keys.a && !keys.s && !keys.d) {
+      movingAmount = 0;
+    }
+  });
+
+  window.addEventListener("blur", function () {
+    keys = {};
+    pointer.active = false;
+    movingAmount = 0;
+  });
+
+  primaryButton.addEventListener("click", function () {
+    initAudio();
+    if (currentAction) currentAction();
+  });
+
+  restartButton.addEventListener("click", function () {
+    initAudio();
+    if (state === "intro") {
+      score = 0;
+      levelStartScore = 0;
+      hits = 0;
+      buildLevel(null);
+      updateHUD();
+      return;
+    }
+    showOverlay(
+      "Restart this lawn?",
+      "Your score will return to what it was at the start of this lawn.",
+      "Restart lawn",
+      resetCurrentLawn
+    );
+  });
+
+  muteButton.addEventListener("click", function () {
+    muted = !muted;
+    muteButton.textContent = muted ? "×♪" : "♪";
+    muteButton.setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
+    if (!muted) initAudio();
+    updateHum();
+  });
+
+  window.addEventListener("resize", resizeCanvas);
+
+  resizeCanvas();
+  updateHUD();
+  currentAction = startGame;
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

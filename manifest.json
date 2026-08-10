@@ -427,6 +427,15 @@
       "path": "games/pond-not-yet/",
       "mobile": true,
       "thumbnail": "games/pond-not-yet/cover.webp"
+    },
+    {
+      "slug": "mow-around-it",
+      "title": "Mow Around It",
+      "tagline": "Cut the grass. The daisies live here.",
+      "date": "2026-08-10",
+      "path": "games/mow-around-it/",
+      "mobile": true,
+      "thumbnail": "games/mow-around-it/cover.webp"
     }
   ]
 }
