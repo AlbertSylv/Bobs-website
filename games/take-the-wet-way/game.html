@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Take the Wet Way</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+:root {
+  --ink:#eaf8f4;
+  --muted:#9dbbb8;
+  --panel:#102b31;
+  --panel2:#173941;
+  --edge:#2e5960;
+  --water:#218eaa;
+  --water2:#42d0dc;
+  --yellow:#ffd45d;
+  --rock:#344b50;
+  --accent:#85f3df;
+  --danger:#ff8585;
+}
+body {
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% -20%, #315760 0%, #16373f 43%, #0b2026 100%);
+  color:var(--ink);
+  font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+}
+button {
+  color:inherit;
+  font:inherit;
+}
+button:focus-visible {
+  outline:3px solid var(--accent);
+  outline-offset:2px;
+}
+#app {
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+.topbar {
+  flex:0 0 auto;
+  min-height:68px;
+  padding:9px clamp(12px, 3vw, 32px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  border-bottom:1px solid rgba(133,243,223,.17);
+  background:rgba(7,25,30,.66);
+  box-shadow:0 7px 24px rgba(0,0,0,.18);
+}
+.brand h1 {
+  margin:0;
+  font-size:clamp(23px, 3vw, 38px);
+  line-height:.98;
+  letter-spacing:-.045em;
+}
+.tagline {
+  margin-top:5px;
+  color:#acd0ca;
+  font-size:clamp(11px, 1.4vw, 15px);
+  letter-spacing:.02em;
+}
+.howline {
+  max-width:600px;
+  text-align:right;
+  color:#c6ded9;
+  font-size:clamp(11px, 1.25vw, 14px);
+  line-height:1.35;
+}
+.game-layout {
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(190px, 250px) minmax(280px, 1fr) minmax(180px, 225px);
+  gap:clamp(8px, 1.5vw, 18px);
+  padding:clamp(8px, 1.5vw, 18px);
+}
+.sidebar, .controls {
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.card {
+  border:1px solid rgba(133,243,223,.16);
+  border-radius:16px;
+  padding:13px;
+  background:linear-gradient(145deg, rgba(24,61,69,.93), rgba(11,37,43,.94));
+  box-shadow:0 10px 25px rgba(0,0,0,.16);
+}
+.eyebrow {
+  color:#91b7b2;
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.12em;
+  font-size:10px;
+}
+.map-title {
+  margin:3px 0 7px;
+  font-size:21px;
+  font-weight:850;
+}
+.hud-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:8px;
+  margin-top:7px;
+  color:#bcd6d2;
+  font-size:13px;
+}
+.hud-row strong {
+  color:white;
+  font-size:17px;
+}
+.target-box {
+  margin-top:10px;
+  padding:9px;
+  border-radius:11px;
+  background:rgba(2,18,22,.37);
+  color:#d6efea;
+  font-size:12px;
+  line-height:1.55;
+}
+.mark-text {
+  color:var(--yellow);
+  letter-spacing:2px;
+  white-space:nowrap;
+}
+#statusText {
+  min-height:40px;
+  margin-top:10px;
+  color:#aee4da;
+  font-size:12px;
+  line-height:1.35;
+}
+.level-nav {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.level-nav button {
+  width:31px;
+  height:31px;
+  border:1px solid #3e6b70;
+  border-radius:9px;
+  background:#173c43;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+.level-nav button.active {
+  color:#082328;
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.level-nav button:disabled {
+  color:#698587;
+  opacity:.55;
+  cursor:not-allowed;
+}
+.tip-card {
+  color:#bcd7d2;
+  font-size:12px;
+  line-height:1.45;
+}
+.tip-card strong { color:#f0fffc; }
+.legend {
+  margin-top:9px;
+  display:grid;
+  gap:6px;
+}
+.legend-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.legend-icon {
+  flex:0 0 25px;
+  height:21px;
+  display:grid;
+  place-items:center;
+  border-radius:7px;
+  color:white;
+  font-weight:900;
+}
+.legend-icon.water { background:#248ba4; }
+.legend-icon.rock { background:#394d51; }
+.legend-icon.ring {
+  border:2px dashed #a9fff0;
+  background:transparent;
+}
+.board-shell {
+  position:relative;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(133,243,223,.18);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(62,129,138,.22), transparent 58%),
+    linear-gradient(#0c292f, #081d22);
+  box-shadow:0 18px 50px rgba(0,0,0,.28), inset 0 0 60px rgba(0,0,0,.18);
+}
+.board-shell::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.18;
+  background:
+    repeating-linear-gradient(107deg, transparent 0 18px, rgba(180,255,246,.25) 19px, transparent 20px 40px);
+  transform:translateY(-30px);
+}
+canvas {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  touch-action:none;
+}
+.overlay {
+  position:absolute;
+  inset:0;
+  z-index:4;
+  display:none;
+  place-items:center;
+  padding:18px;
+  background:rgba(4,19,23,.55);
+  backdrop-filter:blur(4px);
+}
+.overlay.visible { display:grid; }
+.overlay-card {
+  width:min(430px, 94%);
+  max-height:92%;
+  overflow:auto;
+  padding:clamp(18px, 4vw, 27px);
+  border:1px solid rgba(133,243,223,.28);
+  border-radius:21px;
+  background:linear-gradient(150deg, #1d4a51, #102d34);
+  box-shadow:0 20px 60px rgba(0,0,0,.48);
+  text-align:center;
+}
+.overlay-card h2 {
+  margin:5px 0 7px;
+  font-size:clamp(25px, 5vw, 37px);
+  letter-spacing:-.035em;
+}
+.overlay-card p {
+  margin:8px 0;
+  color:#c5ded9;
+  line-height:1.45;
+  font-size:14px;
+}
+.overlay-targets {
+  margin:15px 0;
+  padding:11px;
+  border-radius:12px;
+  background:rgba(2,20,24,.38);
+  line-height:1.65;
+  font-size:13px;
+}
+.primary-btn, .secondary-btn {
+  min-height:46px;
+  padding:10px 20px;
+  border-radius:13px;
+  font-weight:850;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.primary-btn {
+  border:1px solid #a8ffef;
+  color:#08272b;
+  background:linear-gradient(#a5f8e9, #64d7c6);
+  box-shadow:0 5px 0 #287e75;
+}
+.primary-btn:active {
+  transform:translateY(3px);
+  box-shadow:0 2px 0 #287e75;
+}
+.secondary-btn {
+  border:1px solid #4c7378;
+  background:#153a41;
+}
+.overlay-actions {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:15px;
+}
+.controls {
+  justify-content:center;
+}
+.control-heading {
+  text-align:center;
+  color:#a8c9c5;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.11em;
+}
+.dpad {
+  --btn:62px;
+  display:grid;
+  grid-template-columns:repeat(3, var(--btn));
+  grid-template-rows:repeat(3, var(--btn));
+  gap:7px;
+  justify-content:center;
+}
+.dir-btn {
+  min-width:44px;
+  min-height:44px;
+  border:1px solid #527c80;
+  border-radius:17px;
+  background:linear-gradient(145deg, #234d54, #12333a);
+  box-shadow:0 5px 0 #071c21, inset 0 1px rgba(255,255,255,.08);
+  font-size:27px;
+  font-weight:900;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.dir-btn:active {
+  transform:translateY(3px);
+  box-shadow:0 2px 0 #071c21;
+  background:#2d6067;
+}
+.dir-btn[data-dir="up"] { grid-column:2; grid-row:1; }
+.dir-btn[data-dir="left"] { grid-column:1; grid-row:2; }
+.dir-btn[data-dir="down"] { grid-column:2; grid-row:2; }
+.dir-btn[data-dir="right"] { grid-column:3; grid-row:2; }
+.pad-center {
+  grid-column:2;
+  grid-row:3;
+  display:grid;
+  place-items:center;
+  color:#57777a;
+  font-size:11px;
+  font-weight:900;
+}
+.utility-buttons {
+  display:grid;
+  gap:8px;
+}
+.utility-buttons button {
+  min-height:47px;
+  border:1px solid #4d7478;
+  border-radius:13px;
+  background:#153940;
+  font-weight:800;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.utility-buttons button:first-child {
+  color:#fff0bc;
+  border-color:#8b7441;
+  background:#4b4025;
+}
+.keyhint {
+  opacity:.6;
+  margin-left:5px;
+  font-size:11px;
+}
+.score-card {
+  text-align:center;
+  color:#bbd8d3;
+  font-size:12px;
+}
+#bankedScore {
+  display:block;
+  color:var(--yellow);
+  margin-top:2px;
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+@media (max-width:800px) {
+  .topbar {
+    min-height:57px;
+    padding:7px 12px;
+  }
+  .howline {
+    max-width:48%;
+    font-size:10px;
+  }
+  .game-layout {
+    grid-template-columns:1fr;
+    grid-template-rows:auto minmax(220px, 1fr) auto;
+    gap:7px;
+    padding:7px;
+  }
+  .sidebar {
+    flex-direction:row;
+    gap:7px;
+  }
+  .sidebar .card {
+    padding:8px 10px;
+  }
+  .sidebar .card:first-child { flex:1.25; }
+  .tip-card { flex:1; }
+  .map-title {
+    display:inline;
+    font-size:16px;
+    margin-right:8px;
+  }
+  .hud-row {
+    display:inline-flex;
+    margin:0 7px 0 0;
+    font-size:11px;
+  }
+  .hud-row strong { font-size:13px; }
+  .target-box {
+    margin-top:5px;
+    padding:4px 7px;
+    font-size:10px;
+    line-height:1.35;
+  }
+  #statusText {
+    min-height:15px;
+    margin-top:4px;
+    font-size:10px;
+  }
+  .level-nav { margin-top:5px; }
+  .level-nav button {
+    width:26px;
+    height:25px;
+    border-radius:7px;
+  }
+  .legend, .tip-card .eyebrow { display:none; }
+  .tip-card { font-size:10px; }
+  .controls {
+    flex-direction:row;
+    align-items:center;
+    gap:13px;
+    padding:0 4px;
+  }
+  .control-heading, .score-card { display:none; }
+  .dpad {
+    --btn:46px;
+    gap:4px;
+  }
+  .dir-btn {
+    border-radius:13px;
+    font-size:22px;
+  }
+  .utility-buttons {
+    min-width:112px;
+  }
+  .utility-buttons button {
+    min-height:44px;
+    padding:5px 8px;
+    font-size:12px;
+  }
+}
+@media (max-width:460px) {
+  .tagline { font-size:10px; }
+  .howline { display:none; }
+  .tip-card { display:none; }
+  .sidebar .card:first-child { width:100%; }
+}
+@media (max-height:580px) and (max-width:800px) {
+  .topbar { min-height:48px; }
+  .brand h1 { font-size:21px; }
+  .tagline { display:none; }
+  .game-layout {
+    grid-template-rows:auto minmax(120px, 1fr) auto;
+  }
+  .sidebar .eyebrow, #statusText { display:none; }
+  .controls {
+    gap:8px;
+  }
+  .dpad {
+    --btn:44px;
+    grid-template-columns:repeat(4, var(--btn));
+    grid-template-rows:var(--btn);
+    gap:4px;
+  }
+  .dir-btn[data-dir="up"],
+  .dir-btn[data-dir="left"],
+  .dir-btn[data-dir="down"],
+  .dir-btn[data-dir="right"] {
+    grid-column:auto;
+    grid-row:1;
+  }
+  .pad-center {
+    display:none;
+  }
+  .utility-buttons {
+    min-width:172px;
+    grid-template-columns:repeat(2, minmax(82px, 1fr));
+    gap:6px;
+  }
+  .utility-buttons button {
+    min-height:44px;
+  }
+}
+@media (max-height:580px) and (max-width:390px) {
+  .controls {
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .utility-buttons {
+    width:188px;
+    min-width:0;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Take the Wet Way</h1>
+      <div class="tagline">The path is optional. The bench is not.</div>
+    </div>
+    <div class="howline">
+      Arrow keys / WASD or swipe / buttons · Z / Undo · Reach the bench
+    </div>
+  </header>
+
+  <main class="game-layout">
+    <aside class="sidebar" aria-label="Game information">
+      <section class="card">
+        <div class="eyebrow" id="levelLabel">Map 1 of 6</div>
+        <div class="map-title" id="mapTitle">First Dip</div>
+        <div class="hud-row"><span>Moves</span><strong id="moveCount">0</strong></div>
+        <div class="hud-row"><span>Best target</span><strong id="parCount">—</strong></div>
+        <div class="target-box" id="targetBox"></div>
+        <div id="statusText" role="status" aria-live="polite">Read the arrow, then get your boots wet.</div>
+        <nav class="level-nav" id="levelNav" aria-label="Maps"></nav>
+      </section>
+
+      <section class="card tip-card">
+        <div class="eyebrow">How the water works</div>
+        <strong>Enter an arrow tile</strong> and its current shoves you one extra space. It never chains twice in one move.
+        <div class="legend">
+          <div class="legend-row"><span class="legend-icon water">→</span><span>Current direction</span></div>
+          <div class="legend-row"><span class="legend-icon ring"></span><span>Shown landing space</span></div>
+          <div class="legend-row"><span class="legend-icon rock">◆</span><span>Rock: blocked</span></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="board-shell" id="boardShell">
+      <canvas id="gameCanvas" tabindex="0" aria-label="Puzzle map. Swipe to move the walker.">
+        Your browser needs canvas support to play Take the Wet Way.
+      </canvas>
+
+      <div class="overlay visible" id="briefOverlay">
+        <div class="overlay-card">
+          <div class="eyebrow" id="briefNumber">Map 1</div>
+          <h2 id="briefTitle">First Dip</h2>
+          <p id="briefDescription"></p>
+          <div class="overlay-targets" id="briefTargets"></div>
+          <p>Reach the bench. Rocks stop you; water arrows add one extra step.</p>
+          <button class="primary-btn" id="startButton">Walk this map</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="completeOverlay">
+        <div class="overlay-card">
+          <div class="eyebrow">Bench reached</div>
+          <h2 id="completeTitle">A tidy crossing.</h2>
+          <div id="completeMarks" class="mark-text" style="font-size:34px;"></div>
+          <p id="completeSummary"></p>
+          <div class="overlay-actions">
+            <button class="secondary-btn" id="replayButton">Replay map</button>
+            <button class="primary-btn" id="nextButton">Next map</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="controls" aria-label="Touch controls">
+      <div class="control-heading">Tap or swipe</div>
+      <div class="dpad">
+        <button class="dir-btn" data-dir="up" aria-label="Move up">↑</button>
+        <button class="dir-btn" data-dir="left" aria-label="Move left">←</button>
+        <button class="dir-btn" data-dir="down" aria-label="Move down">↓</button>
+        <button class="dir-btn" data-dir="right" aria-label="Move right">→</button>
+        <div class="pad-center">MOVE</div>
+      </div>
+      <div class="utility-buttons">
+        <button id="undoButton">Undo <span class="keyhint">Z</span></button>
+        <button id="restartButton">Restart <span class="keyhint">R</span></button>
+      </div>
+      <div class="card score-card">
+        Marks banked
+        <strong id="bankedScore">0 / 18</strong>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var levels = [
+    {
+      name: "First Dip",
+      description: "One gentle current cuts through the dry detour. The pale ring shows where it will leave you.",
+      rows: [
+        "#######",
+        "#S.#.B#",
+        "#..>..#",
+        "#..#..#",
+        "#.....#",
+        "#######"
+      ]
+    },
+    {
+      name: "Useful Bank",
+      description: "The dry-looking lane is not the useful one. Let the eastbound water place you beyond the wall.",
+      rows: [
+        "########",
+        "#S.#..B#",
+        "#..>...#",
+        "#..#.#.#",
+        "#..^...#",
+        "#......#",
+        "########"
+      ]
+    },
+    {
+      name: "Crossing Signs",
+      description: "More arrows, more rocks, and one angry red landing ring. Read the destination before stepping in.",
+      rows: [
+        "#########",
+        "#S..#..B#",
+        "#..>....#",
+        "#.#.#.#.#",
+        "#...^...#",
+        "#.###...#",
+        "#.......#",
+        "#########"
+      ]
+    },
+    {
+      name: "Second Current",
+      description: "A current may set you down on another current. It will not shove twice during the same move.",
+      rows: [
+        "#########",
+        "#S..#..B#",
+        "#..v#...#",
+        "#..>....#",
+        "#.#..^#.#",
+        "#.......#",
+        "#..##...#",
+        "#########"
+      ]
+    },
+    {
+      name: "Narrow Landing",
+      description: "The banks are tighter now. Entering the same patch of water from a better side can change everything.",
+      rows: [
+        "#########",
+        "#S#....B#",
+        "#..v.##.#",
+        "##.>....#",
+        "#..#.<..#",
+        "#.^.....#",
+        "#.......#",
+        "#########"
+      ]
+    },
+    {
+      name: "Wet Argument",
+      description: "Crossing currents and false invitations. A red landing ring means the current will throw you back safely.",
+      rows: [
+        "##########",
+        "#S..#...B#",
+        "#.#.v.#..#",
+        "#...>....#",
+        "#.##..##.#",
+        "#..^..<..#",
+        "#........#",
+        "##########"
+      ]
+    }
+  ];
+
+  var dirs = {
+    up: { x: 0, y: -1, arrow: "^" },
+    down: { x: 0, y: 1, arrow: "v" },
+    left: { x: -1, y: 0, arrow: "<" },
+    right: { x: 1, y: 0, arrow: ">" }
+  };
+
+  var currentDirs = {
+    "^": { x: 0, y: -1 },
+    "v": { x: 0, y: 1 },
+    "<": { x: -1, y: 0 },
+    ">": { x: 1, y: 0 }
+  };
+
+  var canvas = document.getElementById("gameCanvas");
+  var ctx = canvas.getContext("2d");
+  var boardShell = document.getElementById("boardShell");
+  var briefOverlay = document.getElementById("briefOverlay");
+  var completeOverlay = document.getElementById("completeOverlay");
+  var startButton = document.getElementById("startButton");
+  var replayButton = document.getElementById("replayButton");
+  var nextButton = document.getElementById("nextButton");
+  var undoButton = document.getElementById("undoButton");
+  var restartButton = document.getElementById("restartButton");
+
+  var levelIndex = 0;
+  var level = null;
+  var player = { x: 0, y: 0 };
+  var bench = { x: 0, y: 0 };
+  var moves = 0;
+  var history = [];
+  var unlocked = 1;
+  var earned = [];
+  var mode = "brief";
+  var animation = null;
+  var particles = [];
+  var lastDirection = "down";
+  var blinkUntil = 0;
+  var benchWobbleUntil = 0;
+  var levelToken = 0;
+  var viewW = 1;
+  var viewH = 1;
+  var tileSize = 40;
+  var worldX = 0;
+  var worldY = 0;
+  var audioCtx = null;
+  var swipeStart = null;
+
+  function tileAt(lvl, x, y) {
+    if (y < 0 || y >= lvl.rows.length || x < 0 || x >= lvl.rows[0].length) {
+      return "#";
+    }
+    return lvl.rows[y].charAt(x);
+  }
+
+  function findPoints(lvl) {
+    var start = null;
+    var goal = null;
+    var y, x, c;
+    for (y = 0; y < lvl.rows.length; y++) {
+      for (x = 0; x < lvl.rows[y].length; x++) {
+        c = lvl.rows[y].charAt(x);
+        if (c === "S") start = { x: x, y: y };
+        if (c === "B") goal = { x: x, y: y };
+      }
+    }
+    return { start: start, goal: goal };
+  }
+
+  function transition(lvl, x, y, d) {
+    var nx = x + d.x;
+    var ny = y + d.y;
+    var t = tileAt(lvl, nx, ny);
+    if (t === "#") return null;
+
+    if (currentDirs[t]) {
+      var push = currentDirs[t];
+      var px = nx + push.x;
+      var py = ny + push.y;
+      if (tileAt(lvl, px, py) === "#") {
+        return { x: x, y: y, washedBack: true };
+      }
+      return { x: px, y: py, currentX: nx, currentY: ny };
+    }
+    return { x: nx, y: ny };
+  }
+
+  function shortestRoute(lvl) {
+    var points = findPoints(lvl);
+    var queue = [{ x: points.start.x, y: points.start.y, n: 0 }];
+    var seen = {};
+    var head = 0;
+    seen[points.start.x + "," + points.start.y] = true;
+    var directionList = [dirs.up, dirs.down, dirs.left, dirs.right];
+
+    while (head < queue.length) {
+      var node = queue[head++];
+      if (node.x === points.goal.x && node.y === points.goal.y) return node.n;
+      for (var i = 0; i < directionList.length; i++) {
+        var result = transition(lvl, node.x, node.y, directionList[i]);
+        if (!result || result.washedBack) continue;
+        var key = result.x + "," + result.y;
+        if (!seen[key]) {
+          seen[key] = true;
+          queue.push({ x: result.x, y: result.y, n: node.n + 1 });
+        }
+      }
+    }
+    return 99;
+  }
+
+  for (var li = 0; li < levels.length; li++) {
+    levels[li].par = shortestRoute(levels[li]);
+    earned.push(0);
+  }
+
+  function setStatus(text) {
+    document.getElementById("statusText").textContent = text;
+  }
+
+  function targetsHTML(lvl) {
+    return '<span class="mark-text">●●●</span> ≤ ' + lvl.par +
+      ' moves<br><span class="mark-text">●●</span> ≤ ' + (lvl.par + 2) +
+      ' moves<br><span class="mark-text">●</span> finish the map';
+  }
+
+  function updateHUD() {
+    document.getElementById("levelLabel").textContent = "Map " + (levelIndex + 1) + " of " + levels.length;
+    document.getElementById("mapTitle").textContent = level.name;
+    document.getElementById("moveCount").textContent = String(moves);
+    document.getElementById("parCount").textContent = level.par + " moves";
+    document.getElementById("targetBox").innerHTML = targetsHTML(level);
+
+    var total = 0;
+    for (var i = 0; i < earned.length; i++) total += earned[i];
+    document.getElementById("bankedScore").textContent = total + " / " + (levels.length * 3);
+    updateLevelNav();
+  }
+
+  function updateLevelNav() {
+    var nav = document.getElementById("levelNav");
+    nav.innerHTML = "";
+    for (var i = 0; i < levels.length; i++) {
+      var b = document.createElement("button");
+      b.textContent = earned[i] ? String(i + 1) + "·" : String(i + 1);
+      b.setAttribute("aria-label", "Map " + (i + 1) + ", " + levels[i].name +
+        (earned[i] ? ", earned " + earned[i] + " marks" : ""));
+      if (i >= unlocked) b.disabled = true;
+      if (i === levelIndex) b.className = "active";
+      (function (index) {
+        b.addEventListener("click", function () {
+          loadLevel(index, true);
+        });
+      })(i);
+      nav.appendChild(b);
+    }
+  }
+
+  function loadLevel(index, showBrief) {
+    levelToken++;
+    levelIndex = index;
+    level = levels[index];
+    var points = findPoints(level);
+    player = { x: points.start.x, y: points.start.y };
+    bench = { x: points.goal.x, y: points.goal.y };
+    moves = 0;
+    history = [];
+    particles = [];
+    animation = null;
+    blinkUntil = 0;
+    benchWobbleUntil = 0;
+    lastDirection = "down";
+    completeOverlay.classList.remove("visible");
+
+    document.getElementById("briefNumber").textContent = "Map " + (index + 1) + " of " + levels.length;
+    document.getElementById("briefTitle").textContent = level.name;
+    document.getElementById("briefDescription").textContent = level.description;
+    document.getElementById("briefTargets").innerHTML = targetsHTML(level);
+
+    if (showBrief) {
+      mode = "brief";
+      briefOverlay.classList.add("visible");
+      window.setTimeout(function () { startButton.focus(); }, 20);
+    } else {
+      mode = "playing";
+      briefOverlay.classList.remove("visible");
+      canvas.focus();
+    }
+    setStatus("Read the arrows. The pale rings show each current's landing.");
+    updateHUD();
+  }
+
+  function startMap() {
+    briefOverlay.classList.remove("visible");
+    mode = "playing";
+    setStatus("The bench is waiting. Wet boots are allowed.");
+    initAudio();
+    canvas.focus();
+  }
+
+  function marksForMoveCount(count) {
+    if (count <= level.par) return 3;
+    if (count <= level.par + 2) return 2;
+    return 1;
+  }
+
+  function finishLevel() {
+    if (mode !== "playing") return;
+    mode = "finishing";
+    benchWobbleUntil = performance.now() + 900;
+    playFinish();
+    setStatus("Bench reached. It seems quietly impressed.");
+    var token = levelToken;
+
+    window.setTimeout(function () {
+      if (token !== levelToken) return;
+      var marks = marksForMoveCount(moves);
+      if (marks > earned[levelIndex]) earned[levelIndex] = marks;
+      if (levelIndex + 1 < levels.length) {
+        unlocked = Math.max(unlocked, levelIndex + 2);
+      }
+
+      document.getElementById("completeTitle").textContent =
+        marks === 3 ? "A beautifully wet shortcut." :
+        marks === 2 ? "A solid splashy crossing." :
+        "The bench still approves.";
+      document.getElementById("completeMarks").textContent =
+        marks === 3 ? "● ● ●" : marks === 2 ? "● ● ○" : "● ○ ○";
+      document.getElementById("completeSummary").textContent =
+        "Finished in " + moves + " moves. Three marks needed " + level.par +
+        " or fewer; two needed " + (level.par + 2) + " or fewer.";
+
+      if (levelIndex === levels.length - 1) {
+        nextButton.textContent = "Walk from the start";
+      } else {
+        nextButton.textContent = "Next map";
+      }
+
+      mode = "complete";
+      completeOverlay.classList.add("visible");
+      updateHUD();
+      window.setTimeout(function () { nextButton.focus(); }, 20);
+    }, 520);
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      var AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtor) audioCtx = new AudioCtor();
+    }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  }
+
+  function tone(freq, duration, type, volume, delay) {
+    if (!audioCtx) return;
+    var start = audioCtx.currentTime + (delay || 0);
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume || 0.04, start + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(start);
+    osc.stop(start + duration + 0.03);
+  }
+
+  function playStep(wet) {
+    initAudio();
+    if (wet) {
+      tone(175, 0.12, "triangle", 0.055, 0);
+      tone(340, 0.09, "sine", 0.025, 0.035);
+    } else {
+      tone(110, 0.075, "square", 0.025, 0);
+    }
+  }
+
+  function playKnock() {
+    initAudio();
+    tone(74, 0.13, "square", 0.045, 0);
+    tone(58, 0.1, "triangle", 0.03, 0.04);
+  }
+
+  function playSharpSplash() {
+    initAudio();
+    tone(510, 0.08, "sawtooth", 0.035, 0);
+    tone(180, 0.18, "triangle", 0.05, 0.035);
+  }
+
+  function playFinish() {
+    initAudio();
+    tone(330, 0.16, "sine", 0.045, 0);
+    tone(440, 0.18, "sine", 0.045, 0.11);
+    tone(660, 0.28, "triangle", 0.05, 0.22);
+  }
+
+  function addSplash(x, y, sharp) {
+    var count = sharp ? 16 : 10;
+    for (var i = 0; i < count; i++) {
+      var angle = Math.PI * (1.08 + Math.random() * 0.84);
+      var speed = 0.45 + Math.random() * (sharp ? 1.3 : 0.8);
+      particles.push({
+        x: x + 0.5,
+        y: y + 0.55,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.35,
+        born: performance.now(),
+        life: 500 + Math.random() * 300,
+        color: sharp ? "#d9ffff" : "#82fff0",
+        size: 1.5 + Math.random() * 2.7
+      });
+    }
+  }
+
+  function addFootstep(x, y) {
+    for (var i = 0; i < 4; i++) {
+      particles.push({
+        x: x + 0.5 + (Math.random() - 0.5) * 0.2,
+        y: y + 0.72,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -0.15 - Math.random() * 0.2,
+        born: performance.now(),
+        life: 350,
+        color: "#d5d3a1",
+        size: 1.2 + Math.random() * 1.5
+      });
+    }
+  }
+
+  function ease(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function visualPosition(now) {
+    if (!animation) return { x: player.x, y: player.y };
+    var p = Math.max(0, Math.min(1, (now - animation.start) / animation.duration));
+    var segments = animation.points.length - 1;
+    var scaled = p * segments;
+    var index = Math.min(segments - 1, Math.floor(scaled));
+    var local = ease(scaled - index);
+    var a = animation.points[index];
+    var b = animation.points[index + 1];
+    return {
+      x: a.x + (b.x - a.x) * local,
+      y: a.y + (b.y - a.y) * local
+    };
+  }
+
+  function move(directionName) {
+    if (mode !== "playing" || animation) return;
+    initAudio();
+
+    var d = dirs[directionName];
+    var ox = player.x;
+    var oy = player.y;
+    var nx = ox + d.x;
+    var ny = oy + d.y;
+    lastDirection = directionName;
+
+    if (tileAt(level, nx, ny) === "#") {
+      playKnock();
+      setStatus("Rock. The walker disagrees, then bumps back.");
+      animation = {
+        start: performance.now(),
+        duration: 190,
+        points: [
+          { x: ox, y: oy },
+          { x: ox + d.x * 0.19, y: oy + d.y * 0.19 },
+          { x: ox, y: oy }
+        ],
+        done: null
+      };
+      return;
+    }
+
+    history.push({ x: ox, y: oy, moves: moves });
+    moves++;
+    var tile = tileAt(level, nx, ny);
+    var points = [{ x: ox, y: oy }, { x: nx, y: ny }];
+    var resultX = nx;
+    var resultY = ny;
+    var washedBack = false;
+
+    if (currentDirs[tile]) {
+      var push = currentDirs[tile];
+      var px = nx + push.x;
+      var py = ny + push.y;
+      addSplash(nx, ny, false);
+      playStep(true);
+
+      if (tileAt(level, px, py) === "#") {
+        points.push({ x: ox, y: oy });
+        resultX = ox;
+        resultY = oy;
+        washedBack = true;
+        blinkUntil = performance.now() + 1200;
+        addSplash(nx, ny, true);
+        playSharpSplash();
+        setStatus("Sharp splash! The current found a rock and threw you back to the safe bank.");
+      } else {
+        points.push({ x: px, y: py });
+        resultX = px;
+        resultY = py;
+        addSplash(px, py, false);
+        setStatus("Good shove. The current gave you an extra space.");
+      }
+    } else {
+      addFootstep(nx, ny);
+      playStep(false);
+      setStatus("A firm step. The bench is still ahead.");
+    }
+
+    player = { x: resultX, y: resultY };
+    updateHUD();
+
+    animation = {
+      start: performance.now(),
+      duration: points.length === 3 ? (washedBack ? 430 : 330) : 205,
+      points: points,
+      done: function () {
+        if (player.x === bench.x && player.y === bench.y) finishLevel();
+      }
+    };
+  }
+
+  function undo() {
+    if (mode !== "playing" || history.length === 0) {
+      if (mode === "playing") setStatus("Nothing to undo yet.");
+      return;
+    }
+    initAudio();
+    var now = performance.now();
+    var from = visualPosition(now);
+    var previous = history.pop();
+    player = { x: previous.x, y: previous.y };
+    moves = previous.moves;
+    animation = {
+      start: now,
+      duration: 170,
+      points: [from, { x: player.x, y: player.y }],
+      done: null
+    };
+    tone(260, 0.09, "sine", 0.025, 0);
+    setStatus("Move taken back. No grudge held.");
+    updateHUD();
+  }
+
+  function restart() {
+    initAudio();
+    loadLevel(levelIndex, false);
+    setStatus("Fresh start. The water remembers nothing.");
+  }
+
+  function resizeCanvas() {
+    var rect = boardShell.getBoundingClientRect();
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var w = Math.max(1, Math.floor(rect.width));
+    var h = Math.max(1, Math.floor(rect.height));
+    if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+    }
+    viewW = w;
+    viewH = h;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function roundedRect(c, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.quadraticCurveTo(x + w, y, x + w, y + r);
+    c.lineTo(x + w, y + h - r);
+    c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    c.lineTo(x + r, y + h);
+    c.quadraticCurveTo(x, y + h, x, y + h - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.closePath();
+  }
+
+  function drawArrow(cx, cy, size, char, color) {
+    var angle = char === ">" ? 0 : char === "v" ? Math.PI / 2 : char === "<" ? Math.PI : -Math.PI / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(2, size * 0.09);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.33, 0);
+    ctx.lineTo(size * 0.24, 0);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(size * 0.34, 0);
+    ctx.lineTo(size * 0.06, -size * 0.22);
+    ctx.lineTo(size * 0.06, size * 0.22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawRock(x, y, size) {
+    var cx = x + size / 2;
+    var cy = y + size / 2;
+    ctx.fillStyle = "#253b40";
+    ctx.beginPath();
+    ctx.moveTo(cx - size * .32, cy + size * .25);
+    ctx.lineTo(cx - size * .38, cy - size * .06);
+    ctx.lineTo(cx - size * .17, cy - size * .32);
+    ctx.lineTo(cx + size * .21, cy - size * .28);
+    ctx.lineTo(cx + size * .37, cy);
+    ctx.lineTo(cx + size * .25, cy + size * .3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#557075";
+    ctx.lineWidth = Math.max(1, size * .035);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(190,220,218,.18)";
+    ctx.beginPath();
+    ctx.moveTo(cx - size * .17, cy - size * .2);
+    ctx.lineTo(cx + size * .12, cy - size * .18);
+    ctx.stroke();
+  }
+
+  function drawBench(x, y, size, now) {
+    var cx = x + size / 2;
+    var cy = y + size / 2;
+    var wobble = 0;
+    if (now < benchWobbleUntil) {
+      var remaining = (benchWobbleUntil - now) / 900;
+      wobble = Math.sin(now * 0.04) * 0.09 * remaining;
+    }
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(wobble);
+    ctx.strokeStyle = "#472f20";
+    ctx.lineWidth = Math.max(2, size * .07);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-size * .25, size * .12);
+    ctx.lineTo(-size * .3, size * .34);
+    ctx.moveTo(size * .25, size * .12);
+    ctx.lineTo(size * .3, size * .34);
+    ctx.moveTo(-size * .28, -size * .18);
+    ctx.lineTo(-size * .25, size * .1);
+    ctx.moveTo(size * .28, -size * .18);
+    ctx.lineTo(size * .25, size * .1);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#d2924c";
+    ctx.lineWidth = Math.max(3, size * .11);
+    ctx.beginPath();
+    ctx.moveTo(-size * .3, -size * .15);
+    ctx.lineTo(size * .3, -size * .15);
+    ctx.moveTo(-size * .32, size * .08);
+    ctx.lineTo(size * .32, size * .08);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#f1bc70";
+    ctx.lineWidth = Math.max(1, size * .025);
+    ctx.beginPath();
+    ctx.moveTo(-size * .26, -size * .18);
+    ctx.lineTo(size * .25, -size * .18);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPlayer(gridX, gridY, size, now) {
+    var cx = worldX + (gridX + .5) * size;
+    var cy = worldY + (gridY + .5) * size;
+    var bob = animation ? Math.sin(now * .045) * size * .025 : 0;
+    var blink = now < blinkUntil && Math.floor(now / 95) % 2 === 0;
+
+    ctx.save();
+    ctx.translate(cx, cy + bob);
+
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    ctx.beginPath();
+    ctx.ellipse(0, size * .28, size * .23, size * .09, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#26363b";
+    ctx.lineWidth = Math.max(2, size * .055);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-size * .08, size * .17);
+    ctx.lineTo(-size * .12, size * .34);
+    ctx.moveTo(size * .08, size * .17);
+    ctx.lineTo(size * .13, size * .34);
+    ctx.stroke();
+
+    ctx.fillStyle = "#f0b934";
+    ctx.beginPath();
+    ctx.moveTo(-size * .22, size * .22);
+    ctx.lineTo(-size * .16, -size * .08);
+    ctx.quadraticCurveTo(0, -size * .21, size * .16, -size * .08);
+    ctx.lineTo(size * .23, size * .22);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#ffe292";
+    ctx.beginPath();
+    ctx.arc(0, -size * .17, size * .16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#e8ae37";
+    ctx.lineWidth = Math.max(2, size * .055);
+    ctx.beginPath();
+    ctx.arc(0, -size * .17, size * .185, Math.PI * 1.03, Math.PI * 1.97);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#24383b";
+    ctx.fillStyle = "#24383b";
+    ctx.lineWidth = Math.max(1.3, size * .027);
+    if (blink) {
+      ctx.beginPath();
+      ctx.moveTo(-size * .07, -size * .17);
+      ctx.lineTo(-size * .025, -size * .17);
+      ctx.moveTo(size * .025, -size * .17);
+      ctx.lineTo(size * .07, -size * .17);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(-size * .045, -size * .18, size * .018, 0, Math.PI * 2);
+      ctx.arc(size * .045, -size * .18, size * .018, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawParticles(now) {
+    var remaining = [];
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var ageMs = now - p.born;
+      if (ageMs >= p.life) continue;
+      remaining.push(p);
+      var age = ageMs / 1000;
+      var alpha = 1 - ageMs / p.life;
+      var gx = p.x + p.vx * age;
+      var gy = p.y + p.vy * age + age * age * 1.2;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(worldX + gx * tileSize, worldY + gy * tileSize, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    particles = remaining;
+  }
+
+  function render(now) {
+    resizeCanvas();
+    ctx.clearRect(0, 0, viewW, viewH);
+
+    if (!level) {
+      requestAnimationFrame(render);
+      return;
+    }
+
+    var cols = level.rows[0].length;
+    var rows = level.rows.length;
+    tileSize = Math.max(10, Math.floor(Math.min((viewW - 26) / cols, (viewH - 26) / rows)));
+    worldX = Math.floor((viewW - cols * tileSize) / 2);
+    worldY = Math.floor((viewH - rows * tileSize) / 2);
+
+    roundedRect(ctx, worldX - 8, worldY - 8, cols * tileSize + 16, rows * tileSize + 16, 18);
+    ctx.fillStyle = "rgba(4,20,24,.68)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(134,243,223,.13)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    var x, y, c, px, py;
+    for (y = 0; y < rows; y++) {
+      for (x = 0; x < cols; x++) {
+        c = tileAt(level, x, y);
+        px = worldX + x * tileSize;
+        py = worldY + y * tileSize;
+        var inset = Math.max(1.5, tileSize * .035);
+
+        roundedRect(ctx, px + inset, py + inset, tileSize - inset * 2, tileSize - inset * 2, tileSize * .13);
+
+        if (currentDirs[c]) {
+          var waterGradient = ctx.createLinearGradient(px, py, px, py + tileSize);
+          waterGradient.addColorStop(0, "#36b4c6");
+          waterGradient.addColorStop(1, "#197690");
+          ctx.fillStyle = waterGradient;
+          ctx.fill();
+          ctx.strokeStyle = "rgba(154,255,244,.45)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.strokeStyle = "rgba(210,255,252,.19)";
+          ctx.lineWidth = Math.max(1, tileSize * .025);
+          ctx.beginPath();
+          ctx.moveTo(px + tileSize * .15, py + tileSize * .28);
+          ctx.quadraticCurveTo(px + tileSize * .38, py + tileSize * .2, px + tileSize * .59, py + tileSize * .28);
+          ctx.quadraticCurveTo(px + tileSize * .75, py + tileSize * .34, px + tileSize * .88, py + tileSize * .27);
+          ctx.moveTo(px + tileSize * .11, py + tileSize * .73);
+          ctx.quadraticCurveTo(px + tileSize * .34, py + tileSize * .64, px + tileSize * .55, py + tileSize * .72);
+          ctx.stroke();
+        } else if (c === "#") {
+          ctx.fillStyle = "#182e33";
+          ctx.fill();
+          drawRock(px + inset, py + inset, tileSize - inset * 2);
+        } else {
+          var landGradient = ctx.createLinearGradient(px, py, px, py + tileSize);
+          landGradient.addColorStop(0, "#79967c");
+          landGradient.addColorStop(1, "#526f63");
+          ctx.fillStyle = landGradient;
+          ctx.fill();
+          ctx.strokeStyle = "rgba(221,241,202,.13)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          var seed = (x * 17 + y * 31) % 7;
+          ctx.fillStyle = "rgba(223,235,185,.16)";
+          ctx.beginPath();
+          ctx.arc(px + tileSize * (.25 + seed * .055), py + tileSize * .29, Math.max(1, tileSize * .023), 0, Math.PI * 2);
+          ctx.arc(px + tileSize * .68, py + tileSize * (.58 + (seed % 2) * .09), Math.max(1, tileSize * .018), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    for (y = 0; y < rows; y++) {
+      for (x = 0; x < cols; x++) {
+        c = tileAt(level, x, y);
+        if (!currentDirs[c]) continue;
+        var cd = currentDirs[c];
+        var centerX = worldX + (x + .5) * tileSize;
+        var centerY = worldY + (y + .5) * tileSize;
+        var targetX = x + cd.x;
+        var targetY = y + cd.y;
+        var targetCenterX = worldX + (targetX + .5) * tileSize;
+        var targetCenterY = worldY + (targetY + .5) * tileSize;
+        var danger = tileAt(level, targetX, targetY) === "#";
+
+        ctx.save();
+        ctx.setLineDash([Math.max(2, tileSize * .08), Math.max(2, tileSize * .08)]);
+        ctx.strokeStyle = danger ? "rgba(255,125,125,.9)" : "rgba(176,255,241,.58)";
+        ctx.lineWidth = Math.max(1.3, tileSize * .025);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(targetCenterX, targetCenterY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(targetCenterX, targetCenterY, tileSize * .2, 0, Math.PI * 2);
+        ctx.stroke();
+        if (danger) {
+          ctx.beginPath();
+          ctx.moveTo(targetCenterX - tileSize * .09, targetCenterY - tileSize * .09);
+          ctx.lineTo(targetCenterX + tileSize * .09, targetCenterY + tileSize * .09);
+          ctx.moveTo(targetCenterX + tileSize * .09, targetCenterY - tileSize * .09);
+          ctx.lineTo(targetCenterX - tileSize * .09, targetCenterY + tileSize * .09);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        drawArrow(centerX, centerY, tileSize * .62, c, "#e3fffb");
+      }
+    }
+
+    drawBench(worldX + bench.x * tileSize, worldY + bench.y * tileSize, tileSize, now);
+    drawParticles(now);
+
+    var vpos = visualPosition(now);
+    drawPlayer(vpos.x, vpos.y, tileSize, now);
+
+    if (animation) {
+      var progress = (now - animation.start) / animation.duration;
+      if (progress >= 1) {
+        var callback = animation.done;
+        animation = null;
+        if (callback) callback();
+      }
+    }
+
+    requestAnimationFrame(render);
+  }
+
+  document.querySelectorAll(".dir-btn").forEach(function (button) {
+    button.addEventListener("click", function () {
+      move(button.getAttribute("data-dir"));
+    });
+  });
+
+  startButton.addEventListener("click", startMap);
+  undoButton.addEventListener("click", undo);
+  restartButton.addEventListener("click", restart);
+  replayButton.addEventListener("click", function () {
+    loadLevel(levelIndex, false);
+  });
+  nextButton.addEventListener("click", function () {
+    if (levelIndex === levels.length - 1) {
+      loadLevel(0, true);
+    } else {
+      loadLevel(levelIndex + 1, true);
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var key = event.key.toLowerCase();
+
+    if (mode === "brief" && (key === "enter" || key === " ")) {
+      event.preventDefault();
+      startMap();
+      return;
+    }
+
+    if (mode === "complete" && (key === "enter" || key === " ")) {
+      event.preventDefault();
+      nextButton.click();
+      return;
+    }
+
+    var direction = null;
+    if (key === "arrowup" || key === "w") direction = "up";
+    if (key === "arrowdown" || key === "s") direction = "down";
+    if (key === "arrowleft" || key === "a") direction = "left";
+    if (key === "arrowright" || key === "d") direction = "right";
+
+    if (direction) {
+      event.preventDefault();
+      move(direction);
+    } else if (key === "z" || key === "u" || key === "backspace") {
+      event.preventDefault();
+      undo();
+    } else if (key === "r") {
+      event.preventDefault();
+      restart();
+    }
+  });
+
+  canvas.addEventListener("pointerdown", function (event) {
+    if (mode !== "playing") return;
+    swipeStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    canvas.setPointerCapture(event.pointerId);
+    initAudio();
+  });
+
+  canvas.addEventListener("pointerup", function (event) {
+    if (!swipeStart || swipeStart.id !== event.pointerId || mode !== "playing") {
+      swipeStart = null;
+      return;
+    }
+    var dx = event.clientX - swipeStart.x;
+    var dy = event.clientY - swipeStart.y;
+    swipeStart = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 22) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      move(dx > 0 ? "right" : "left");
+    } else {
+      move(dy > 0 ? "down" : "up");
+    }
+  });
+
+  canvas.addEventListener("pointercancel", function () {
+    swipeStart = null;
+  });
+
+  window.addEventListener("resize", resizeCanvas);
+  loadLevel(0, true);
+  resizeCanvas();
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>

@@ -445,6 +445,15 @@
       "path": "games/low-tide-tower/",
       "mobile": true,
       "thumbnail": "games/low-tide-tower/cover.webp"
+    },
+    {
+      "slug": "take-the-wet-way",
+      "title": "Take the Wet Way",
+      "tagline": "The path is optional. The bench is not.",
+      "date": "2026-09-27",
+      "path": "games/take-the-wet-way/",
+      "mobile": true,
+      "thumbnail": "games/take-the-wet-way/cover.webp"
     }
   ]
 }

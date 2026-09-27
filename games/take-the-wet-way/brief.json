@@ -1,0 +1,11 @@
+{
+  "title": "Take the Wet Way",
+  "slug": "take-the-wet-way",
+  "tagline": "The path is optional. The bench is not.",
+  "concept": "Guide a stubborn walker across tiny maps where stepping into the water is often the sensible route.",
+  "core_loop": "Read the current arrows, make a few moves, and use the shove of the water to reach a useful bank; each short route feels good because a bad-looking swim can become a neat shortcut.",
+  "mechanics": "Use arrow keys or WASD on keyboard, or swipe and tap large direction buttons on touch screens; press Z or tap Undo to take back a move.; Reach the bench to finish the map; rocks block movement, visible currents push you one extra space after each move in water, and dead ends can always be undone.; Finish in fewer moves to earn up to three plain marks, with the target move counts shown before and during the map.",
+  "feedback": "A good move draws a bright wake, lands with a firm splash or footstep, and makes the bench give a small approving wobble when reached. A blocked move makes the walker bump back with a dull knock. A current pushing toward trouble shows the next space before the move, while a near-miss sends up a sharp splash and leaves the walker blinking on the safe bank.",
+  "difficulty": "The first maps have one gentle current and obvious banks. Later maps add crossing currents, narrow landing spots, rocks, and routes that require entering the same water from a different side. There is no timer, and every mistake can be undone immediately.",
+  "mobile": true
+}
