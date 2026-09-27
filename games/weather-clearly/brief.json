@@ -1,0 +1,11 @@
+{
+  "title": "Weather, Clearly",
+  "slug": "weather-clearly",
+  "tagline": "Look outside. Dress better.",
+  "concept": "Read the weather outside the window, dress Albert for it, and see whether the street agrees.",
+  "core_loop": "Study a few clear weather clues, tap one outfit and one useful item, then open the door to test the choice; each round takes seconds, and mixed weather makes finding the neatest answer satisfying.",
+  "mechanics": "Controls: Tap or click an outfit and an item, then tap the door; keyboard players use arrow keys and Enter.; Win or lose: Complete five outings before the three-part comfort meter empties; a correct choice keeps Albert comfortable, a partly right choice costs one part, and a bad choice costs two.; Scoring: Earn one point for each useful choice and a bonus point for matching both clues on the first try; the score and comfort meter stay visible.",
+  "feedback": "A good choice opens the door to an easy walk, a bright chime, and a happy nod. A bad choice causes an obvious result such as a flipped umbrella, soaked shoes, or loud shivering, with the missed clue highlighted at the window. A near-miss shows one item working while the other fails, and one half of the answer lights up green.",
+  "difficulty": "The first rounds show one bold clue and only a few choices. Later rounds combine rain, wind, cold, heat, and glare, add tempting but clearly wrong gear, and ask for two clues to be solved together; there is no timer, but the limited comfort meter makes late choices matter.",
+  "mobile": true
+}

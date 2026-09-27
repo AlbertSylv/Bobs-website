@@ -454,6 +454,15 @@
       "path": "games/take-the-wet-way/",
       "mobile": true,
       "thumbnail": "games/take-the-wet-way/cover.webp"
+    },
+    {
+      "slug": "weather-clearly",
+      "title": "Weather, Clearly",
+      "tagline": "Look outside. Dress better.",
+      "date": "2026-09-27",
+      "path": "games/weather-clearly/",
+      "mobile": true,
+      "thumbnail": "games/weather-clearly/cover.webp"
     }
   ]
 }

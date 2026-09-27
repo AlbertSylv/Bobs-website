@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weather, Clearly</title>
+<style>
+  :root {
+    --ink: #17324d;
+    --muted: #607386;
+    --paper: #f7f4ec;
+    --panel: #ffffff;
+    --sky: #bfe7f5;
+    --blue: #1876a5;
+    --blue-dark: #0e526f;
+    --yellow: #ffd45a;
+    --green: #2c9b6f;
+    --green-soft: #def5e8;
+    --red: #d8564f;
+    --red-soft: #ffe3df;
+    --orange: #ed8b45;
+    --line: #d8e0e4;
+    --shadow: 0 12px 32px rgba(23, 50, 77, 0.14);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+
+  body {
+    min-width: 280px;
+    background:
+      radial-gradient(circle at 12% 5%, rgba(255,255,255,.9), transparent 28%),
+      linear-gradient(135deg, #eaf5f6, #f8efe1);
+    color: var(--ink);
+    font-family: Arial, Helvetica, sans-serif;
+    overflow: auto;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  #app {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 12px clamp(12px, 3vw, 34px);
+    background: rgba(247, 244, 236, 0.96);
+    border-bottom: 1px solid rgba(23, 50, 77, 0.13);
+    backdrop-filter: blur(10px);
+  }
+
+  .brand {
+    min-width: 210px;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1;
+    letter-spacing: -1.2px;
+  }
+
+  .tagline {
+    margin-top: 5px;
+    color: var(--blue-dark);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .02em;
+  }
+
+  .hud {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .hud-box {
+    min-width: 92px;
+    padding: 7px 11px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid var(--line);
+    box-shadow: 0 3px 10px rgba(23, 50, 77, .06);
+  }
+
+  .hud-label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+  }
+
+  #scoreValue {
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .meter, .outing-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 22px;
+  }
+
+  .comfort-part {
+    width: 22px;
+    height: 12px;
+    border-radius: 999px;
+    background: #d7dee1;
+    border: 1px solid #c3ccd0;
+    transition: background .25s, transform .25s;
+  }
+
+  .comfort-part.full {
+    background: var(--green);
+    border-color: #16805a;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.12);
+  }
+
+  .comfort-part.lost {
+    animation: meterDrop .45s ease;
+  }
+
+  .outing-dot {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #aab9c1;
+    border-radius: 50%;
+    background: white;
+  }
+
+  .outing-dot.active {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(24,118,165,.14);
+  }
+
+  .outing-dot.done {
+    border-color: var(--green);
+    background: var(--green);
+  }
+
+  .sound-button {
+    width: 44px;
+    min-width: 44px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: white;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 19px;
+  }
+
+  .sound-button:hover {
+    background: #eef8fb;
+  }
+
+  .howto {
+    padding: 8px 16px;
+    text-align: center;
+    color: var(--muted);
+    background: rgba(255,255,255,.62);
+    border-bottom: 1px solid rgba(23,50,77,.08);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .howto strong {
+    color: var(--ink);
+  }
+
+  main {
+    width: min(1460px, 100%);
+    flex: 1;
+    margin: 0 auto;
+    padding: clamp(10px, 2vw, 22px);
+    display: grid;
+    grid-template-columns: minmax(440px, 1.08fr) minmax(430px, .92fr);
+    gap: clamp(10px, 2vw, 22px);
+    align-items: stretch;
+  }
+
+  .scene,
+  .wardrobe {
+    position: relative;
+    min-height: 480px;
+    border-radius: 22px;
+    border: 1px solid rgba(23,50,77,.13);
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .scene {
+    background:
+      linear-gradient(to bottom, #f2e7d2 0 77%, #d7c8ae 77% 100%);
+  }
+
+  .scene-title {
+    position: absolute;
+    top: 13px;
+    left: 16px;
+    z-index: 12;
+    max-width: 57%;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(23,50,77,.12);
+    box-shadow: 0 3px 10px rgba(23,50,77,.08);
+  }
+
+  .scene-title strong {
+    display: block;
+    font-size: 13px;
+    letter-spacing: .08em;
+  }
+
+  .scene-title span {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .window {
+    position: absolute;
+    top: 75px;
+    left: 4%;
+    width: 58%;
+    height: 63%;
+    min-height: 290px;
+    border: 11px solid #edf1ed;
+    border-bottom-width: 15px;
+    border-radius: 8px;
+    background: #9ad3e8;
+    box-shadow:
+      inset 0 0 0 4px #78909c,
+      0 8px 20px rgba(23,50,77,.18);
+    overflow: hidden;
+    z-index: 2;
+  }
+
+  .window::before,
+  .window::after {
+    content: "";
+    position: absolute;
+    z-index: 10;
+    background: rgba(238,244,242,.95);
+    box-shadow: 0 0 0 1px rgba(70,91,101,.25);
+  }
+
+  .window::before {
+    left: 49%;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+  }
+
+  .window::after {
+    left: 0;
+    right: 0;
+    top: 45%;
+    height: 8px;
+  }
+
+  .window-view {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: linear-gradient(#90d7ef 0 65%, #b7c5bd 65% 100%);
+  }
+
+  .city {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 22%;
+    height: 34%;
+    opacity: .68;
+    background:
+      linear-gradient(90deg,
+        #647b82 0 12%, transparent 12% 15%,
+        #72898f 15% 28%, transparent 28% 31%,
+        #5b737b 31% 48%, transparent 48% 52%,
+        #778e91 52% 66%, transparent 66% 70%,
+        #60777d 70% 84%, transparent 84% 87%,
+        #71868c 87% 100%);
+    clip-path: polygon(0 38%, 8% 38%, 8% 15%, 24% 15%, 24% 45%, 38% 45%, 38% 2%, 52% 2%, 52% 31%, 69% 31%, 69% 17%, 84% 17%, 84% 46%, 100% 46%, 100% 100%, 0 100%);
+  }
+
+  .street {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 24%;
+    background:
+      linear-gradient(10deg, transparent 47%, rgba(255,255,255,.7) 48% 52%, transparent 53%) 0 0 / 100px 100%,
+      #6e7c80;
+  }
+
+  .puddle {
+    display: none;
+    position: absolute;
+    bottom: 8%;
+    left: 19%;
+    width: 42%;
+    height: 11px;
+    border-radius: 50%;
+    background: rgba(110,200,231,.72);
+    box-shadow: 0 0 0 2px rgba(220,245,255,.25);
+  }
+
+  .sun {
+    display: none;
+    position: absolute;
+    right: 11%;
+    top: 8%;
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: 0 0 0 12px rgba(255,212,90,.22), 0 0 35px rgba(255,241,170,.9);
+    animation: sunPulse 2.6s ease-in-out infinite;
+  }
+
+  .sun-glare {
+    display: none;
+    position: absolute;
+    right: -8%;
+    top: -5%;
+    width: 62%;
+    height: 78%;
+    transform: rotate(-18deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,220,.55), transparent);
+    animation: glareSweep 3s ease-in-out infinite;
+  }
+
+  .cloud {
+    display: none;
+    position: absolute;
+    left: 13%;
+    top: 12%;
+    width: 115px;
+    height: 36px;
+    border-radius: 40px;
+    background: #647981;
+    box-shadow:
+      34px -19px 0 8px #71868d,
+      68px -7px 0 3px #647981;
+    animation: cloudDrift 4s ease-in-out infinite alternate;
+  }
+
+  .cloud.second {
+    left: 58%;
+    top: 27%;
+    transform: scale(.72);
+    opacity: .75;
+    animation-delay: -1.5s;
+  }
+
+  .rain,
+  .snow,
+  .gusts {
+    display: none;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .rain span {
+    position: absolute;
+    top: -22px;
+    width: 3px;
+    height: 23px;
+    border-radius: 4px;
+    background: rgba(232,249,255,.86);
+    transform: rotate(10deg);
+    animation: rainFall 1s linear infinite;
+  }
+
+  .rain span:nth-child(1) { left: 5%; animation-delay: -.1s; }
+  .rain span:nth-child(2) { left: 14%; animation-delay: -.55s; }
+  .rain span:nth-child(3) { left: 24%; animation-delay: -.25s; }
+  .rain span:nth-child(4) { left: 34%; animation-delay: -.77s; }
+  .rain span:nth-child(5) { left: 44%; animation-delay: -.42s; }
+  .rain span:nth-child(6) { left: 54%; animation-delay: -.9s; }
+  .rain span:nth-child(7) { left: 65%; animation-delay: -.18s; }
+  .rain span:nth-child(8) { left: 75%; animation-delay: -.66s; }
+  .rain span:nth-child(9) { left: 86%; animation-delay: -.34s; }
+  .rain span:nth-child(10) { left: 95%; animation-delay: -.82s; }
+
+  .snow span {
+    position: absolute;
+    top: -15px;
+    color: white;
+    font-size: 18px;
+    animation: snowFall 3.2s linear infinite;
+  }
+
+  .snow span:nth-child(1) { left: 7%; animation-delay: -.2s; }
+  .snow span:nth-child(2) { left: 19%; animation-delay: -2s; }
+  .snow span:nth-child(3) { left: 32%; animation-delay: -1.1s; }
+  .snow span:nth-child(4) { left: 46%; animation-delay: -2.7s; }
+  .snow span:nth-child(5) { left: 61%; animation-delay: -.8s; }
+  .snow span:nth-child(6) { left: 75%; animation-delay: -2.3s; }
+  .snow span:nth-child(7) { left: 89%; animation-delay: -1.5s; }
+
+  .gust {
+    position: absolute;
+    left: -42%;
+    width: 42%;
+    height: 4px;
+    border-radius: 50%;
+    border-top: 3px solid rgba(238,251,255,.86);
+    animation: gustAcross 1.8s linear infinite;
+  }
+
+  .gust:nth-child(1) { top: 24%; animation-delay: -.3s; }
+  .gust:nth-child(2) { top: 39%; animation-delay: -1.1s; width: 55%; }
+  .gust:nth-child(3) { top: 56%; animation-delay: -.7s; width: 33%; }
+  .gust:nth-child(4) { top: 70%; animation-delay: -1.5s; width: 47%; }
+
+  .weather-rain .cloud,
+  .weather-rain .rain,
+  .weather-rain .puddle,
+  .weather-storm .cloud,
+  .weather-storm .rain,
+  .weather-storm .gusts,
+  .weather-storm .puddle {
+    display: block;
+  }
+
+  .weather-cold .cloud,
+  .weather-cold .gusts {
+    display: block;
+  }
+
+  .weather-heat .sun,
+  .weather-heat .sun-glare,
+  .weather-snowSun .sun,
+  .weather-snowSun .sun-glare,
+  .weather-snowSun .snow {
+    display: block;
+  }
+
+  .weather-rain .window-view,
+  .weather-storm .window-view {
+    background: linear-gradient(#6f8e9c 0 65%, #738587 65% 100%);
+  }
+
+  .weather-storm .rain span {
+    height: 33px;
+    transform: rotate(28deg);
+    animation-duration: .65s;
+  }
+
+  .weather-cold .window-view {
+    background: linear-gradient(#c1d9df 0 65%, #a9b6b4 65% 100%);
+  }
+
+  .weather-heat .window-view {
+    background: linear-gradient(#6fd3f0 0 65%, #d9c781 65% 100%);
+  }
+
+  .weather-snowSun .window-view {
+    background: linear-gradient(#a9def1 0 61%, #f7fbff 61% 100%);
+  }
+
+  .window-clues {
+    position: absolute;
+    z-index: 14;
+    left: 7px;
+    right: 7px;
+    bottom: 7px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .clue-chip {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 8px;
+    border: 2px solid rgba(255,255,255,.8);
+    border-radius: 10px;
+    color: var(--ink);
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 3px 8px rgba(23,50,77,.14);
+    transition: transform .2s, background .2s, border-color .2s;
+  }
+
+  .clue-chip b {
+    display: block;
+    font-size: 9px;
+    letter-spacing: .1em;
+    color: var(--blue-dark);
+  }
+
+  .clue-chip span {
+    display: block;
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .clue-chip.matched {
+    border-color: var(--green);
+    background: var(--green-soft);
+  }
+
+  .clue-chip.missed {
+    border-color: var(--red);
+    background: var(--red-soft);
+    animation: cluePulse .65s ease 2;
+  }
+
+  .door-btn {
+    position: absolute;
+    z-index: 5;
+    top: 76px;
+    right: 4%;
+    width: 28%;
+    height: 68%;
+    min-height: 310px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    perspective: 800px;
+  }
+
+  .door-frame {
+    position: absolute;
+    inset: 0 3% 42px;
+    border: 10px solid #73513b;
+    border-bottom-width: 7px;
+    border-radius: 6px 6px 2px 2px;
+    background:
+      linear-gradient(#b7e3f1 0 65%, #6f7f82 65% 100%);
+    box-shadow: 0 8px 18px rgba(23,50,77,.22);
+    overflow: hidden;
+  }
+
+  .door-frame::after {
+    content: "";
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    bottom: 9%;
+    height: 4px;
+    transform: rotate(-5deg);
+    background: rgba(255,255,255,.75);
+  }
+
+  .door-leaf {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    transform-origin: left center;
+    background:
+      linear-gradient(rgba(255,255,255,.08), rgba(0,0,0,.06)),
+      #d47d46;
+    border: 3px solid #91502e;
+    transition: transform .65s ease, filter .2s;
+    box-shadow: inset -12px 0 0 rgba(95,47,27,.12);
+  }
+
+  .door-panel {
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    height: 25%;
+    border: 3px solid rgba(104,50,28,.35);
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.08);
+  }
+
+  .door-panel.one { top: 12%; }
+  .door-panel.two { bottom: 12%; }
+
+  .door-handle {
+    position: absolute;
+    right: 11%;
+    top: 52%;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #f5d471;
+    box-shadow: 0 0 0 2px #8e6530;
+  }
+
+  .door-cta {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 8px;
+    border-radius: 10px;
+    background: var(--ink);
+    color: white;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    box-shadow: 0 5px 0 #091d2d;
+    transition: transform .15s, background .15s;
+  }
+
+  .door-btn:hover .door-cta,
+  .door-btn.key-focus .door-cta {
+    background: var(--blue);
+    transform: translateY(-2px);
+  }
+
+  .door-btn:active .door-cta {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #091d2d;
+  }
+
+  .door-open .door-leaf {
+    transform: rotateY(-76deg);
+  }
+
+  .albert {
+    --coat-color: #6c8aa0;
+    position: absolute;
+    z-index: 8;
+    left: 59%;
+    bottom: 12%;
+    width: 102px;
+    height: 230px;
+    transform-origin: bottom center;
+    pointer-events: none;
+  }
+
+  .head {
+    position: absolute;
+    z-index: 4;
+    top: 17px;
+    left: 31px;
+    width: 50px;
+    height: 58px;
+    border-radius: 46% 46% 45% 45%;
+    background: #e8af83;
+    border: 2px solid #704d3a;
+    transform-origin: bottom center;
+  }
+
+  .hair {
+    position: absolute;
+    left: -3px;
+    top: -7px;
+    width: 51px;
+    height: 22px;
+    border-radius: 50% 50% 20% 20%;
+    background: #443329;
+    transform: rotate(-5deg);
+  }
+
+  .eyes::before,
+  .eyes::after {
+    content: "";
+    position: absolute;
+    top: 26px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #263847;
+  }
+
+  .eyes::before { left: 12px; }
+  .eyes::after { right: 12px; }
+
+  .mouth {
+    position: absolute;
+    left: 18px;
+    top: 41px;
+    width: 14px;
+    height: 6px;
+    border-bottom: 2px solid #743e39;
+    border-radius: 50%;
+  }
+
+  .body {
+    position: absolute;
+    z-index: 3;
+    top: 70px;
+    left: 22px;
+    width: 68px;
+    height: 93px;
+    border-radius: 18px 18px 9px 9px;
+    background: var(--coat-color);
+    border: 3px solid rgba(35,50,60,.48);
+    transition: background .2s;
+  }
+
+  .body::before {
+    content: "";
+    position: absolute;
+    left: 31px;
+    top: 3px;
+    bottom: 2px;
+    width: 3px;
+    background: rgba(255,255,255,.35);
+  }
+
+  .arm {
+    position: absolute;
+    z-index: 2;
+    top: 78px;
+    width: 24px;
+    height: 87px;
+    border-radius: 14px;
+    background: var(--coat-color);
+    border: 3px solid rgba(35,50,60,.45);
+    transform-origin: top center;
+  }
+
+  .arm.left {
+    left: 10px;
+    transform: rotate(8deg);
+  }
+
+  .arm.right {
+    right: 1px;
+    transform: rotate(-12deg);
+  }
+
+  .leg {
+    position: absolute;
+    z-index: 1;
+    top: 153px;
+    width: 29px;
+    height: 67px;
+    border-radius: 4px 4px 10px 10px;
+    background: #314f65;
+    border: 3px solid #263b4b;
+  }
+
+  .leg.left { left: 25px; transform: rotate(2deg); }
+  .leg.right { right: 16px; transform: rotate(-2deg); }
+
+  .held-item {
+    position: absolute;
+    z-index: 9;
+    right: -14px;
+    top: 104px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    font-size: 35px;
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,.18));
+    transform-origin: center bottom;
+  }
+
+  .outfit-label {
+    position: absolute;
+    z-index: 10;
+    left: 4px;
+    right: -2px;
+    bottom: -27px;
+    padding: 4px 5px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(255,255,255,.92);
+    color: var(--ink);
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 9px;
+    font-weight: 800;
+    box-shadow: 0 2px 7px rgba(23,50,77,.12);
+  }
+
+  .street-reaction {
+    position: absolute;
+    z-index: 13;
+    top: 18px;
+    right: 5%;
+    max-width: 35%;
+    padding: 8px 10px;
+    border-radius: 12px 12px 2px 12px;
+    color: var(--ink);
+    background: white;
+    border: 2px solid var(--ink);
+    box-shadow: 0 4px 10px rgba(23,50,77,.12);
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 800;
+  }
+
+  .effect-label {
+    position: absolute;
+    z-index: 15;
+    left: 61%;
+    top: 42%;
+    display: none;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: var(--red);
+    color: white;
+    font-size: 14px;
+    font-weight: 900;
+    transform: rotate(-7deg);
+    box-shadow: 0 4px 0 #8e342f;
+  }
+
+  .effect-label.show {
+    display: block;
+    animation: popEffect .4s ease both;
+  }
+
+  .outcome-good .albert {
+    animation: happyStep 1.1s ease both;
+  }
+
+  .outcome-good .head {
+    animation: happyNod .42s ease 2;
+  }
+
+  .outcome-good .mouth {
+    height: 8px;
+    border-bottom-width: 3px;
+  }
+
+  .outcome-near .albert {
+    animation: wobble .4s ease 2;
+  }
+
+  .outcome-bad .albert {
+    animation: shiver .12s linear 8;
+  }
+
+  .prop-fail .held-item {
+    animation: umbrellaFlip .65s ease both;
+  }
+
+  .floor-shadow {
+    position: absolute;
+    left: 53%;
+    bottom: 8%;
+    width: 130px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(63,56,48,.2);
+    z-index: 4;
+  }
+
+  .wardrobe {
+    padding: clamp(14px, 2.2vw, 24px);
+    overflow: visible;
+  }
+
+  .round-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 13px;
+  }
+
+  .round-kicker {
+    margin-bottom: 4px;
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .14em;
+  }
+
+  .round-head h2 {
+    margin: 0;
+    font-size: clamp(21px, 2.2vw, 29px);
+    letter-spacing: -.5px;
+  }
+
+  .round-head p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .difficulty {
+    flex: 0 0 auto;
+    padding: 7px 9px;
+    border-radius: 999px;
+    color: var(--blue-dark);
+    background: #e3f4f8;
+    border: 1px solid #b9dce5;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+  }
+
+  .choice-group {
+    margin-top: 14px;
+  }
+
+  .choice-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+  }
+
+  .choice-heading h3 {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: .1em;
+  }
+
+  .slot-state {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .slot-state.filled {
+    color: var(--green);
+  }
+
+  .choice-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .choice-card {
+    position: relative;
+    min-height: 91px;
+    padding: 9px 7px 8px;
+    border: 2px solid var(--line);
+    border-radius: 13px;
+    color: var(--ink);
+    background: #fbfcfc;
+    cursor: pointer;
+    text-align: center;
+    touch-action: manipulation;
+    transition: transform .14s, border-color .14s, background .14s, box-shadow .14s;
+  }
+
+  .choice-card:hover {
+    transform: translateY(-2px);
+    border-color: #86b7c9;
+    box-shadow: 0 6px 13px rgba(23,50,77,.1);
+  }
+
+  .choice-card.selected {
+    border-color: var(--blue);
+    background: #e8f5fa;
+    box-shadow: 0 0 0 3px rgba(24,118,165,.12);
+  }
+
+  .choice-card.key-focus {
+    outline: 3px solid var(--yellow);
+    outline-offset: 2px;
+  }
+
+  .choice-card.verdict-good {
+    border-color: var(--green);
+    background: var(--green-soft);
+    box-shadow: 0 0 0 3px rgba(44,155,111,.12);
+  }
+
+  .choice-card.verdict-bad {
+    border-color: var(--red);
+    background: var(--red-soft);
+    animation: cardShake .35s ease;
+  }
+
+  .choice-card:disabled {
+    cursor: default;
+    opacity: .78;
+    transform: none;
+  }
+
+  .choice-icon {
+    display: block;
+    min-height: 32px;
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .choice-name {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .choice-note {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .feedback {
+    min-height: 67px;
+    margin-top: 16px;
+    padding: 11px 13px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    border: 1px solid #cad8de;
+    border-radius: 14px;
+    background: #eef7fa;
+  }
+
+  .feedback.good {
+    background: var(--green-soft);
+    border-color: #9bd7bb;
+  }
+
+  .feedback.near {
+    background: #fff3d2;
+    border-color: #e7c565;
+  }
+
+  .feedback.bad,
+  .feedback.warn {
+    background: var(--red-soft);
+    border-color: #e5a09b;
+  }
+
+  .feedback-icon {
+    flex: 0 0 auto;
+    font-size: 23px;
+    line-height: 1;
+  }
+
+  .feedback-copy strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    letter-spacing: .05em;
+  }
+
+  .feedback-copy span {
+    display: block;
+    color: #42596b;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .score-rule {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .screen-overlay {
+    position: fixed;
+    z-index: 60;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(13,35,51,.68);
+    backdrop-filter: blur(5px);
+  }
+
+  .screen-overlay.hidden {
+    display: none;
+  }
+
+  .end-card {
+    width: min(430px, 100%);
+    padding: 28px;
+    border-radius: 22px;
+    background: var(--paper);
+    border: 2px solid white;
+    box-shadow: 0 22px 60px rgba(0,0,0,.3);
+    text-align: center;
+  }
+
+  .end-weather {
+    font-size: 52px;
+    line-height: 1;
+  }
+
+  .end-card h2 {
+    margin: 12px 0 5px;
+    font-size: 30px;
+  }
+
+  .end-card p {
+    margin: 0 auto 17px;
+    max-width: 330px;
+    color: var(--muted);
+    line-height: 1.45;
+    font-size: 14px;
+  }
+
+  .end-stats {
+    display: flex;
+    justify-content: center;
+    gap: 9px;
+    margin-bottom: 18px;
+  }
+
+  .end-stat {
+    min-width: 105px;
+    padding: 10px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid var(--line);
+  }
+
+  .end-stat b {
+    display: block;
+    font-size: 24px;
+  }
+
+  .end-stat span {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .11em;
+  }
+
+  .restart-button {
+    min-height: 48px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 12px;
+    color: white;
+    background: var(--blue);
+    box-shadow: 0 5px 0 var(--blue-dark);
+    cursor: pointer;
+    font-weight: 900;
+    letter-spacing: .05em;
+  }
+
+  .restart-button:hover {
+    background: #2088ba;
+  }
+
+  .restart-button:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 var(--blue-dark);
+  }
+
+  @keyframes rainFall {
+    to { transform: translate(20px, 440px) rotate(10deg); }
+  }
+
+  @keyframes snowFall {
+    to { transform: translate(28px, 430px) rotate(220deg); }
+  }
+
+  @keyframes gustAcross {
+    to { transform: translateX(390%); }
+  }
+
+  @keyframes cloudDrift {
+    to { transform: translateX(14px); }
+  }
+
+  @keyframes sunPulse {
+    50% { transform: scale(1.06); }
+  }
+
+  @keyframes glareSweep {
+    50% { transform: translateX(-18px) rotate(-18deg); opacity: .5; }
+  }
+
+  @keyframes cluePulse {
+    50% { transform: scale(1.055); box-shadow: 0 0 0 5px rgba(216,86,79,.2); }
+  }
+
+  @keyframes meterDrop {
+    40% { transform: scale(1.25); background: var(--red); }
+  }
+
+  @keyframes happyStep {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(18px) translateY(-5px); }
+    100% { transform: translateX(35px); }
+  }
+
+  @keyframes happyNod {
+    50% { transform: rotate(8deg) translateY(2px); }
+  }
+
+  @keyframes wobble {
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(3deg); }
+  }
+
+  @keyframes shiver {
+    0% { transform: translateX(-3px); }
+    100% { transform: translateX(3px); }
+  }
+
+  @keyframes umbrellaFlip {
+    40% { transform: rotate(130deg) scaleX(-1); }
+    100% { transform: rotate(195deg) scaleX(-1); }
+  }
+
+  @keyframes popEffect {
+    from { transform: scale(.2) rotate(-14deg); opacity: 0; }
+    to { transform: scale(1) rotate(-7deg); opacity: 1; }
+  }
+
+  @keyframes cardShake {
+    25% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+    75% { transform: translateX(-2px); }
+  }
+
+  @media (max-width: 980px) {
+    main {
+      grid-template-columns: 1fr;
+    }
+
+    .scene {
+      min-height: 430px;
+    }
+
+    .wardrobe {
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 650px) {
+    .topbar {
+      align-items: flex-start;
+      gap: 8px;
+      padding: 9px 10px;
+    }
+
+    .brand {
+      min-width: 128px;
+      flex: 1;
+    }
+
+    .brand h1 {
+      font-size: 20px;
+      letter-spacing: -.7px;
+    }
+
+    .tagline {
+      font-size: 10px;
+    }
+
+    .hud {
+      flex: 0 1 auto;
+      gap: 4px;
+    }
+
+    .hud-box {
+      min-width: 0;
+      padding: 6px 7px;
+    }
+
+    .hud-box.outings-box {
+      display: none;
+    }
+
+    .hud-label {
+      margin-bottom: 3px;
+      font-size: 8px;
+    }
+
+    #scoreValue {
+      font-size: 18px;
+    }
+
+    .comfort-part {
+      width: 15px;
+      height: 10px;
+    }
+
+    .sound-button {
+      width: 37px;
+      min-width: 37px;
+      height: 39px;
+    }
+
+    .howto {
+      padding: 6px 9px;
+      font-size: 10px;
+    }
+
+    main {
+      padding: 8px;
+      gap: 9px;
+    }
+
+    .scene {
+      min-height: 350px;
+      border-radius: 16px;
+    }
+
+    .scene-title {
+      top: 8px;
+      left: 9px;
+      max-width: 60%;
+      padding: 5px 7px;
+    }
+
+    .scene-title strong {
+      font-size: 10px;
+    }
+
+    .scene-title span {
+      font-size: 9px;
+    }
+
+    .window {
+      top: 54px;
+      left: 3%;
+      width: 61%;
+      height: 69%;
+      min-height: 240px;
+      border-width: 7px;
+      border-bottom-width: 10px;
+    }
+
+    .clue-chip {
+      padding: 5px;
+    }
+
+    .clue-chip b {
+      font-size: 7px;
+    }
+
+    .clue-chip span {
+      font-size: 8px;
+    }
+
+    .door-btn {
+      top: 54px;
+      right: 2%;
+      width: 31%;
+      height: 72%;
+      min-height: 250px;
+    }
+
+    .door-frame {
+      inset-bottom: 38px;
+      border-width: 7px;
+    }
+
+    .door-cta {
+      font-size: 9px;
+      min-height: 34px;
+      letter-spacing: .04em;
+    }
+
+    .albert {
+      left: 57%;
+      bottom: 10%;
+      transform: scale(.77);
+    }
+
+    .outcome-good .albert {
+      animation-name: happyStepMobile;
+    }
+
+    .floor-shadow {
+      left: 50%;
+      width: 105px;
+    }
+
+    .street-reaction {
+      top: 8px;
+      right: 3%;
+      max-width: 36%;
+      padding: 5px 7px;
+      font-size: 9px;
+    }
+
+    .effect-label {
+      left: 55%;
+      top: 42%;
+      font-size: 11px;
+    }
+
+    .wardrobe {
+      padding: 13px 11px;
+      border-radius: 16px;
+    }
+
+    .round-head {
+      margin-bottom: 8px;
+    }
+
+    .round-head h2 {
+      font-size: 20px;
+    }
+
+    .round-head p {
+      font-size: 11px;
+    }
+
+    .choice-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .choice-card {
+      min-height: 78px;
+      padding: 7px 6px;
+    }
+
+    .choice-icon {
+      min-height: 27px;
+      font-size: 24px;
+    }
+
+    .feedback {
+      margin-top: 12px;
+    }
+  }
+
+  @keyframes happyStepMobile {
+    0% { transform: scale(.77) translateX(0); }
+    50% { transform: scale(.77) translateX(15px) translateY(-5px); }
+    100% { transform: scale(.77) translateX(28px); }
+  }
+
+  @media (max-width: 360px) {
+    .brand h1 {
+      font-size: 17px;
+    }
+
+    .tagline {
+      display: none;
+    }
+
+    .scene {
+      min-height: 325px;
+    }
+
+    .window {
+      min-height: 220px;
+    }
+
+    .albert {
+      left: 54%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+
+    .door-leaf {
+      transition-duration: .01ms;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Weather, Clearly</h1>
+      <div class="tagline">Look outside. Dress better.</div>
+    </div>
+
+    <div class="hud" aria-label="Game status">
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="scoreValue">00</span>
+      </div>
+
+      <div class="hud-box">
+        <span class="hud-label">COMFORT</span>
+        <div id="comfortMeter" class="meter" aria-label="Three comfort parts"></div>
+      </div>
+
+      <div class="hud-box outings-box">
+        <span class="hud-label">OUTINGS</span>
+        <div id="outingDots" class="outing-dots" aria-label="Five outings"></div>
+      </div>
+
+      <button id="soundToggle" class="sound-button" type="button" aria-label="Mute sound" title="Toggle sound">🔊</button>
+    </div>
+  </header>
+
+  <div class="howto">
+    <strong>How to play:</strong> choose one outfit and one useful item, then open the door. Keyboard: ↑↓ switch rows, ←→ browse, Enter chooses or opens.
+  </div>
+
+  <main>
+    <section id="scene" class="scene weather-rain" aria-label="Albert's room and the weather outside">
+      <div class="scene-title">
+        <strong id="weatherHeadline">STEADY RAIN · 12°C</strong>
+        <span id="weatherDetail">Read the window, not your hopes.</span>
+      </div>
+
+      <div class="window" aria-label="Weather window">
+        <div class="window-view">
+          <div class="sun"></div>
+          <div class="sun-glare"></div>
+          <div class="cloud"></div>
+          <div class="cloud second"></div>
+          <div class="city"></div>
+          <div class="street"></div>
+          <div class="puddle"></div>
+
+          <div class="rain" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+
+          <div class="snow" aria-hidden="true">
+            <span>✦</span><span>✦</span><span>✦</span><span>✦</span>
+            <span>✦</span><span>✦</span><span>✦</span>
+          </div>
+
+          <div class="gusts" aria-hidden="true">
+            <div class="gust"></div><div class="gust"></div>
+            <div class="gust"></div><div class="gust"></div>
+          </div>
+        </div>
+
+        <div id="windowClues" class="window-clues"></div>
+      </div>
+
+      <div id="streetReaction" class="street-reaction" aria-live="polite">The street is waiting…</div>
+      <div id="effectLabel" class="effect-label">BRR!</div>
+      <div class="floor-shadow"></div>
+
+      <div id="albert" class="albert" aria-label="Albert">
+        <div class="head">
+          <div class="hair"></div>
+          <div class="eyes"></div>
+          <div class="mouth"></div>
+        </div>
+        <div class="arm left"></div>
+        <div class="arm right"></div>
+        <div class="body"></div>
+        <div class="leg left"></div>
+        <div class="leg right"></div>
+        <div id="heldItem" class="held-item"></div>
+        <div id="outfitLabel" class="outfit-label">Indoor clothes</div>
+      </div>
+
+      <button id="doorButton" class="door-btn" type="button" aria-label="Open the door and test this outfit">
+        <span class="door-frame">
+          <span class="door-leaf">
+            <span class="door-panel one"></span>
+            <span class="door-panel two"></span>
+            <span class="door-handle"></span>
+          </span>
+        </span>
+        <span id="doorText" class="door-cta">OPEN THE DOOR →</span>
+      </button>
+    </section>
+
+    <section id="wardrobe" class="wardrobe" aria-label="Outfit choices">
+      <div class="round-head">
+        <div>
+          <div id="roundKicker" class="round-kicker">OUTING 1 OF 5</div>
+          <h2 id="roundTitle">A very wet start</h2>
+          <p id="roundPrompt">Pick clothing and one item that answer what the window shows.</p>
+        </div>
+        <div id="difficulty" class="difficulty">CLEAR CLUE</div>
+      </div>
+
+      <div class="choice-group">
+        <div class="choice-heading">
+          <h3>1 · OUTFIT</h3>
+          <span id="outfitState" class="slot-state">NOT CHOSEN</span>
+        </div>
+        <div id="outfitChoices" class="choice-grid" role="group" aria-label="Choose an outfit"></div>
+      </div>
+
+      <div class="choice-group">
+        <div class="choice-heading">
+          <h3>2 · USEFUL ITEM</h3>
+          <span id="itemState" class="slot-state">NOT CHOSEN</span>
+        </div>
+        <div id="itemChoices" class="choice-grid" role="group" aria-label="Choose a useful item"></div>
+      </div>
+
+      <div id="feedback" class="feedback" aria-live="polite">
+        <div id="feedbackIcon" class="feedback-icon">👀</div>
+        <div class="feedback-copy">
+          <strong id="feedbackTitle">LOOK FIRST</strong>
+          <span id="feedbackText">Choose one card from each row, then tap the door.</span>
+        </div>
+      </div>
+
+      <div class="score-rule">+1 for each useful choice · +1 bonus for solving both clues on the first try</div>
+    </section>
+  </main>
+</div>
+
+<div id="endOverlay" class="screen-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="end-card">
+    <div id="endWeather" class="end-weather">☀️</div>
+    <h2 id="endTitle">Five good walks!</h2>
+    <p id="endMessage">Albert and the street agree: the window was worth reading.</p>
+    <div class="end-stats">
+      <div class="end-stat">
+        <b id="endScore">15</b>
+        <span>POINTS</span>
+      </div>
+      <div class="end-stat">
+        <b id="endOutings">5/5</b>
+        <span>OUTINGS</span>
+      </div>
+    </div>
+    <button id="restartButton" class="restart-button" type="button">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var rounds = [
+    {
+      title: "A very wet start",
+      difficulty: "CLEAR CLUE",
+      weather: "rain",
+      headline: "STEADY RAIN · 12°C",
+      detail: "Large drops, dark clouds, no mystery.",
+      prompt: "One bold weather clue. Keep Albert and what he carries dry.",
+      correctOutfit: "raincoat",
+      correctItem: "umbrella",
+      clues: [
+        { type: "outfit", label: "CLOTHES", text: "Rain streaks every coat" },
+        { type: "item", label: "OVERHEAD", text: "Drops are still falling hard" }
+      ],
+      outfits: [
+        { key: "raincoat", icon: "🧥", name: "Raincoat", note: "Sealed and waterproof", color: "#e6a530" },
+        { key: "sweater", icon: "👕", name: "Wool sweater", note: "Warm, not waterproof", color: "#9b6b53" },
+        { key: "tee", icon: "👕", name: "Cotton tee", note: "Soaks quickly", color: "#66a7c8" }
+      ],
+      items: [
+        { key: "umbrella", icon: "☂️", name: "Umbrella", note: "Stops falling rain" },
+        { key: "sunglasses", icon: "🕶️", name: "Sunglasses", note: "Useful for glare" },
+        { key: "scarf", icon: "🧣", name: "Scarf", note: "Useful for cold" }
+      ]
+    },
+    {
+      title: "The cold gets in",
+      difficulty: "ONE BOLD CLUE",
+      weather: "cold",
+      headline: "COLD BREEZE · 3°C",
+      detail: "Frosty glass and a flag that will not sit still.",
+      prompt: "The temperature is the main clue; notice where the little breeze lands.",
+      correctOutfit: "woolcoat",
+      correctItem: "scarf",
+      clues: [
+        { type: "outfit", label: "TEMPERATURE", text: "Only 3°C outside" },
+        { type: "item", label: "DRAFT", text: "Cold air finds bare necks" }
+      ],
+      outfits: [
+        { key: "woolcoat", icon: "🧥", name: "Wool coat", note: "Thick insulation", color: "#4c6b83" },
+        { key: "thinshell", icon: "🥼", name: "Thin shell", note: "Blocks drops, not cold", color: "#d2c35c" },
+        { key: "airy", icon: "👕", name: "Airy clothes", note: "Made for heat", color: "#75bed0" }
+      ],
+      items: [
+        { key: "scarf", icon: "🧣", name: "Wool scarf", note: "Covers the draft", color: "#c85353" },
+        { key: "umbrella", icon: "☂️", name: "Umbrella", note: "No rain today" },
+        { key: "sunglasses", icon: "🕶️", name: "Sunglasses", note: "Cloudy and dim" }
+      ]
+    },
+    {
+      title: "Heat with a bright side",
+      difficulty: "TWO CLUES",
+      weather: "heat",
+      headline: "HOT & BRIGHT · 29°C",
+      detail: "The pavement shimmers and the sun is hard to face.",
+      prompt: "Now solve two different clues: heat for the outfit, glare for the item.",
+      correctOutfit: "airy",
+      correctItem: "sunglasses",
+      clues: [
+        { type: "outfit", label: "HEAT", text: "Pavement shimmers at 29°C" },
+        { type: "item", label: "GLARE", text: "Hard sunlight hits the eyes" }
+      ],
+      outfits: [
+        { key: "airy", icon: "👕", name: "Airy clothes", note: "Light and breathable", color: "#70c4d5" },
+        { key: "parka", icon: "🧥", name: "Heavy parka", note: "Traps lots of heat", color: "#455b69" },
+        { key: "raincoat", icon: "🥼", name: "Rain shell", note: "Sticky in the heat", color: "#d7aa3d" },
+        { key: "sweater", icon: "👚", name: "Thick sweater", note: "Far too warm", color: "#945f70" }
+      ],
+      items: [
+        { key: "sunglasses", icon: "🕶️", name: "Sunglasses", note: "Cuts harsh glare" },
+        { key: "scarf", icon: "🧣", name: "Wool scarf", note: "Adds more heat" },
+        { key: "umbrella", icon: "☂️", name: "Rain umbrella", note: "No clouds or rain" },
+        { key: "beanie", icon: "🧢", name: "Knit cap", note: "Warm and heavy" }
+      ]
+    },
+    {
+      title: "Rain going sideways",
+      difficulty: "MIXED WEATHER",
+      weather: "storm",
+      headline: "RAIN + STRONG GUSTS · 10°C",
+      detail: "Rain lashes the pane while branches bend.",
+      prompt: "Stay dry, but do not hand the wind something loose to grab.",
+      correctOutfit: "hoodshell",
+      correctItem: "snugcap",
+      clues: [
+        { type: "outfit", label: "DRIVING RAIN", text: "Water blows against clothing" },
+        { type: "item", label: "STRONG WIND", text: "Loose gear will flip or fly" }
+      ],
+      outfits: [
+        { key: "hoodshell", icon: "🧥", name: "Hooded shell", note: "Dry and close-fitting", color: "#477e89" },
+        { key: "woolcoat", icon: "🧥", name: "Wool coat", note: "Warm, but absorbs rain", color: "#7c6055" },
+        { key: "airy", icon: "👕", name: "Airy clothes", note: "Wet in seconds", color: "#75bed0" },
+        { key: "poncho", icon: "🥼", name: "Loose poncho", note: "Flaps in hard gusts", color: "#e2b43d" }
+      ],
+      items: [
+        { key: "snugcap", icon: "🧢", name: "Snug storm cap", note: "Stays put in gusts" },
+        { key: "umbrella", icon: "☂️", name: "Umbrella", note: "A gust can flip it" },
+        { key: "sunglasses", icon: "🕶️", name: "Sunglasses", note: "There is no glare" },
+        { key: "tote", icon: "👜", name: "Open tote", note: "Catches wind and rain" }
+      ]
+    },
+    {
+      title: "Cold, clear, dazzling",
+      difficulty: "FINAL MIX",
+      weather: "snowSun",
+      headline: "FROST + SNOW GLARE · −4°C",
+      detail: "The air bites, but low sun flashes off every white surface.",
+      prompt: "The final window mixes deep cold with surprisingly fierce glare.",
+      correctOutfit: "snowlayers",
+      correctItem: "sunglasses",
+      clues: [
+        { type: "outfit", label: "BITING COLD", text: "Frost holds at −4°C" },
+        { type: "item", label: "SNOW GLARE", text: "Low sun flashes off snow" }
+      ],
+      outfits: [
+        { key: "snowlayers", icon: "🧥", name: "Insulated layers", note: "Warm from head to toe", color: "#39586d" },
+        { key: "thinshell", icon: "🥼", name: "Thin rain shell", note: "No real insulation", color: "#d4ad49" },
+        { key: "airy", icon: "👕", name: "Airy clothes", note: "Made for summer", color: "#73bfd1" },
+        { key: "poncho", icon: "🥼", name: "Loose poncho", note: "Cold air flows inside", color: "#c98f43" }
+      ],
+      items: [
+        { key: "sunglasses", icon: "🕶️", name: "UV sunglasses", note: "Cuts reflected glare" },
+        { key: "umbrella", icon: "☂️", name: "Umbrella", note: "Nothing is falling" },
+        { key: "fan", icon: "🪭", name: "Hand fan", note: "Makes cold air colder" },
+        { key: "sunhat", icon: "👒", name: "Floppy hat", note: "Poor against low glare" }
+      ]
+    }
+  ];
+
+  var state = {
+    roundIndex: 0,
+    completed: 0,
+    comfort: 3,
+    score: 0,
+    attempt: 0,
+    selectedOutfit: null,
+    selectedItem: null,
+    creditedOutfit: false,
+    creditedItem: false,
+    lastResult: null,
+    lastTestSignature: null,
+    phase: "choose",
+    muted: false,
+    keyboardMode: false,
+    keyZone: 0,
+    keyIndexes: [0, 0],
+    lastComfort: 3
+  };
+
+  var scene = document.getElementById("scene");
+  var weatherHeadline = document.getElementById("weatherHeadline");
+  var weatherDetail = document.getElementById("weatherDetail");
+  var windowClues = document.getElementById("windowClues");
+  var streetReaction = document.getElementById("streetReaction");
+  var effectLabel = document.getElementById("effectLabel");
+  var albert = document.getElementById("albert");
+  var heldItem = document.getElementById("heldItem");
+  var outfitLabel = document.getElementById("outfitLabel");
+  var doorButton = document.getElementById("doorButton");
+  var doorText = document.getElementById("doorText");
+  var roundKicker = document.getElementById("roundKicker");
+  var roundTitle = document.getElementById("roundTitle");
+  var roundPrompt = document.getElementById("roundPrompt");
+  var difficulty = document.getElementById("difficulty");
+  var outfitChoices = document.getElementById("outfitChoices");
+  var itemChoices = document.getElementById("itemChoices");
+  var outfitState = document.getElementById("outfitState");
+  var itemState = document.getElementById("itemState");
+  var feedback = document.getElementById("feedback");
+  var feedbackIcon = document.getElementById("feedbackIcon");
+  var feedbackTitle = document.getElementById("feedbackTitle");
+  var feedbackText = document.getElementById("feedbackText");
+  var scoreValue = document.getElementById("scoreValue");
+  var comfortMeter = document.getElementById("comfortMeter");
+  var outingDots = document.getElementById("outingDots");
+  var soundToggle = document.getElementById("soundToggle");
+  var endOverlay = document.getElementById("endOverlay");
+  var endWeather = document.getElementById("endWeather");
+  var endTitle = document.getElementById("endTitle");
+  var endMessage = document.getElementById("endMessage");
+  var endScore = document.getElementById("endScore");
+  var endOutings = document.getElementById("endOutings");
+  var restartButton = document.getElementById("restartButton");
+
+  var audioContext = null;
+
+  function currentRound() {
+    return rounds[state.roundIndex];
+  }
+
+  function findOption(list, key) {
+    var i;
+    for (i = 0; i < list.length; i += 1) {
+      if (list[i].key === key) {
+        return list[i];
+      }
+    }
+    return null;
+  }
+
+  function setFeedback(tone, icon, title, text) {
+    feedback.className = "feedback" + (tone ? " " + tone : "");
+    feedbackIcon.textContent = icon;
+    feedbackTitle.textContent = title;
+    feedbackText.textContent = text;
+  }
+
+  function renderHUD() {
+    var i;
+    scoreValue.textContent = state.score < 10 ? "0" + state.score : String(state.score);
+
+    comfortMeter.innerHTML = "";
+    for (i = 0; i < 3; i += 1) {
+      var part = document.createElement("span");
+      part.className = "comfort-part " + (i < state.comfort ? "full" : "");
+      if (state.comfort < state.lastComfort && i >= state.comfort && i < state.lastComfort) {
+        part.className += " lost";
+      }
+      comfortMeter.appendChild(part);
+    }
+    comfortMeter.setAttribute("aria-label", state.comfort + " of 3 comfort parts remaining");
+
+    outingDots.innerHTML = "";
+    for (i = 0; i < 5; i += 1) {
+      var dot = document.createElement("span");
+      dot.className = "outing-dot";
+      if (i < state.completed) {
+        dot.className += " done";
+      } else if (i === state.roundIndex && state.phase === "choose") {
+        dot.className += " active";
+      }
+      outingDots.appendChild(dot);
+    }
+    outingDots.setAttribute("aria-label", state.completed + " of 5 outings completed");
+    state.lastComfort = state.comfort;
+  }
+
+  function buildChoices(type) {
+    var round = currentRound();
+    var list = type === "outfit" ? round.outfits : round.items;
+    var container = type === "outfit" ? outfitChoices : itemChoices;
+    container.innerHTML = "";
+
+    list.forEach(function (option, index) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "choice-card";
+      button.setAttribute("data-key", option.key);
+      button.setAttribute("data-index", String(index));
+      button.setAttribute("aria-pressed", "false");
+      button.innerHTML =
+        '<span class="choice-icon" aria-hidden="true">' + option.icon + '</span>' +
+        '<span class="choice-name">' + option.name + '</span>' +
+        '<span class="choice-note">' + option.note + '</span>';
+
+      button.addEventListener("click", function () {
+        state.keyboardMode = false;
+        state.keyZone = type === "outfit" ? 0 : 1;
+        state.keyIndexes[state.keyZone] = index;
+        selectChoice(type, option.key, false);
+      });
+
+      container.appendChild(button);
+    });
+  }
+
+  function renderClues() {
+    var round = currentRound();
+    windowClues.innerHTML = "";
+
+    round.clues.forEach(function (clue) {
+      var chip = document.createElement("div");
+      chip.className = "clue-chip";
+      chip.setAttribute("data-type", clue.type);
+      chip.innerHTML = "<b>" + clue.label + "</b><span>" + clue.text + "</span>";
+      windowClues.appendChild(chip);
+    });
+  }
+
+  function renderAlbert() {
+    var round = currentRound();
+    var outfit = findOption(round.outfits, state.selectedOutfit);
+    var item = findOption(round.items, state.selectedItem);
+
+    if (outfit) {
+      albert.style.setProperty("--coat-color", outfit.color || "#6c8aa0");
+      outfitLabel.textContent = outfit.name;
+    } else {
+      albert.style.setProperty("--coat-color", "#6c8aa0");
+      outfitLabel.textContent = "Indoor clothes";
+    }
+
+    heldItem.textContent = item ? item.icon : "";
+    heldItem.setAttribute("aria-label", item ? item.name : "No item selected");
+  }
+
+  function updateChoiceVisuals() {
+    var round = currentRound();
+    var outfitButtons = outfitChoices.querySelectorAll(".choice-card");
+    var itemButtons = itemChoices.querySelectorAll(".choice-card");
+    var i;
+
+    for (i = 0; i < outfitButtons.length; i += 1) {
+      var outfitKey = outfitButtons[i].getAttribute("data-key");
+      outfitButtons[i].className = "choice-card";
+      if (outfitKey === state.selectedOutfit) {
+        outfitButtons[i].className += " selected";
+        outfitButtons[i].setAttribute("aria-pressed", "true");
+        if (state.lastResult) {
+          outfitButtons[i].className += state.lastResult.outfit ? " verdict-good" : " verdict-bad";
+        }
+      } else {
+        outfitButtons[i].setAttribute("aria-pressed", "false");
+      }
+      outfitButtons[i].disabled = state.phase !== "choose";
+    }
+
+    for (i = 0; i < itemButtons.length; i += 1) {
+      var itemKey = itemButtons[i].getAttribute("data-key");
+      itemButtons[i].className = "choice-card";
+      if (itemKey === state.selectedItem) {
+        itemButtons[i].className += " selected";
+        itemButtons[i].setAttribute("aria-pressed", "true");
+        if (state.lastResult) {
+          itemButtons[i].className += state.lastResult.item ? " verdict-good" : " verdict-bad";
+        }
+      } else {
+        itemButtons[i].setAttribute("aria-pressed", "false");
+      }
+      itemButtons[i].disabled = state.phase !== "choose";
+    }
+
+    outfitState.textContent = state.selectedOutfit ? "✓ " + findOption(round.outfits, state.selectedOutfit).name : "NOT CHOSEN";
+    itemState.textContent = state.selectedItem ? "✓ " + findOption(round.items, state.selectedItem).name : "NOT CHOSEN";
+    outfitState.className = "slot-state" + (state.selectedOutfit ? " filled" : "");
+    itemState.className = "slot-state" + (state.selectedItem ? " filled" : "");
+
+    updateClueVisuals();
+    refreshKeyboardFocus();
+  }
+
+  function updateClueVisuals() {
+    var chips = windowClues.querySelectorAll(".clue-chip");
+    var i;
+
+    for (i = 0; i < chips.length; i += 1) {
+      chips[i].className = "clue-chip";
+      if (state.lastResult) {
+        var type = chips[i].getAttribute("data-type");
+        if (state.lastResult[type]) {
+          chips[i].className += " matched";
+        } else {
+          chips[i].className += " missed";
+        }
+      }
+    }
+  }
+
+  function clearOutcomeVisuals() {
+    scene.classList.remove("door-open", "outcome-good", "outcome-near", "outcome-bad", "prop-fail");
+    effectLabel.className = "effect-label";
+    effectLabel.textContent = "";
+  }
+
+  function renderRound() {
+    var round = currentRound();
+
+    scene.className = "scene weather-" + round.weather;
+    weatherHeadline.textContent = round.headline;
+    weatherDetail.textContent = round.detail;
+    roundKicker.textContent = "OUTING " + (state.roundIndex + 1) + " OF 5";
+    roundTitle.textContent = round.title;
+    roundPrompt.textContent = round.prompt;
+    difficulty.textContent = round.difficulty;
+
+    renderClues();
+    buildChoices("outfit");
+    buildChoices("item");
+    renderAlbert();
+    updateChoiceVisuals();
+    renderHUD();
+
+    streetReaction.textContent = "The street is waiting…";
+    doorText.textContent = "OPEN THE DOOR →";
+    doorButton.setAttribute("aria-label", "Open the door and test this outfit");
+    clearOutcomeVisuals();
+    setFeedback("", "👀", "LOOK FIRST", "Choose one card from each row, then tap the door.");
+  }
+
+  function selectChoice(type, key, fromKeyboard) {
+    if (state.phase !== "choose") {
+      return;
+    }
+
+    if (type === "outfit") {
+      state.selectedOutfit = key;
+    } else {
+      state.selectedItem = key;
+    }
+
+    if (state.lastResult) {
+      state.lastResult = null;
+      state.lastTestSignature = null;
+      clearOutcomeVisuals();
+      streetReaction.textContent = "New choice ready for the street.";
+      setFeedback("", "↻", "CHOICE CHANGED", "Open the door again when both picks look right.");
+    }
+
+    renderAlbert();
+    updateChoiceVisuals();
+
+    if (fromKeyboard) {
+      if (type === "outfit") {
+        state.keyZone = 1;
+      } else {
+        state.keyZone = 2;
+      }
+      refreshKeyboardFocus();
+    }
+  }
+
+  function consequenceText(outfitCorrect, itemCorrect) {
+    var round = currentRound();
+
+    if (round.weather === "storm" && state.selectedItem === "umbrella" && !itemCorrect) {
+      return {
+        speech: "WHUMP! A gust flips the umbrella inside out.",
+        effect: "FLIPPED!",
+        propFail: true
+      };
+    }
+
+    if ((round.weather === "rain" || round.weather === "storm") && !outfitCorrect) {
+      return {
+        speech: "Albert's shoulders are getting soaked.",
+        effect: "SOAKED!",
+        propFail: false
+      };
+    }
+
+    if ((round.weather === "cold" || round.weather === "snowSun") && !outfitCorrect) {
+      return {
+        speech: "Brrr—Albert's teeth chatter loudly.",
+        effect: "BRR!",
+        propFail: false
+      };
+    }
+
+    if (round.weather === "heat" && !outfitCorrect) {
+      return {
+        speech: "That outfit is much too warm for this pavement.",
+        effect: "TOO HOT!",
+        propFail: false
+      };
+    }
+
+    if ((round.weather === "heat" || round.weather === "snowSun") && !itemCorrect) {
+      return {
+        speech: "Albert squints into the hard glare.",
+        effect: "SQUINT!",
+        propFail: false
+      };
+    }
+
+    if (!itemCorrect) {
+      return {
+        speech: "The carried item does not help with this weather.",
+        effect: "NO HELP!",
+        propFail: false
+      };
+    }
+
+    return {
+      speech: "One choice works, but the other misses the window's clue.",
+      effect: "HALF RIGHT",
+      propFail: false
+    };
+  }
+
+  function playSound(kind) {
+    var AudioCtor;
+    var now;
+
+    if (state.muted) {
+      return;
+    }
+
+    AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) {
+      return;
+    }
+
+    if (!audioContext) {
+      audioContext = new AudioCtor();
+    }
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    now = audioContext.currentTime;
+
+    function tone(frequency, start, duration, type, volume) {
+      var oscillator = audioContext.createOscillator();
+      var gain = audioContext.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, now + start);
+      gain.gain.setValueAtTime(0.0001, now + start);
+      gain.gain.exponentialRampToValueAtTime(volume, now + start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(now + start);
+      oscillator.stop(now + start + duration + 0.03);
+    }
+
+    if (kind === "good") {
+      tone(523.25, 0, .2, "sine", .11);
+      tone(659.25, .11, .22, "sine", .1);
+      tone(783.99, .23, .34, "sine", .11);
+    } else if (kind === "near") {
+      tone(440, 0, .16, "triangle", .08);
+      tone(523.25, .13, .22, "triangle", .08);
+    } else {
+      tone(180, 0, .28, "sawtooth", .06);
+      tone(135, .09, .34, "sawtooth", .05);
+    }
+  }
+
+  function testChoices() {
+    var round = currentRound();
+    var outfitCorrect;
+    var itemCorrect;
+    var usefulCount;
+    var comfortCost;
+    var gained = 0;
+    var consequence;
+    var outfitOption;
+    var itemOption;
+    var correctOption;
+    var wrongType;
+    var signature;
+
+    if (!state.selectedOutfit || !state.selectedItem) {
+      setFeedback("warn", "☝️", "TWO PICKS NEEDED", "Choose one outfit and one item before opening the door. No comfort lost.");
+      streetReaction.textContent = "Albert is still missing part of his kit.";
+      return;
+    }
+
+    signature = state.selectedOutfit + "|" + state.selectedItem;
+    if (state.lastTestSignature === signature && state.lastResult) {
+      setFeedback("warn", "↻", "CHANGE A CHOICE", "The street already tested this exact pair. Adjust at least one card first.");
+      return;
+    }
+
+    outfitCorrect = state.selectedOutfit === round.correctOutfit;
+    itemCorrect = state.selectedItem === round.correctItem;
+    usefulCount = (outfitCorrect ? 1 : 0) + (itemCorrect ? 1 : 0);
+    state.lastResult = { outfit: outfitCorrect, item: itemCorrect };
+    state.lastTestSignature = signature;
+
+    if (outfitCorrect && !state.creditedOutfit) {
+      state.score += 1;
+      gained += 1;
+      state.creditedOutfit = true;
+    }
+
+    if (itemCorrect && !state.creditedItem) {
+      state.score += 1;
+      gained += 1;
+      state.creditedItem = true;
+    }
+
+    clearOutcomeVisuals();
+    void scene.offsetWidth;
+    scene.classList.add("door-open");
+
+    if (usefulCount === 2) {
+      if (state.attempt === 0) {
+        state.score += 1;
+        gained += 1;
+      }
+
+      state.phase = "success";
+      state.completed += 1;
+      scene.classList.add("outcome-good");
+      streetReaction.textContent = state.attempt === 0 ?
+        "Perfect read! Easy walking, first try." :
+        "That's it—both clues are covered.";
+      effectLabel.textContent = "GOOD CALL!";
+      effectLabel.className = "effect-label show";
+
+      if (state.attempt === 0) {
+        setFeedback("good", "✓", "PERFECT FIRST LOOK", "Both choices work. +" + gained + " points, including the first-try bonus.");
+      } else {
+        setFeedback("good", "✓", "COMFORT RESTORED", "Both clues are covered. +" + gained + (gained === 1 ? " point." : " points."));
+      }
+
+      doorText.textContent = state.completed >= 5 ? "SEE RESULTS →" : "NEXT OUTING →";
+      doorButton.setAttribute("aria-label", state.completed >= 5 ? "See final results" : "Continue to the next outing");
+      playSound("good");
+    } else {
+      comfortCost = usefulCount === 1 ? 1 : 2;
+      state.comfort = Math.max(0, state.comfort - comfortCost);
+      state.attempt += 1;
+      consequence = consequenceText(outfitCorrect, itemCorrect);
+      effectLabel.textContent = consequence.effect;
+      effectLabel.className = "effect-label show";
+      streetReaction.textContent = consequence.speech;
+
+      if (consequence.propFail) {
+        scene.classList.add("prop-fail");
+      }
+
+      outfitOption = findOption(round.outfits, state.selectedOutfit);
+      itemOption = findOption(round.items, state.selectedItem);
+
+      if (usefulCount === 1) {
+        scene.classList.add("outcome-near");
+        correctOption = outfitCorrect ? outfitOption : itemOption;
+        wrongType = outfitCorrect ? "item" : "outfit";
+        setFeedback(
+          "near",
+          "½",
+          "NEAR MISS · COMFORT −1",
+          correctOption.name + " works, but the " + wrongType + " misses its highlighted window clue."
+        );
+        playSound("near");
+      } else {
+        scene.classList.add("outcome-bad");
+        setFeedback(
+          "bad",
+          "!",
+          "BAD MATCH · COMFORT −2",
+          consequence.speech + " Both missed clues are highlighted at the window."
+        );
+        playSound("bad");
+      }
+
+      doorText.textContent = "CHANGE A CHOICE";
+      doorButton.setAttribute("aria-label", "Change a choice and try the door again");
+    }
+
+    renderHUD();
+    updateChoiceVisuals();
+
+    if (state.comfort <= 0) {
+      state.phase = "gameover";
+      updateChoiceVisuals();
+      window.setTimeout(function () {
+        showEnd(false);
+      }, 900);
+    }
+  }
+
+  function nextRound() {
+    if (state.completed >= 5) {
+      showEnd(true);
+      return;
+    }
+
+    state.roundIndex += 1;
+    state.attempt = 0;
+    state.selectedOutfit = null;
+    state.selectedItem = null;
+    state.creditedOutfit = false;
+    state.creditedItem = false;
+    state.lastResult = null;
+    state.lastTestSignature = null;
+    state.phase = "choose";
+    state.keyZone = 0;
+    state.keyIndexes = [0, 0];
+    renderRound();
+  }
+
+  function handleDoor() {
+    if (state.phase === "success") {
+      nextRound();
+      return;
+    }
+
+    if (state.phase !== "choose") {
+      return;
+    }
+
+    testChoices();
+  }
+
+  function showEnd(won) {
+    endOverlay.classList.remove("hidden");
+    endScore.textContent = String(state.score);
+    endOutings.textContent = state.completed + "/5";
+
+    if (won) {
+      endWeather.textContent = "☀️";
+      endTitle.textContent = "Five good walks!";
+      endMessage.textContent = "Albert and the street agree: the window was worth reading.";
+      restartButton.textContent = "PLAY AGAIN";
+    } else {
+      endWeather.textContent = "🌧️";
+      endTitle.textContent = "Comfort ran out";
+      endMessage.textContent = "The clues are still outside. Read the highlighted misses and give Albert another go.";
+      restartButton.textContent = "TRY AGAIN";
+    }
+
+    restartButton.focus();
+  }
+
+  function resetGame() {
+    state.roundIndex = 0;
+    state.completed = 0;
+    state.comfort = 3;
+    state.score = 0;
+    state.attempt = 0;
+    state.selectedOutfit = null;
+    state.selectedItem = null;
+    state.creditedOutfit = false;
+    state.creditedItem = false;
+    state.lastResult = null;
+    state.lastTestSignature = null;
+    state.phase = "choose";
+    state.keyZone = 0;
+    state.keyIndexes = [0, 0];
+    state.lastComfort = 3;
+    endOverlay.classList.add("hidden");
+    renderRound();
+  }
+
+  function getZoneButtons(zone) {
+    if (zone === 0) {
+      return outfitChoices.querySelectorAll(".choice-card");
+    }
+    if (zone === 1) {
+      return itemChoices.querySelectorAll(".choice-card");
+    }
+    return [];
+  }
+
+  function refreshKeyboardFocus() {
+    var focused = document.querySelectorAll(".key-focus");
+    var i;
+    var buttons;
+    var index;
+
+    for (i = 0; i < focused.length; i += 1) {
+      focused[i].classList.remove("key-focus");
+    }
+
+    if (!state.keyboardMode || state.phase === "gameover") {
+      return;
+    }
+
+    if (state.keyZone === 2 || state.phase === "success") {
+      doorButton.classList.add("key-focus");
+      return;
+    }
+
+    buttons = getZoneButtons(state.keyZone);
+    if (buttons.length) {
+      index = state.keyIndexes[state.keyZone] % buttons.length;
+      buttons[index].classList.add("key-focus");
+    }
+  }
+
+  document.addEventListener("keydown", function (event) {
+    var buttons;
+    var key;
+    var index;
+    var type;
+    var selectedKey;
+
+    key = event.key;
+
+    if (!endOverlay.classList.contains("hidden")) {
+      if (key === "Enter") {
+        event.preventDefault();
+        resetGame();
+      }
+      return;
+    }
+
+    if (event.target === soundToggle && (key === "Enter" || key === " ")) {
+      return;
+    }
+
+    if (key !== "ArrowLeft" && key !== "ArrowRight" &&
+        key !== "ArrowUp" && key !== "ArrowDown" && key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    state.keyboardMode = true;
+
+    if (state.phase === "success") {
+      if (key === "Enter") {
+        nextRound();
+      } else {
+        state.keyZone = 2;
+        refreshKeyboardFocus();
+      }
+      return;
+    }
+
+    if (state.phase !== "choose") {
+      return;
+    }
+
+    if (key === "ArrowUp") {
+      state.keyZone = Math.max(0, state.keyZone - 1);
+    } else if (key === "ArrowDown") {
+      state.keyZone = Math.min(2, state.keyZone + 1);
+    } else if (key === "ArrowLeft" || key === "ArrowRight") {
+      if (state.keyZone < 2) {
+        buttons = getZoneButtons(state.keyZone);
+        if (buttons.length) {
+          index = state.keyIndexes[state.keyZone];
+          index += key === "ArrowRight" ? 1 : -1;
+          if (index < 0) {
+            index = buttons.length - 1;
+          }
+          if (index >= buttons.length) {
+            index = 0;
+          }
+          state.keyIndexes[state.keyZone] = index;
+        }
+      }
+    } else if (key === "Enter") {
+      if (state.keyZone === 2) {
+        handleDoor();
+        return;
+      }
+
+      buttons = getZoneButtons(state.keyZone);
+      if (buttons.length) {
+        index = state.keyIndexes[state.keyZone] % buttons.length;
+        type = state.keyZone === 0 ? "outfit" : "item";
+        selectedKey = buttons[index].getAttribute("data-key");
+        selectChoice(type, selectedKey, true);
+        return;
+      }
+    }
+
+    refreshKeyboardFocus();
+  });
+
+  document.addEventListener("pointerdown", function () {
+    state.keyboardMode = false;
+    refreshKeyboardFocus();
+  });
+
+  doorButton.addEventListener("click", function () {
+    handleDoor();
+  });
+
+  soundToggle.addEventListener("click", function () {
+    state.muted = !state.muted;
+    soundToggle.textContent = state.muted ? "🔇" : "🔊";
+    soundToggle.setAttribute("aria-label", state.muted ? "Turn sound on" : "Mute sound");
+    soundToggle.title = state.muted ? "Turn sound on" : "Mute sound";
+  });
+
+  restartButton.addEventListener("click", function () {
+    resetGame();
+  });
+
+  renderRound();
+}());
+</script>
+</body>
+</html>
