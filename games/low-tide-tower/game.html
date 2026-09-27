@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Low Tide Tower</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+body {
+  overflow:hidden;
+  background:#bde5ec;
+  color:#173f49;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+}
+#game {
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#bde5ec;
+}
+canvas {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  touch-action:none;
+}
+#topbar {
+  position:absolute;
+  z-index:4;
+  top:0;
+  left:0;
+  right:0;
+  padding:10px 12px 0;
+  pointer-events:none;
+  text-shadow:0 1px 0 rgba(255,255,255,.65);
+}
+#titleRow {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+#brand {
+  min-width:0;
+}
+#title {
+  margin:0;
+  font-size:clamp(20px,4vw,34px);
+  line-height:.95;
+  letter-spacing:-.04em;
+  font-weight:900;
+}
+#tagline {
+  margin-top:4px;
+  font-size:clamp(10px,1.8vw,14px);
+  font-weight:700;
+  opacity:.78;
+}
+#stats {
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  max-width:55%;
+}
+.stat {
+  padding:5px 8px;
+  border:1px solid rgba(23,63,73,.16);
+  border-radius:10px;
+  background:rgba(255,255,255,.67);
+  box-shadow:0 3px 10px rgba(31,82,92,.08);
+  font-size:clamp(10px,1.6vw,13px);
+  font-weight:850;
+  white-space:nowrap;
+}
+#how {
+  margin-top:7px;
+  padding:5px 8px;
+  width:max-content;
+  max-width:100%;
+  border-radius:8px;
+  background:rgba(235,250,250,.62);
+  font-size:clamp(9px,1.45vw,12px);
+  font-weight:700;
+  opacity:.9;
+}
+#controls {
+  position:absolute;
+  z-index:6;
+  left:50%;
+  bottom:max(8px, env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  width:min(720px, calc(100% - 14px));
+  display:flex;
+  align-items:stretch;
+  gap:6px;
+}
+.control {
+  min-width:0;
+  flex:1;
+  height:clamp(54px,10vh,76px);
+  border:0;
+  border-bottom:5px solid rgba(17,55,63,.30);
+  border-radius:15px;
+  background:rgba(245,253,251,.93);
+  color:#16414a;
+  box-shadow:0 8px 18px rgba(20,67,77,.20);
+  font:900 clamp(20px,5vw,32px)/1 system-ui,sans-serif;
+  touch-action:none;
+  cursor:pointer;
+}
+.control.turn {
+  flex:1.18;
+  color:#225f69;
+  background:rgba(230,249,244,.96);
+}
+.control.drop {
+  flex:1.35;
+  color:#fff;
+  background:#e46c43;
+  border-bottom-color:#a7462b;
+}
+.control span {
+  display:block;
+  margin-top:3px;
+  font-size:9px;
+  letter-spacing:.1em;
+}
+.control.pressed,
+.control:active {
+  transform:translateY(3px);
+  border-bottom-width:2px;
+  filter:brightness(.96);
+}
+#modal {
+  position:absolute;
+  z-index:12;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(12,45,52,.38);
+}
+#modal.hidden { display:none; }
+#modalCard {
+  width:min(420px,92vw);
+  padding:25px;
+  text-align:center;
+  border:2px solid rgba(255,255,255,.75);
+  border-radius:24px;
+  background:rgba(242,253,248,.96);
+  box-shadow:0 18px 60px rgba(4,35,42,.32);
+}
+#modalCard h2 {
+  margin:0 0 8px;
+  color:#bf8122;
+  font-size:clamp(28px,8vw,48px);
+  line-height:1;
+}
+#modalCard p {
+  margin:8px 0 18px;
+  font-weight:700;
+  line-height:1.4;
+}
+#again {
+  width:100%;
+  padding:14px 20px;
+  border:0;
+  border-bottom:5px solid #93631c;
+  border-radius:14px;
+  background:#e7a93d;
+  color:#fff;
+  font:900 18px system-ui,sans-serif;
+  cursor:pointer;
+}
+@media (max-height:480px) {
+  #topbar { padding-top:6px; }
+  #tagline { display:none; }
+  #how { margin-top:4px; }
+  #controls { bottom:5px; }
+  .control { height:53px; }
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" aria-label="Low Tide Tower game"></canvas>
+
+  <div id="topbar">
+    <div id="titleRow">
+      <div id="brand">
+        <h1 id="title">Low Tide Tower</h1>
+        <div id="tagline">Stack the rocks. The sea gets a vote.</div>
+      </div>
+      <div id="stats">
+        <div class="stat" id="stageStat">Stage 1</div>
+        <div class="stat" id="heightStat">Height 0</div>
+        <div class="stat" id="bestStat">Best 0</div>
+      </div>
+    </div>
+    <div id="how">Drag / ← → to place · ↶ ↷ or Z X to turn · release / ↓ to drop</div>
+  </div>
+
+  <div id="controls" aria-label="Touch controls">
+    <button class="control" id="leftBtn" aria-label="Move left">←<span>MOVE</span></button>
+    <button class="control" id="rightBtn" aria-label="Move right">→<span>MOVE</span></button>
+    <button class="control turn" id="turnLeftBtn" aria-label="Turn counterclockwise">↶<span>Z · TURN</span></button>
+    <button class="control turn" id="turnRightBtn" aria-label="Turn clockwise">↷<span>X · TURN</span></button>
+    <button class="control drop" id="dropBtn" aria-label="Drop rock">▼<span>DROP</span></button>
+  </div>
+
+  <div id="modal" class="hidden">
+    <div id="modalCard">
+      <h2>All Tides Cleared</h2>
+      <p>Your tower held through every cove. The sea is calm—for now.</p>
+      <button id="again">SAIL AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var game = document.getElementById("game");
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var stageStat = document.getElementById("stageStat");
+  var heightStat = document.getElementById("heightStat");
+  var bestStat = document.getElementById("bestStat");
+  var modal = document.getElementById("modal");
+  var again = document.getElementById("again");
+
+  var W = 800;
+  var H = 600;
+  var DPR = 1;
+  var platformTop = 430;
+  var waterY = 450;
+  var heldY = 125;
+  var targetHeight = 125;
+  var targetY = 305;
+
+  var configs = [
+    { name:"Sheltered Cove", target:125, ledge:.68, wave:52, rough:.04, rock:1.12 },
+    { name:"Gull Point", target:155, ledge:.58, wave:74, rough:.10, rock:1.02 },
+    { name:"Channel Mouth", target:185, ledge:.49, wave:100, rough:.17, rock:.94 },
+    { name:"Black Reef", target:215, ledge:.42, wave:132, rough:.23, rock:.88 },
+    { name:"Moonwater", target:240, ledge:.36, wave:168, rough:.29, rock:.82 }
+  ];
+
+  var palettes = [
+    ["#657e7f", "#486365", "#8fa5a3"],
+    ["#847765", "#665b4e", "#a99a82"],
+    ["#69727a", "#4c565e", "#9099a0"],
+    ["#766c72", "#574f55", "#9b8e95"],
+    ["#5c7771", "#415c57", "#849b94"]
+  ];
+
+  var stageIndex = 0;
+  var best = [0, 0, 0, 0, 0];
+  var bodies = [];
+  var platform = null;
+  var held = null;
+  var currentBody = null;
+  var state = "aim";
+  var stateTimer = 0;
+  var stableTimer = 0;
+  var fallTimer = 0;
+  var placement = 0;
+  var waveDir = 1;
+  var finalWave = false;
+  var targetGold = false;
+  var effects = [];
+  var particles = [];
+  var shake = 0;
+  var dragPointer = null;
+  var dragging = false;
+  var lastScrape = 0;
+  var resizeTimer = 0;
+  var started = false;
+
+  var keys = {
+    left:false,
+    right:false,
+    turnLeft:false,
+    turnRight:false
+  };
+
+  var audioContext = null;
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function rand(a, b) {
+    return a + Math.random() * (b - a);
+  }
+
+  function initAudio() {
+    if (!audioContext) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        try {
+          audioContext = new AC();
+        } catch (e) {
+          audioContext = null;
+        }
+      }
+    }
+    if (audioContext && audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }
+
+  function tone(freq, duration, volume, type, endFreq) {
+    if (!audioContext) return;
+    try {
+      var now = audioContext.currentTime;
+      var osc = audioContext.createOscillator();
+      var gain = audioContext.createGain();
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    } catch (e) {
+      return;
+    }
+  }
+
+  function noise(duration, volume, lowpass) {
+    if (!audioContext) return;
+    try {
+      var rate = audioContext.sampleRate;
+      var length = Math.max(1, Math.floor(rate * duration));
+      var buffer = audioContext.createBuffer(1, length, rate);
+      var data = buffer.getChannelData(0);
+      var i;
+      for (i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+      }
+      var source = audioContext.createBufferSource();
+      var gain = audioContext.createGain();
+      var filter = audioContext.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = lowpass || 900;
+      gain.gain.value = volume;
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioContext.destination);
+      source.start();
+    } catch (e) {
+      return;
+    }
+  }
+
+  function soundClack(power) {
+    tone(190 + Math.min(power, 160), .11, .12, "triangle", 80);
+    tone(640, .035, .04, "square", 310);
+  }
+
+  function soundSplash(big) {
+    noise(big ? .7 : .25, big ? .22 : .08, big ? 1100 : 1500);
+    tone(big ? 90 : 150, big ? .45 : .16, big ? .10 : .035, "sine", 45);
+  }
+
+  function soundScrape() {
+    noise(.18, .035, 700);
+    tone(105, .16, .025, "sawtooth", 70);
+  }
+
+  function soundWave() {
+    noise(.8, .08, 650);
+    tone(72, .7, .035, "sine", 45);
+  }
+
+  function resizeCanvas(resetStage) {
+    var rect = game.getBoundingClientRect();
+    W = Math.max(280, rect.width);
+    H = Math.max(320, rect.height);
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    if (resetStage && started) {
+      setupStage();
+    }
+  }
+
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      resizeCanvas(true);
+    }, 120);
+  });
+
+  function createRockPoints(roughness) {
+    var r = roughness;
+    return [
+      { x:-.48 + rand(-r, r) * .12, y:-.22 + rand(-r, r) * .35 },
+      { x:-.28 + rand(-r, r) * .18, y:-.47 + rand(-r, r) * .13 },
+      { x:.10 + rand(-r, r) * .14, y:-.50 + rand(-r, r) * .12 },
+      { x:.43 + rand(-r, r) * .10, y:-.34 + rand(-r, r) * .20 },
+      { x:.50 + rand(-r, r) * .08, y:.06 + rand(-r, r) * .18 },
+      { x:.34 + rand(-r, r) * .15, y:.43 + rand(-r, r) * .12 },
+      { x:-.08 + rand(-r, r) * .14, y:.50 + rand(-r, r) * .10 },
+      { x:-.43 + rand(-r, r) * .10, y:.34 + rand(-r, r) * .18 }
+    ];
+  }
+
+  function makeBody(x, y, w, h, angle, fixed, points, colorIndex) {
+    var mass = fixed ? Infinity : Math.max(.7, w * h / 3600);
+    var inertia = fixed ? Infinity : mass * (w * w + h * h) / 12;
+    return {
+      x:x,
+      y:y,
+      w:w,
+      h:h,
+      angle:angle || 0,
+      vx:0,
+      vy:0,
+      av:0,
+      fixed:!!fixed,
+      mass:mass,
+      invM:fixed ? 0 : 1 / mass,
+      inertia:inertia,
+      invI:fixed ? 0 : 1 / inertia,
+      points:points || createRockPoints(.05),
+      colorIndex:colorIndex || 0,
+      landed:fixed,
+      lost:false,
+      countScore:!fixed,
+      current:false,
+      waveBias:rand(.65, 1.35),
+      nearSplash:0
+    };
+  }
+
+  function setupStage() {
+    var cfg = configs[stageIndex];
+    platformTop = H * .73;
+    waterY = platformTop + clamp(H * .027, 14, 23);
+    heldY = clamp(H * .18, 82, 137);
+    targetHeight = Math.min(cfg.target, Math.max(78, platformTop - heldY - 52));
+    targetY = platformTop - targetHeight;
+
+    var ledgeW = clamp(W * cfg.ledge, 120, 500);
+    platform = makeBody(W / 2, platformTop + 15, ledgeW, 30, 0, true, null, 0);
+
+    bodies = [];
+    effects = [];
+    particles = [];
+    held = null;
+    currentBody = null;
+    placement = 0;
+    state = "aim";
+    stateTimer = 0;
+    stableTimer = 0;
+    fallTimer = 0;
+    finalWave = false;
+    targetGold = false;
+    shake = 0;
+    modal.classList.add("hidden");
+    spawnRock();
+    updateHUD();
+  }
+
+  function spawnRock() {
+    var cfg = configs[stageIndex];
+    var base = clamp(W * .20, 78, 145) * cfg.rock;
+    var w = base * rand(.88, 1.15);
+    var h = clamp(w * rand(.31, .43), 30, 60);
+    if (stageIndex >= 2 && Math.random() < .35) {
+      w *= rand(.78, .92);
+      h *= rand(1.04, 1.20);
+    }
+
+    held = {
+      x:W / 2,
+      y:heldY,
+      w:w,
+      h:h,
+      angle:stageIndex === 0 ? 0 : rand(-.07, .07),
+      points:createRockPoints(cfg.rough),
+      colorIndex:(placement + stageIndex) % palettes.length
+    };
+
+    currentBody = null;
+    state = "aim";
+    stateTimer = 0;
+    clampHeld();
+  }
+
+  function heldExtents() {
+    if (!held) return { x:0, y:0 };
+    var c = Math.abs(Math.cos(held.angle));
+    var s = Math.abs(Math.sin(held.angle));
+    return {
+      x:c * held.w * .5 + s * held.h * .5,
+      y:s * held.w * .5 + c * held.h * .5
+    };
+  }
+
+  function bodyExtents(body) {
+    var c = Math.abs(Math.cos(body.angle));
+    var s = Math.abs(Math.sin(body.angle));
+    return {
+      x:c * body.w * .5 + s * body.h * .5,
+      y:s * body.w * .5 + c * body.h * .5
+    };
+  }
+
+  function clampHeld() {
+    if (!held) return;
+    var e = heldExtents();
+    held.x = clamp(held.x, e.x + 7, W - e.x - 7);
+  }
+
+  function rotateHeld(amount) {
+    if (!held || state !== "aim") return;
+    held.angle += amount;
+    while (held.angle > Math.PI) held.angle -= Math.PI * 2;
+    while (held.angle < -Math.PI) held.angle += Math.PI * 2;
+    clampHeld();
+  }
+
+  function dropRock() {
+    if (!held || state !== "aim") return;
+    initAudio();
+
+    var b = makeBody(
+      held.x,
+      held.y,
+      held.w,
+      held.h,
+      held.angle,
+      false,
+      held.points,
+      held.colorIndex
+    );
+    b.vy = 8;
+    b.current = true;
+    b.countScore = true;
+    bodies.push(b);
+    currentBody = b;
+    held = null;
+    placement++;
+    state = "falling";
+    stateTimer = 0;
+    stableTimer = 0;
+    fallTimer = 0;
+  }
+
+  function dot(ax, ay, bx, by) {
+    return ax * bx + ay * by;
+  }
+
+  function cross(ax, ay, bx, by) {
+    return ax * by - ay * bx;
+  }
+
+  function axesFor(body) {
+    var c = Math.cos(body.angle);
+    var s = Math.sin(body.angle);
+    return [
+      { x:c, y:s },
+      { x:-s, y:c }
+    ];
+  }
+
+  function cornersFor(body) {
+    var a = axesFor(body);
+    var ux = a[0].x;
+    var uy = a[0].y;
+    var vx = a[1].x;
+    var vy = a[1].y;
+    var hw = body.w * .5;
+    var hh = body.h * .5;
+    return [
+      { x:body.x + ux * hw + vx * hh, y:body.y + uy * hw + vy * hh },
+      { x:body.x - ux * hw + vx * hh, y:body.y - uy * hw + vy * hh },
+      { x:body.x - ux * hw - vx * hh, y:body.y - uy * hw - vy * hh },
+      { x:body.x + ux * hw - vx * hh, y:body.y + uy * hw - vy * hh }
+    ];
+  }
+
+  function projectionRadius(body, ax, ay) {
+    var c = Math.cos(body.angle);
+    var s = Math.sin(body.angle);
+    var ux = c;
+    var uy = s;
+    var vx = -s;
+    var vy = c;
+    return body.w * .5 * Math.abs(dot(ux, uy, ax, ay)) +
+           body.h * .5 * Math.abs(dot(vx, vy, ax, ay));
+  }
+
+  function supportPoint(body, dx, dy) {
+    var corners = cornersFor(body);
+    var max = -Infinity;
+    var i;
+    for (i = 0; i < corners.length; i++) {
+      max = Math.max(max, dot(corners[i].x, corners[i].y, dx, dy));
+    }
+    var sx = 0;
+    var sy = 0;
+    var count = 0;
+    for (i = 0; i < corners.length; i++) {
+      var p = dot(corners[i].x, corners[i].y, dx, dy);
+      if (max - p < 1.6) {
+        sx += corners[i].x;
+        sy += corners[i].y;
+        count++;
+      }
+    }
+    return { x:sx / count, y:sy / count };
+  }
+
+  function collisionInfo(a, b) {
+    var aa = axesFor(a);
+    var ba = axesFor(b);
+    var axes = [aa[0], aa[1], ba[0], ba[1]];
+    var minOverlap = Infinity;
+    var nx = 0;
+    var ny = 0;
+    var dx = b.x - a.x;
+    var dy = b.y - a.y;
+    var i;
+
+    for (i = 0; i < axes.length; i++) {
+      var ax = axes[i].x;
+      var ay = axes[i].y;
+      var distance = Math.abs(dot(dx, dy, ax, ay));
+      var overlap = projectionRadius(a, ax, ay) + projectionRadius(b, ax, ay) - distance;
+      if (overlap <= 0) return null;
+      if (overlap < minOverlap) {
+        minOverlap = overlap;
+        nx = ax;
+        ny = ay;
+      }
+    }
+
+    if (dot(dx, dy, nx, ny) < 0) {
+      nx = -nx;
+      ny = -ny;
+    }
+
+    var pa = supportPoint(a, nx, ny);
+    var pb = supportPoint(b, -nx, -ny);
+    return {
+      nx:nx,
+      ny:ny,
+      overlap:minOverlap,
+      x:(pa.x + pb.x) * .5,
+      y:(pa.y + pb.y) * .5
+    };
+  }
+
+  function resolveCollision(a, b, allowLanding) {
+    var info = collisionInfo(a, b);
+    if (!info) return;
+
+    var nx = info.nx;
+    var ny = info.ny;
+    var invSum = a.invM + b.invM;
+
+    if (invSum > 0) {
+      var correction = Math.max(info.overlap - .18, 0) * .58 / invSum;
+      a.x -= nx * correction * a.invM;
+      a.y -= ny * correction * a.invM;
+      b.x += nx * correction * b.invM;
+      b.y += ny * correction * b.invM;
+    }
+
+    var rax = info.x - a.x;
+    var ray = info.y - a.y;
+    var rbx = info.x - b.x;
+    var rby = info.y - b.y;
+
+    var vax = a.vx - a.av * ray;
+    var vay = a.vy + a.av * rax;
+    var vbx = b.vx - b.av * rby;
+    var vby = b.vy + b.av * rbx;
+    var rvx = vbx - vax;
+    var rvy = vby - vay;
+    var velN = dot(rvx, rvy, nx, ny);
+
+    if (velN > 0) return;
+
+    var raCrossN = cross(rax, ray, nx, ny);
+    var rbCrossN = cross(rbx, rby, nx, ny);
+    var denom = invSum +
+      raCrossN * raCrossN * a.invI +
+      rbCrossN * rbCrossN * b.invI;
+
+    if (denom <= 0) return;
+
+    var impulse = -(1.04) * velN / denom;
+    var ix = nx * impulse;
+    var iy = ny * impulse;
+
+    a.vx -= ix * a.invM;
+    a.vy -= iy * a.invM;
+    a.av -= cross(rax, ray, ix, iy) * a.invI;
+    b.vx += ix * b.invM;
+    b.vy += iy * b.invM;
+    b.av += cross(rbx, rby, ix, iy) * b.invI;
+
+    vax = a.vx - a.av * ray;
+    vay = a.vy + a.av * rax;
+    vbx = b.vx - b.av * rby;
+    vby = b.vy + b.av * rbx;
+    rvx = vbx - vax;
+    rvy = vby - vay;
+
+    var tx = rvx - nx * dot(rvx, rvy, nx, ny);
+    var ty = rvy - ny * dot(rvx, rvy, nx, ny);
+    var tl = Math.sqrt(tx * tx + ty * ty);
+
+    if (tl > .0001) {
+      tx /= tl;
+      ty /= tl;
+      var raCrossT = cross(rax, ray, tx, ty);
+      var rbCrossT = cross(rbx, rby, tx, ty);
+      var fdenom = invSum +
+        raCrossT * raCrossT * a.invI +
+        rbCrossT * rbCrossT * b.invI;
+      var jt = -dot(rvx, rvy, tx, ty) / Math.max(.0001, fdenom);
+      var maxFriction = impulse * .78;
+      jt = clamp(jt, -maxFriction, maxFriction);
+      var fix = tx * jt;
+      var fiy = ty * jt;
+
+      a.vx -= fix * a.invM;
+      a.vy -= fiy * a.invM;
+      a.av -= cross(rax, ray, fix, fiy) * a.invI;
+      b.vx += fix * b.invM;
+      b.vy += fiy * b.invM;
+      b.av += cross(rbx, rby, fix, fiy) * b.invI;
+    }
+
+    if (allowLanding && impulse > 6) {
+      var candidate = null;
+      var support = null;
+
+      if (!a.fixed && !a.landed && (b.fixed || b.landed)) {
+        candidate = a;
+        support = b;
+      } else if (!b.fixed && !b.landed && (a.fixed || a.landed)) {
+        candidate = b;
+        support = a;
+      }
+
+      if (candidate && support) {
+        candidate.landed = true;
+        effects.push({ type:"ring", x:info.x, y:info.y, t:0, life:.45 });
+        soundClack(impulse);
+      }
+    }
+  }
+
+  function physicsStep(dt) {
+    var i;
+    var j;
+    var cfg = configs[stageIndex];
+    var waveProgress = state === "wave" ? clamp(stateTimer / .95, 0, 1) : 0;
+    var wavePush = state === "wave" ? Math.sin(waveProgress * Math.PI) : 0;
+
+    for (i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      if (b.fixed) continue;
+
+      if (b.lost) {
+        b.vy += 440 * dt;
+        b.vx *= Math.pow(.985, dt * 60);
+        b.vy *= Math.pow(.993, dt * 60);
+        b.av *= Math.pow(.99, dt * 60);
+      } else {
+        b.vy += 720 * dt;
+
+        if (state === "wave") {
+          var altitude = clamp((platformTop - b.y) / Math.max(90, targetHeight), 0, 1.45);
+          var exposure = .42 + altitude * .75;
+          var strength = cfg.wave * (finalWave ? 1.30 : 1);
+          b.vx += waveDir * strength * exposure * wavePush * dt;
+          b.av += waveDir * strength * .0032 * b.waveBias * wavePush * dt;
+        }
+
+        b.vx *= Math.pow(.997, dt * 60);
+        b.av *= Math.pow(.994, dt * 60);
+      }
+
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.angle += b.av * dt;
+    }
+
+    for (j = 0; j < 6; j++) {
+      for (i = 0; i < bodies.length; i++) {
+        if (!bodies[i].lost) {
+          resolveCollision(bodies[i], platform, j === 0);
+        }
+      }
+
+      var a;
+      var c;
+      for (a = 0; a < bodies.length; a++) {
+        if (bodies[a].lost) continue;
+        for (c = a + 1; c < bodies.length; c++) {
+          if (bodies[c].lost) continue;
+          resolveCollision(bodies[a], bodies[c], j === 0);
+        }
+      }
+    }
+  }
+
+  function towerHeight() {
+    var top = platformTop;
+    var found = false;
+    var i;
+    for (i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      if (!b.landed || b.lost || !b.countScore) continue;
+      var e = bodyExtents(b);
+      top = Math.min(top, b.y - e.y);
+      found = true;
+    }
+    return found ? Math.max(0, platformTop - top) : 0;
+  }
+
+  function allStable() {
+    var any = false;
+    var i;
+    for (i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      if (b.lost) continue;
+      any = true;
+      if (Math.abs(b.vx) > 13 || Math.abs(b.vy) > 13 || Math.abs(b.av) > .32) {
+        return false;
+      }
+    }
+    return any;
+  }
+
+  function addSplash(x, y, big) {
+    var count = big ? 34 : 9;
+    var i;
+    effects.push({
+      type:"splash",
+      x:x,
+      y:y,
+      t:0,
+      life:big ? .85 : .45,
+      big:big
+    });
+
+    for (i = 0; i < count; i++) {
+      particles.push({
+        x:x + rand(big ? -18 : -5, big ? 18 : 5),
+        y:y + rand(-3, 3),
+        vx:rand(big ? -145 : -55, big ? 145 : 55),
+        vy:rand(big ? -260 : -125, big ? -70 : -45),
+        g:430,
+        t:0,
+        life:rand(big ? .55 : .3, big ? 1.05 : .55),
+        color:Math.random() < .5 ? "#f4ffff" : "#6dc6d5",
+        size:rand(big ? 2 : 1, big ? 6 : 3),
+        kind:"drop"
+      });
+    }
+  }
+
+  function loseRock(body) {
+    if (state === "fail" || state === "complete") return;
+    body.lost = true;
+    body.countScore = false;
+    state = "fail";
+    stateTimer = 0;
+    targetGold = false;
+    shake = 12;
+    addSplash(clamp(body.x, 20, W - 20), waterY, true);
+    soundSplash(true);
+    updateHUD();
+  }
+
+  function detectWater(dt) {
+    var now = performance.now() * .001;
+    var i;
+
+    for (i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      if (b.lost) continue;
+      var e = bodyExtents(b);
+      var bottom = b.y + e.y;
+
+      if (bottom > waterY - 3 && bottom < waterY + 10) {
+        b.nearSplash -= dt;
+        if (b.nearSplash <= 0 && Math.abs(b.vx) + Math.abs(b.vy) > 20) {
+          b.nearSplash = .48;
+          addSplash(clamp(b.x, 10, W - 10), waterY, false);
+          if (now - lastScrape > .45) {
+            lastScrape = now;
+            soundScrape();
+          }
+        }
+      }
+
+      if (bottom > waterY + 10 ||
+          (b.x + e.x < -18) ||
+          (b.x - e.x > W + 18)) {
+        loseRock(b);
+        return;
+      }
+    }
+  }
+
+  function beginWave() {
+    var height = towerHeight();
+    best[stageIndex] = Math.max(best[stageIndex], Math.round(height));
+    finalWave = height >= targetHeight - 1;
+    targetGold = finalWave;
+    waveDir = ((placement + stageIndex) % 2 === 0) ? 1 : -1;
+    if (Math.random() < .28) waveDir *= -1;
+    state = "waveWarn";
+    stateTimer = 0;
+    updateHUD();
+  }
+
+  function stageClear() {
+    state = "clear";
+    stateTimer = 0;
+    targetGold = true;
+    best[stageIndex] = Math.max(best[stageIndex], Math.round(towerHeight()));
+    tone(440, .35, .07, "sine", 660);
+    tone(660, .55, .05, "sine", 880);
+
+    var i;
+    for (i = 0; i < 44; i++) {
+      particles.push({
+        x:W * .5 + rand(-W * .22, W * .22),
+        y:targetY + rand(-12, 12),
+        vx:rand(-80, 80),
+        vy:rand(-160, -45),
+        g:180,
+        t:0,
+        life:rand(1.0, 2.0),
+        color:Math.random() < .5 ? "#f5c34f" : "#fff5ad",
+        size:rand(3, 7),
+        kind:"confetti"
+      });
+    }
+    updateHUD();
+  }
+
+  function finishGame() {
+    state = "complete";
+    modal.classList.remove("hidden");
+  }
+
+  function updateGame(dt) {
+    var i;
+
+    if (state === "aim" && held) {
+      var move = 0;
+      if (keys.left) move -= 1;
+      if (keys.right) move += 1;
+      held.x += move * clamp(W * .40, 180, 360) * dt;
+
+      var turn = 0;
+      if (keys.turnLeft) turn -= 1;
+      if (keys.turnRight) turn += 1;
+      if (turn !== 0) rotateHeld(turn * 1.45 * dt);
+      clampHeld();
+    }
+
+    var steps = Math.max(1, Math.ceil(dt / (1 / 120)));
+    var step = dt / steps;
+    for (i = 0; i < steps; i++) {
+      physicsStep(step);
+    }
+
+    if (state !== "complete") detectWater(dt);
+
+    if (state === "falling") {
+      stateTimer += dt;
+      fallTimer += dt;
+
+      if (currentBody && currentBody.landed) {
+        if (allStable()) {
+          stableTimer += dt;
+        } else {
+          stableTimer = Math.max(0, stableTimer - dt * .45);
+        }
+
+        if (stableTimer > .56 || fallTimer > 3.3) {
+          beginWave();
+        }
+      }
+    } else if (state === "waveWarn") {
+      stateTimer += dt;
+      if (stateTimer > .92) {
+        state = "wave";
+        stateTimer = 0;
+        soundWave();
+      }
+    } else if (state === "wave") {
+      stateTimer += dt;
+      if (stateTimer > .95) {
+        state = "settle";
+        stateTimer = 0;
+      }
+    } else if (state === "settle") {
+      stateTimer += dt;
+      if ((stateTimer > .65 && allStable()) || stateTimer > 1.75) {
+        if (finalWave) {
+          stageClear();
+        } else {
+          spawnRock();
+        }
+      }
+    } else if (state === "fail") {
+      stateTimer += dt;
+      if (stateTimer > 1.28) {
+        setupStage();
+      }
+    } else if (state === "clear") {
+      stateTimer += dt;
+      if (stateTimer > 2.25) {
+        if (stageIndex >= configs.length - 1) {
+          finishGame();
+        } else {
+          stageIndex++;
+          setupStage();
+        }
+      }
+    }
+
+    for (i = effects.length - 1; i >= 0; i--) {
+      effects[i].t += dt;
+      if (effects[i].t >= effects[i].life) effects.splice(i, 1);
+    }
+
+    for (i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.t += dt;
+      p.vy += p.g * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= Math.pow(.992, dt * 60);
+      if (p.t >= p.life) particles.splice(i, 1);
+    }
+
+    shake *= Math.pow(.86, dt * 60);
+    updateHUD();
+  }
+
+  function updateHUD() {
+    var h = Math.round(towerHeight());
+    stageStat.textContent = "Stage " + (stageIndex + 1) + " · " + configs[stageIndex].name;
+    heightStat.textContent = "Height " + h;
+    bestStat.textContent = "Best " + Math.max(best[stageIndex], h);
+  }
+
+  function roundedRectPath(x, y, w, h, r) {
+    r = Math.min(r, w * .5, h * .5);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function waterSurfaceAt(x) {
+    var y = waterY;
+    var time = performance.now() * .001;
+
+    if (state === "waveWarn") {
+      var pull = Math.sin(clamp(stateTimer / .92, 0, 1) * Math.PI * .75);
+      var side = waveDir > 0 ? 1 - x / W : x / W;
+      y += pull * side * clamp(H * .035, 13, 27);
+      y += Math.sin(x * .025 + time * 2) * 1.4;
+    } else if (state === "wave") {
+      var progress = clamp(stateTimer / .95, 0, 1);
+      var sourceX = waveDir > 0 ? progress * W : (1 - progress) * W;
+      var distance = (x - sourceX) / Math.max(40, W * .12);
+      y += Math.sin(x * .032 + time * 7) * 3;
+      y -= Math.exp(-distance * distance) * clamp(H * .035, 14, 28);
+    } else {
+      var calm = state === "clear" || state === "complete";
+      y += Math.sin(x * .022 + time * (calm ? .6 : 1.4)) * (calm ? 1.1 : 2.1);
+    }
+
+    return y;
+  }
+
+  function drawBackground() {
+    var sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#bce8ef");
+    sky.addColorStop(.63, "#e9f2dc");
+    sky.addColorStop(1, "#d8c99e");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.globalAlpha = .55;
+    ctx.fillStyle = "#fff6c9";
+    ctx.beginPath();
+    ctx.arc(W * .82, H * .16, clamp(W * .06, 24, 54), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "rgba(72,116,115,.18)";
+    ctx.beginPath();
+    ctx.moveTo(0, platformTop - 36);
+    ctx.quadraticCurveTo(W * .12, platformTop - 78, W * .28, platformTop - 35);
+    ctx.quadraticCurveTo(W * .41, platformTop - 67, W * .55, platformTop - 31);
+    ctx.lineTo(W * .55, platformTop + 25);
+    ctx.lineTo(0, platformTop + 25);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(W, platformTop - 27);
+    ctx.quadraticCurveTo(W * .88, platformTop - 76, W * .70, platformTop - 29);
+    ctx.lineTo(W * .70, platformTop + 20);
+    ctx.lineTo(W, platformTop + 20);
+    ctx.closePath();
+    ctx.fill();
+
+    var sand = ctx.createLinearGradient(0, platformTop - 10, 0, H);
+    sand.addColorStop(0, "#d9c68e");
+    sand.addColorStop(1, "#b69b68");
+    ctx.fillStyle = sand;
+    ctx.fillRect(0, platformTop - 7, W, H - platformTop + 7);
+  }
+
+  function drawSeaBase() {
+    var grad = ctx.createLinearGradient(0, waterY - 15, 0, H);
+    grad.addColorStop(0, "rgba(81,177,194,.82)");
+    grad.addColorStop(1, "rgba(28,105,130,.96)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    var x;
+    for (x = 0; x <= W + 20; x += 18) {
+      ctx.lineTo(x, waterSurfaceAt(x));
+    }
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    if (state === "waveWarn") {
+      var leftSource = waveDir > 0;
+      var pull = Math.sin(clamp(stateTimer / .92, 0, 1) * Math.PI * .75);
+      ctx.fillStyle = "rgba(230,203,139," + (.42 * pull) + ")";
+      ctx.beginPath();
+      if (leftSource) {
+        ctx.moveTo(0, waterY - 2);
+        ctx.lineTo(W * .42, waterY - 2);
+        ctx.lineTo(0, waterY + 27 * pull);
+      } else {
+        ctx.moveTo(W, waterY - 2);
+        ctx.lineTo(W * .58, waterY - 2);
+        ctx.lineTo(W, waterY + 27 * pull);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawMarkers() {
+    ctx.save();
+
+    ctx.setLineDash([8, 7]);
+    ctx.lineWidth = targetGold ? 3 : 2;
+    ctx.strokeStyle = targetGold ? "#e8ae37" : "rgba(29,90,101,.58)";
+    ctx.beginPath();
+    ctx.moveTo(16, targetY);
+    ctx.lineTo(W - 16, targetY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    var label = targetGold ? "TARGET HELD" : "TARGET " + Math.round(targetHeight);
+    ctx.font = "900 11px system-ui,sans-serif";
+    var tw = ctx.measureText(label).width + 16;
+    roundedRectPath(W - tw - 14, targetY - 13, tw, 24, 8);
+    ctx.fillStyle = targetGold ? "#e4aa36" : "rgba(235,250,247,.88)";
+    ctx.fill();
+    ctx.fillStyle = targetGold ? "#fff" : "#285d66";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, W - tw * .5 - 14, targetY - 1);
+
+    var h = towerHeight();
+    if (h > 1) {
+      var y = platformTop - h;
+      ctx.setLineDash([3, 5]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(255,255,255,.75)";
+      ctx.beginPath();
+      ctx.moveTo(W * .05, y);
+      ctx.lineTo(W * .34, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.font = "800 10px system-ui,sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#205660";
+      ctx.fillText("HEIGHT " + Math.round(h), W * .05, y - 7);
+    }
+    ctx.restore();
+  }
+
+  function drawPlatform() {
+    var x = platform.x - platform.w * .5;
+    var y = platformTop;
+
+    ctx.fillStyle = "rgba(28,64,67,.18)";
+    ctx.beginPath();
+    ctx.ellipse(platform.x + 4, y + 29, platform.w * .52, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#5d6c66";
+    ctx.beginPath();
+    ctx.moveTo(x, y + 2);
+    ctx.lineTo(x + platform.w * .08, y - 5);
+    ctx.lineTo(x + platform.w * .35, y - 2);
+    ctx.lineTo(x + platform.w * .55, y - 6);
+    ctx.lineTo(x + platform.w * .83, y - 1);
+    ctx.lineTo(x + platform.w, y + 4);
+    ctx.lineTo(x + platform.w * .94, y + 29);
+    ctx.lineTo(x + platform.w * .10, y + 31);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.30)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 8, y + 1);
+    ctx.lineTo(x + platform.w * .37, y - 2);
+    ctx.lineTo(x + platform.w * .55, y - 5);
+    ctx.lineTo(x + platform.w - 8, y + 3);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(39,54,51,.28)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + platform.w * .27, y + 7);
+    ctx.lineTo(x + platform.w * .31, y + 23);
+    ctx.moveTo(x + platform.w * .72, y + 5);
+    ctx.lineTo(x + platform.w * .66, y + 25);
+    ctx.stroke();
+  }
+
+  function drawRock(body, alpha) {
+    var palette = palettes[body.colorIndex % palettes.length];
+    ctx.save();
+    ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+    ctx.translate(body.x, body.y);
+    ctx.rotate(body.angle);
+
+    ctx.fillStyle = "rgba(22,52,56,.18)";
+    ctx.beginPath();
+    ctx.ellipse(4, body.h * .47, body.w * .42, body.h * .19, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    var i;
+    for (i = 0; i < body.points.length; i++) {
+      var p = body.points[i];
+      if (i === 0) ctx.moveTo(p.x * body.w, p.y * body.h);
+      else ctx.lineTo(p.x * body.w, p.y * body.h);
+    }
+    ctx.closePath();
+    ctx.fillStyle = palette[0];
+    ctx.fill();
+    ctx.strokeStyle = palette[1];
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-body.w * .28, -body.h * .24);
+    ctx.quadraticCurveTo(0, -body.h * .38, body.w * .28, -body.h * .20);
+    ctx.strokeStyle = palette[2];
+    ctx.lineWidth = 2;
+    ctx.globalAlpha *= .65;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(body.w * .08, -body.h * .06);
+    ctx.lineTo(-body.w * .02, body.h * .12);
+    ctx.lineTo(body.w * .10, body.h * .25);
+    ctx.strokeStyle = palette[1];
+    ctx.lineWidth = 1.4;
+    ctx.globalAlpha *= .55;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function projectedLanding() {
+    if (!held) return { y:waterY + 18, safe:false };
+    var e = heldExtents();
+    var surface = Infinity;
+    var safe = false;
+
+    if (Math.abs(held.x - platform.x) < platform.w * .5 + e.x * .55) {
+      surface = platformTop;
+      safe = true;
+    }
+
+    var i;
+    for (i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      if (!b.landed || b.lost) continue;
+      var be = bodyExtents(b);
+      if (Math.abs(held.x - b.x) < e.x * .62 + be.x * .78) {
+        surface = Math.min(surface, b.y - be.y);
+        safe = true;
+      }
+    }
+
+    if (!isFinite(surface)) surface = waterY + 18;
+    return { y:surface - e.y, safe:safe };
+  }
+
+  function drawHeld() {
+    if (!held) return;
+    var landing = projectedLanding();
+    var ghost = {
+      x:held.x,
+      y:landing.y,
+      w:held.w,
+      h:held.h,
+      angle:held.angle,
+      points:held.points,
+      colorIndex:held.colorIndex
+    };
+
+    ctx.save();
+    ctx.globalAlpha = landing.safe ? .20 : .14;
+    if (!landing.safe) {
+      ctx.fillStyle = "#d75640";
+      ctx.beginPath();
+      ctx.ellipse(held.x, waterY + 5, held.w * .34, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    drawRock(ghost, landing.safe ? .20 : .12);
+    ctx.restore();
+
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = "rgba(36,77,83,.42)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(held.x, 0);
+    ctx.lineTo(held.x, held.y - heldExtents().y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    drawRock({
+      x:held.x,
+      y:held.y,
+      w:held.w,
+      h:held.h,
+      angle:held.angle,
+      points:held.points,
+      colorIndex:held.colorIndex
+    }, 1);
+  }
+
+  function drawSeaOverlay() {
+    ctx.save();
+    ctx.fillStyle = "rgba(178,231,235,.20)";
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    var x;
+    for (x = 0; x <= W + 20; x += 18) {
+      ctx.lineTo(x, waterSurfaceAt(x));
+    }
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(239,255,253,.68)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (x = 0; x <= W + 20; x += 14) {
+      var y = waterSurfaceAt(x);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawEffects() {
+    var i;
+    for (i = 0; i < effects.length; i++) {
+      var e = effects[i];
+      var p = e.t / e.life;
+
+      if (e.type === "ring") {
+        ctx.save();
+        ctx.globalAlpha = 1 - p;
+        ctx.strokeStyle = "#fff6a8";
+        ctx.lineWidth = 4 * (1 - p) + 1;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 5 + p * 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      } else if (e.type === "splash") {
+        ctx.save();
+        ctx.globalAlpha = 1 - p;
+        ctx.strokeStyle = "#eaffff";
+        ctx.lineWidth = e.big ? 4 : 2;
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y, 8 + p * (e.big ? 55 : 18), 3 + p * 7, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    for (i = 0; i < particles.length; i++) {
+      var part = particles[i];
+      var life = 1 - part.t / part.life;
+      ctx.save();
+      ctx.globalAlpha = clamp(life, 0, 1);
+      ctx.fillStyle = part.color;
+      if (part.kind === "confetti") {
+        ctx.translate(part.x, part.y);
+        ctx.rotate(part.t * 5 + part.vx * .01);
+        ctx.fillRect(-part.size, -part.size * .45, part.size * 2, part.size * .9);
+      } else {
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawMessage() {
+    var titleText = "";
+    var subText = "";
+    var color = "#164a55";
+
+    if (state === "waveWarn") {
+      titleText = finalWave ? "FINAL WAVE " : "WAVE ";
+      titleText += waveDir > 0 ? "→" : "←";
+      subText = waveDir > 0 ? "The sea pulls back on the left" : "The sea pulls back on the right";
+      color = finalWave ? "#bb7a19" : "#1d6774";
+    } else if (state === "wave") {
+      titleText = waveDir > 0 ? "SURGE →" : "← SURGE";
+      subText = finalWave ? "Hold the line!" : "Steady…";
+      color = "#f7fbeb";
+    } else if (state === "fail") {
+      titleText = "ROCK OVERBOARD";
+      subText = "The tide resets the stage";
+      color = "#fff";
+    } else if (state === "clear") {
+      titleText = "STAGE CLEAR";
+      subText = "The tower holds. The cove goes calm.";
+      color = "#fff3a3";
+    } else {
+      var wobble = false;
+      var i;
+      for (i = 0; i < bodies.length; i++) {
+        if (!bodies[i].lost && Math.abs(bodies[i].av) > .48) {
+          wobble = true;
+          break;
+        }
+      }
+      if (wobble) {
+        titleText = "CAREFUL…";
+        subText = "That edge is scraping";
+        color = "#b65438";
+      }
+    }
+
+    if (!titleText) return;
+
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 " + clamp(W * .038, 19, 34) + "px system-ui,sans-serif";
+    var width = Math.min(W - 24, ctx.measureText(titleText).width + 46);
+    var boxY = clamp(H * .27, 102, 180);
+
+    roundedRectPath(W * .5 - width * .5, boxY - 28, width, 68, 16);
+    ctx.fillStyle = state === "fail" ? "rgba(153,63,42,.83)" :
+                    state === "clear" ? "rgba(85,113,67,.82)" :
+                    "rgba(239,251,246,.83)";
+    ctx.fill();
+
+    ctx.fillStyle = color;
+    ctx.fillText(titleText, W * .5, boxY - 5);
+    ctx.font = "750 11px system-ui,sans-serif";
+    ctx.fillText(subText, W * .5, boxY + 20);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+
+    ctx.save();
+    if (shake > .1) {
+      ctx.translate(rand(-shake, shake), rand(-shake * .45, shake * .45));
+    }
+
+    drawSeaBase();
+    drawMarkers();
+    drawPlatform();
+
+    var i;
+    for (i = 0; i < bodies.length; i++) {
+      drawRock(bodies[i], 1);
+    }
+
+    drawHeld();
+    drawSeaOverlay();
+    drawEffects();
+    drawMessage();
+    ctx.restore();
+  }
+
+  var lastTime = performance.now();
+
+  function loop(now) {
+    var dt = Math.min(.034, Math.max(0, (now - lastTime) / 1000));
+    lastTime = now;
+    updateGame(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function setCanvasHeldX(clientX) {
+    if (!held) return;
+    var rect = canvas.getBoundingClientRect();
+    held.x = clientX - rect.left;
+    clampHeld();
+  }
+
+  canvas.addEventListener("pointerdown", function (e) {
+    initAudio();
+    if (state !== "aim" || !held) return;
+    e.preventDefault();
+    dragging = true;
+    dragPointer = e.pointerId;
+    canvas.setPointerCapture(e.pointerId);
+    setCanvasHeldX(e.clientX);
+  });
+
+  canvas.addEventListener("pointermove", function (e) {
+    if (!dragging || dragPointer !== e.pointerId || state !== "aim") return;
+    e.preventDefault();
+    setCanvasHeldX(e.clientX);
+  });
+
+  canvas.addEventListener("pointerup", function (e) {
+    if (!dragging || dragPointer !== e.pointerId) return;
+    e.preventDefault();
+    setCanvasHeldX(e.clientX);
+    dragging = false;
+    dragPointer = null;
+    dropRock();
+  });
+
+  canvas.addEventListener("pointercancel", function () {
+    dragging = false;
+    dragPointer = null;
+  });
+
+  window.addEventListener("keydown", function (e) {
+    var key = e.key.toLowerCase();
+    if (key === "arrowleft" || key === "arrowright" || key === "arrowdown" ||
+        key === "z" || key === "x" || key === " ") {
+      e.preventDefault();
+      initAudio();
+    }
+
+    if (key === "arrowleft") keys.left = true;
+    if (key === "arrowright") keys.right = true;
+    if (key === "z") {
+      keys.turnLeft = true;
+      if (!e.repeat) rotateHeld(-Math.PI / 18);
+    }
+    if (key === "x") {
+      keys.turnRight = true;
+      if (!e.repeat) rotateHeld(Math.PI / 18);
+    }
+    if ((key === "arrowdown" || key === " ") && !e.repeat) dropRock();
+  });
+
+  window.addEventListener("keyup", function (e) {
+    var key = e.key.toLowerCase();
+    if (key === "arrowleft") keys.left = false;
+    if (key === "arrowright") keys.right = false;
+    if (key === "z") keys.turnLeft = false;
+    if (key === "x") keys.turnRight = false;
+  });
+
+  function bindHoldButton(id, flag, immediate) {
+    var button = document.getElementById(id);
+
+    button.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      initAudio();
+      keys[flag] = true;
+      button.classList.add("pressed");
+      if (immediate) immediate();
+      try {
+        button.setPointerCapture(e.pointerId);
+      } catch (err) {
+        return;
+      }
+    });
+
+    function release(e) {
+      if (e) e.preventDefault();
+      keys[flag] = false;
+      button.classList.remove("pressed");
+    }
+
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("lostpointercapture", release);
+  }
+
+  bindHoldButton("leftBtn", "left", null);
+  bindHoldButton("rightBtn", "right", null);
+  bindHoldButton("turnLeftBtn", "turnLeft", function () {
+    rotateHeld(-Math.PI / 18);
+  });
+  bindHoldButton("turnRightBtn", "turnRight", function () {
+    rotateHeld(Math.PI / 18);
+  });
+
+  document.getElementById("dropBtn").addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    initAudio();
+    dropRock();
+  });
+
+  again.addEventListener("click", function () {
+    initAudio();
+    stageIndex = 0;
+    setupStage();
+  });
+
+  window.addEventListener("blur", function () {
+    keys.left = false;
+    keys.right = false;
+    keys.turnLeft = false;
+    keys.turnRight = false;
+    dragging = false;
+    dragPointer = null;
+  });
+
+  resizeCanvas(false);
+  started = true;
+  setupStage();
+  requestAnimationFrame(loop);
+}());
+</script>
+</body>
+</html>

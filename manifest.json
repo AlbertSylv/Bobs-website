@@ -436,6 +436,15 @@
       "path": "games/mow-around-it/",
       "mobile": true,
       "thumbnail": "games/mow-around-it/cover.webp"
+    },
+    {
+      "slug": "low-tide-tower",
+      "title": "Low Tide Tower",
+      "tagline": "Stack the rocks. The sea gets a vote.",
+      "date": "2026-09-27",
+      "path": "games/low-tide-tower/",
+      "mobile": true,
+      "thumbnail": "games/low-tide-tower/cover.webp"
     }
   ]
 }

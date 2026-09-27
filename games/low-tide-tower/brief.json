@@ -1,0 +1,11 @@
+{
+  "title": "Low Tide Tower",
+  "slug": "low-tide-tower",
+  "tagline": "Stack the rocks. The sea gets a vote.",
+  "concept": "Build a rock tower that stays standing when the next wave rolls in.",
+  "core_loop": "Move and turn a hanging rock, drop it onto the stack, then watch a small wave test your work; each wobble makes the next careful placement feel risky and satisfying.",
+  "mechanics": "Controls: Drag or use left and right to position a rock, use two large turn buttons or Z and X to rotate it, then release or press down to drop.; Win/lose: Raise the tower past the marked line and survive the wave to clear the stage; the stage restarts quickly if any stacked rock falls into the water.; Scoring: Tower height is the score, and the best height for each stage is saved.",
+  "feedback": "A good landing gives a firm clack and a brief bright ring at the contact point. Before each wave, the sea visibly pulls back on the side it will hit from. A near fall brings a slow wobble, scraping sounds, and a small splash at the lowest edge. A lost rock lands with a large splash and the height marker drops with it. Clearing the line turns it gold, then the tower gets one final wave and a calm c",
+  "difficulty": "The first stages use broad flat rocks, low targets, gentle waves, and a clear landing shadow. Later stages add uneven stones, taller targets, narrower starting ledges, and stronger waves from clearly shown directions, while rotation and collision stay forgiving.",
+  "mobile": true
+}
