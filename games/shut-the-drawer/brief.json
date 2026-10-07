@@ -1,0 +1,11 @@
+{
+  "title": "Shut the Drawer",
+  "slug": "shut-the-drawer",
+  "tagline": "Make it fit. End the argument.",
+  "concept": "Pack a stubborn junk drawer and close it without anything catching.",
+  "core_loop": "Drag and rotate a few objects, then pull the handle to test the drawer; each quick close brings a new layout, and getting a perfect thunk stays deeply satisfying.",
+  "mechanics": "Controls: Drag objects with a finger or pointer, tap to rotate them, and swipe the handle to close; keyboard players use Tab, arrow keys, Space, and Enter.; Win or lose: The round is won when the drawer closes; a blocked attempt costs the clean-close bonus, shows the problem, and lets the player keep fixing it.; Scoring: Earn points for each closed drawer, with extra points for fewer moves, no overlaps, and closing on the first try.",
+  "feedback": "A clean close lands with a solid thunk, a small green flash, and points snapping upward. A blocked drawer kicks back with a rude clack while the objects in the way jump and glow red. A near-miss gives a short scrape, an orange edge flash, and a wobble before the drawer either clears or stops.",
+  "difficulty": "The first drawers have two simple objects and lots of room. Later drawers add odd shapes, fixed dividers, tighter gaps, and more possible rotations, but there is never a timer and every failed close clearly shows what caught.",
+  "mobile": true
+}

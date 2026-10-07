@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Shut the Drawer</title>
+<style>
+html, body { margin:0; height:100%; }
+* { box-sizing:border-box; }
+body {
+  overflow:hidden;
+  background:#17130f;
+  color:#fff8e9;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#app {
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255,193,111,.15), transparent 42%),
+    linear-gradient(#231b15, #120f0c);
+}
+header {
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:minmax(175px,1fr) auto;
+  gap:5px 16px;
+  align-items:center;
+  padding:10px 16px 8px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+  background:rgba(19,15,12,.9);
+  box-shadow:0 5px 18px rgba(0,0,0,.25);
+  z-index:2;
+}
+.brand h1 {
+  margin:0;
+  font-size:clamp(22px,3.3vw,36px);
+  line-height:1;
+  letter-spacing:-.04em;
+}
+.tagline {
+  margin-top:4px;
+  color:#d9b889;
+  font-size:clamp(11px,1.5vw,15px);
+  font-weight:650;
+  letter-spacing:.02em;
+}
+.stats {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+.stat {
+  min-width:76px;
+  padding:5px 10px 6px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  background:rgba(255,255,255,.055);
+  text-align:center;
+}
+.stat span {
+  display:block;
+  color:#bda98d;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.13em;
+}
+.stat strong {
+  display:block;
+  margin-top:1px;
+  color:#fff8e9;
+  font-size:17px;
+  line-height:1.05;
+  font-variant-numeric:tabular-nums;
+}
+#scoreStat.pop strong {
+  animation:scorePop .42s ease-out;
+  color:#83ef98;
+}
+@keyframes scorePop {
+  0% { transform:translateY(7px) scale(.88); }
+  55% { transform:translateY(-4px) scale(1.16); }
+  100% { transform:none; }
+}
+#how {
+  grid-column:1 / -1;
+  margin-top:2px;
+  color:#cfc2ae;
+  font-size:12px;
+  text-align:center;
+}
+#gameWrap {
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+}
+canvas {
+  display:block;
+  width:100%;
+  height:100%;
+  outline:none;
+  touch-action:none;
+  cursor:grab;
+}
+canvas:active { cursor:grabbing; }
+canvas:focus-visible {
+  box-shadow:inset 0 0 0 3px rgba(119,220,255,.55);
+}
+#live {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+}
+@media (max-width:620px) {
+  header {
+    grid-template-columns:1fr;
+    gap:5px;
+    padding:8px 9px 6px;
+  }
+  .brand { text-align:center; }
+  .stats { justify-content:center; gap:5px; }
+  .stat { min-width:70px; padding:4px 7px; }
+  .stat strong { font-size:15px; }
+  #how { font-size:10.5px; }
+}
+@media (max-height:480px) {
+  header {
+    grid-template-columns:minmax(150px,1fr) auto;
+    padding:5px 10px 4px;
+  }
+  .brand h1 { font-size:21px; }
+  .tagline { display:none; }
+  .stat { padding:3px 7px; }
+  .stat strong { font-size:14px; }
+  #how { grid-column:1 / -1; font-size:10px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>Shut the Drawer</h1>
+      <div class="tagline">Make it fit. End the argument.</div>
+    </div>
+    <div class="stats" aria-label="Game status">
+      <div class="stat" id="scoreStat"><span>SCORE</span><strong id="score">0</strong></div>
+      <div class="stat"><span>DRAWER</span><strong id="round">01</strong></div>
+      <div class="stat"><span>MOVES</span><strong id="moves">0</strong></div>
+      <div class="stat"><span>CLOSE</span><strong id="clean">CLEAN</strong></div>
+    </div>
+    <div id="how">Drag items • tap to rotate • swipe the handle up to test • Keyboard: Tab, arrows, Space, Enter</div>
+  </header>
+  <main id="gameWrap">
+    <canvas id="game" tabindex="0" role="application" aria-describedby="how" aria-label="Junk drawer packing game. Arrange every item without overlaps, then swipe the handle upward or press Enter to close."></canvas>
+    <div id="live" aria-live="polite"></div>
+  </main>
+</div>
+
+<script>
+(function () {
+"use strict";
+
+var canvas = document.getElementById("game");
+var ctx = canvas.getContext("2d");
+var scoreEl = document.getElementById("score");
+var roundEl = document.getElementById("round");
+var movesEl = document.getElementById("moves");
+var cleanEl = document.getElementById("clean");
+var scoreStat = document.getElementById("scoreStat");
+var liveEl = document.getElementById("live");
+
+var cw = 1;
+var ch = 1;
+var dpr = 1;
+var layout = null;
+var lastTime = performance.now();
+
+var score = 0;
+var shownScore = 0;
+var roundNumber = 1;
+var levelIndex = 0;
+var moves = 0;
+var attempts = 0;
+var objects = [];
+var dividers = [];
+var selectedIndex = -1;
+var handleSelected = false;
+var mode = "play";
+var statusText = "";
+var statusKind = "normal";
+var issueIds = {};
+var issueDividers = {};
+var closeResult = null;
+var closeStarted = 0;
+var closeProgress = 0;
+var completeAt = 0;
+var feedbackType = "";
+var feedbackStarted = 0;
+var scoreToast = null;
+var pointer = null;
+var handlePull = 0;
+var audioContext = null;
+
+var COLORS = {
+  blue:"#4299dc",
+  yellow:"#edb83f",
+  red:"#df6659",
+  green:"#59b984",
+  purple:"#9b76d2",
+  orange:"#e98b3d",
+  teal:"#43aaa3",
+  pink:"#d66f9e",
+  cream:"#d8c69e",
+  slate:"#72879b"
+};
+
+function rectParts(w, h) {
+  return [{x:0, y:0, w:w, h:h}];
+}
+function lParts(w, h, t) {
+  return [
+    {x:0, y:(h - t) / 2, w:w, h:t},
+    {x:-(w - t) / 2, y:0, w:t, h:h}
+  ];
+}
+function tParts(w, h, t) {
+  return [
+    {x:0, y:-(h - t) / 2, w:w, h:t},
+    {x:0, y:t / 2, w:t, h:h - t}
+  ];
+}
+function zParts(w, h, t) {
+  return [
+    {x:-(w - t) / 4, y:-(h - t) / 2, w:w / 2 + t / 2, h:t},
+    {x:0, y:0, w:t, h:h},
+    {x:(w - t) / 4, y:(h - t) / 2, w:w / 2 + t / 2, h:t}
+  ];
+}
+function makeObject(name, color, parts, x, y, rot) {
+  return {name:name, color:color, parts:parts, x:x, y:y, rot:rot || 0};
+}
+
+var LEVELS = [
+  {
+    name:"Easy does it",
+    dividers:[],
+    objects:[
+      makeObject("Ruler", COLORS.yellow, rectParts(34,7), 47,25,0),
+      makeObject("Marker", COLORS.blue, rectParts(8,25), 53,28,0)
+    ]
+  },
+  {
+    name:"Three's a crowd",
+    dividers:[],
+    objects:[
+      makeObject("Phone", COLORS.slate, rectParts(22,14), 39,26,0),
+      makeObject("Comb", COLORS.purple, rectParts(31,7), 52,27,0),
+      makeObject("Tape", COLORS.orange, rectParts(14,13), 52,35,0)
+    ]
+  },
+  {
+    name:"Mind the divider",
+    dividers:[
+      {x:48, y:0, w:4, h:22}
+    ],
+    objects:[
+      makeObject("Scissors", COLORS.red, lParts(25,18,7), 49,22,0),
+      makeObject("Notebook", COLORS.green, rectParts(28,17), 39,35,0),
+      makeObject("Cable", COLORS.teal, tParts(23,19,6), 56,35,1)
+    ]
+  },
+  {
+    name:"Three narrow lanes",
+    dividers:[
+      {x:32, y:0, w:3, h:60},
+      {x:67, y:0, w:3, h:60}
+    ],
+    objects:[
+      makeObject("Flashlight", COLORS.yellow, rectParts(30,8), 32,29,0),
+      makeObject("Cards", COLORS.blue, rectParts(20,14), 53,22,0),
+      makeObject("Charger", COLORS.purple, lParts(24,18,7), 68,38,0),
+      makeObject("Key", COLORS.orange, tParts(17,15,5), 84,18,1)
+    ]
+  },
+  {
+    name:"The awkward shelf",
+    dividers:[
+      {x:0, y:29, w:42, h:3},
+      {x:58, y:29, w:42, h:3},
+      {x:48, y:0, w:4, h:19}
+    ],
+    objects:[
+      makeObject("Shears", COLORS.red, lParts(26,19,7), 40,29,0),
+      makeObject("Adapter", COLORS.blue, tParts(21,20,7), 59,29,1),
+      makeObject("Pen", COLORS.yellow, rectParts(31,6), 49,44,0),
+      makeObject("Clip", COLORS.green, zParts(18,17,5), 49,18,0)
+    ]
+  },
+  {
+    name:"No sensible place",
+    dividers:[
+      {x:27, y:0, w:3, h:38},
+      {x:70, y:22, w:3, h:38},
+      {x:43, y:28, w:27, h:3}
+    ],
+    objects:[
+      makeObject("Remote", COLORS.slate, rectParts(27,10), 28,35,0),
+      makeObject("Pliers", COLORS.red, lParts(24,20,7), 45,29,0),
+      makeObject("Brush", COLORS.purple, rectParts(29,8), 66,26,0),
+      makeObject("Battery", COLORS.green, rectParts(12,19), 74,39,0),
+      makeObject("Opener", COLORS.orange, tParts(19,19,6), 51,43,1)
+    ]
+  },
+  {
+    name:"Corners everywhere",
+    dividers:[
+      {x:24, y:0, w:3, h:60},
+      {x:49, y:0, w:3, h:42},
+      {x:75, y:18, w:3, h:42}
+    ],
+    objects:[
+      makeObject("Torch", COLORS.yellow, rectParts(29,7), 24,18,0),
+      makeObject("Cord", COLORS.teal, lParts(22,19,6), 49,39,0),
+      makeObject("Wallet", COLORS.slate, rectParts(20,15), 62,20,0),
+      makeObject("Tool", COLORS.red, tParts(21,22,7), 76,37,1),
+      makeObject("Mints", COLORS.pink, rectParts(15,11), 88,18,0)
+    ]
+  },
+  {
+    name:"The final argument",
+    dividers:[
+      {x:31, y:0, w:3, h:22},
+      {x:31, y:36, w:3, h:24},
+      {x:65, y:12, w:3, h:36},
+      {x:31, y:31, w:34, h:3}
+    ],
+    objects:[
+      makeObject("Multi-tool", COLORS.red, lParts(27,20,7), 32,34,0),
+      makeObject("Glasses", COLORS.blue, tParts(25,16,6), 64,31,0),
+      makeObject("Cable", COLORS.teal, zParts(22,20,6), 52,34,1),
+      makeObject("Pencil", COLORS.yellow, rectParts(32,6), 47,17,0),
+      makeObject("Case", COLORS.purple, rectParts(20,14), 74,42,0),
+      makeObject("Keyring", COLORS.orange, tParts(16,17,5), 76,19,1)
+    ]
+  }
+];
+
+function resize() {
+  var r = canvas.getBoundingClientRect();
+  cw = Math.max(1, r.width);
+  ch = Math.max(1, r.height);
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = Math.round(cw * dpr);
+  canvas.height = Math.round(ch * dpr);
+  canvas.style.width = cw + "px";
+  canvas.style.height = ch + "px";
+  calculateLayout();
+}
+
+function calculateLayout() {
+  var margin = Math.max(10, Math.min(30, cw * 0.035));
+  var availableW = Math.max(100, cw - margin * 2);
+  var availableH = Math.max(55, ch - 102);
+  var availableRatio = availableW / availableH;
+  var ratio = Math.max(1.25, Math.min(2.6, availableRatio));
+  var w;
+  var h;
+
+  if (availableRatio > ratio) {
+    h = availableH;
+    w = h * ratio;
+  } else {
+    w = availableW;
+    h = w / ratio;
+  }
+
+  var x = (cw - w) / 2;
+  var y = 10 + Math.max(0, (availableH - h) / 2);
+  var handleW = Math.max(76, Math.min(145, w * 0.25));
+  var handleH = Math.max(24, Math.min(34, ch * 0.07));
+
+  layout = {
+    x:x,
+    y:y,
+    w:w,
+    h:h,
+    sx:w / 100,
+    sy:h / 60,
+    handle:{
+      x:x + w / 2 - handleW / 2,
+      y:y + h + 17,
+      w:handleW,
+      h:handleH
+    }
+  };
+}
+
+function setupRound() {
+  var level = LEVELS[levelIndex % LEVELS.length];
+  objects = [];
+  dividers = [];
+
+  for (var i = 0; i < level.objects.length; i++) {
+    var source = level.objects[i];
+    var parts = [];
+    for (var p = 0; p < source.parts.length; p++) {
+      parts.push({
+        x:source.parts[p].x,
+        y:source.parts[p].y,
+        w:source.parts[p].w,
+        h:source.parts[p].h
+      });
+    }
+    objects.push({
+      id:i,
+      name:source.name,
+      color:source.color,
+      parts:parts,
+      x:source.x,
+      y:source.y,
+      rot:source.rot,
+      pulse:0
+    });
+  }
+
+  for (var d = 0; d < level.dividers.length; d++) {
+    dividers.push({
+      x:level.dividers[d].x,
+      y:level.dividers[d].y,
+      w:level.dividers[d].w,
+      h:level.dividers[d].h
+    });
+  }
+
+  moves = 0;
+  attempts = 0;
+  mode = "play";
+  selectedIndex = -1;
+  handleSelected = false;
+  closeResult = null;
+  closeProgress = 0;
+  issueIds = {};
+  issueDividers = {};
+  feedbackType = "";
+  statusText = level.name;
+  statusKind = "normal";
+  scoreToast = null;
+  handlePull = 0;
+  updateHUD();
+  announce("Drawer " + roundNumber + ": " + level.name + ". Arrange the items and close the drawer.");
+}
+
+function updateHUD() {
+  roundEl.textContent = String(roundNumber).padStart(2, "0");
+  movesEl.textContent = String(moves);
+  if (mode === "complete") {
+    cleanEl.textContent = "CLOSED";
+  } else if (attempts > 0) {
+    cleanEl.textContent = "BONUS LOST";
+  } else {
+    cleanEl.textContent = "CLEAN";
+  }
+}
+
+function announce(text) {
+  liveEl.textContent = "";
+  window.setTimeout(function () {
+    liveEl.textContent = text;
+  }, 20);
+}
+
+function worldX(x) {
+  return layout.x + x * layout.sx;
+}
+function worldY(y) {
+  return layout.y + y * layout.sy;
+}
+function screenToWorld(x, y) {
+  return {
+    x:(x - layout.x) / layout.sx,
+    y:(y - layout.y) / layout.sy
+  };
+}
+
+function transformedParts(item) {
+  var out = [];
+  for (var i = 0; i < item.parts.length; i++) {
+    var p = item.parts[i];
+    var x = p.x;
+    var y = p.y;
+    var w = p.w;
+    var h = p.h;
+    var r = ((item.rot % 4) + 4) % 4;
+    var tx;
+    if (r === 1) {
+      tx = x;
+      x = -y;
+      y = tx;
+      tx = w;
+      w = h;
+      h = tx;
+    } else if (r === 2) {
+      x = -x;
+      y = -y;
+    } else if (r === 3) {
+      tx = x;
+      x = y;
+      y = -tx;
+      tx = w;
+      w = h;
+      h = tx;
+    }
+    out.push({
+      x:item.x + x - w / 2,
+      y:item.y + y - h / 2,
+      w:w,
+      h:h
+    });
+  }
+  return out;
+}
+
+function objectBounds(item) {
+  var parts = transformedParts(item);
+  var minX = Infinity;
+  var minY = Infinity;
+  var maxX = -Infinity;
+  var maxY = -Infinity;
+  for (var i = 0; i < parts.length; i++) {
+    minX = Math.min(minX, parts[i].x);
+    minY = Math.min(minY, parts[i].y);
+    maxX = Math.max(maxX, parts[i].x + parts[i].w);
+    maxY = Math.max(maxY, parts[i].y + parts[i].h);
+  }
+  return {x:minX, y:minY, w:maxX - minX, h:maxY - minY};
+}
+
+function overlaps(a, b) {
+  var ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+  var oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+  if (ox > 0.08 && oy > 0.08) {
+    return {hit:true, depth:Math.min(ox, oy)};
+  }
+  return {hit:false, depth:0};
+}
+
+function gapBetween(a, b) {
+  var dx = Math.max(a.x - (b.x + b.w), b.x - (a.x + a.w), 0);
+  var dy = Math.max(a.y - (b.y + b.h), b.y - (a.y + a.h), 0);
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function evaluateDrawer() {
+  var issues = [];
+  var maxDepth = 0;
+  var minClear = Infinity;
+  var i;
+  var j;
+  var p;
+  var q;
+  var partsA;
+  var partsB;
+
+  for (i = 0; i < objects.length; i++) {
+    partsA = transformedParts(objects[i]);
+    for (p = 0; p < partsA.length; p++) {
+      var a = partsA[p];
+      var leftOver = Math.max(0, -a.x);
+      var topOver = Math.max(0, -a.y);
+      var rightOver = Math.max(0, a.x + a.w - 100);
+      var bottomOver = Math.max(0, a.y + a.h - 60);
+      var boundaryDepth = Math.max(leftOver, topOver, rightOver, bottomOver);
+
+      if (boundaryDepth > 0.08) {
+        issues.push({kind:"boundary", ids:[i], depth:boundaryDepth});
+        maxDepth = Math.max(maxDepth, boundaryDepth);
+      } else {
+        minClear = Math.min(minClear, a.x, a.y, 100 - a.x - a.w, 60 - a.y - a.h);
+      }
+
+      for (j = 0; j < dividers.length; j++) {
+        var obstacleHit = overlaps(a, dividers[j]);
+        if (obstacleHit.hit) {
+          issues.push({kind:"divider", ids:[i], divider:j, depth:obstacleHit.depth});
+          maxDepth = Math.max(maxDepth, obstacleHit.depth);
+        } else {
+          minClear = Math.min(minClear, gapBetween(a, dividers[j]));
+        }
+      }
+    }
+  }
+
+  for (i = 0; i < objects.length; i++) {
+    partsA = transformedParts(objects[i]);
+    for (j = i + 1; j < objects.length; j++) {
+      partsB = transformedParts(objects[j]);
+      for (p = 0; p < partsA.length; p++) {
+        for (q = 0; q < partsB.length; q++) {
+          var itemHit = overlaps(partsA[p], partsB[q]);
+          if (itemHit.hit) {
+            issues.push({kind:"object", ids:[i,j], depth:itemHit.depth});
+            maxDepth = Math.max(maxDepth, itemHit.depth);
+          } else {
+            minClear = Math.min(minClear, gapBetween(partsA[p], partsB[q]));
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    valid:issues.length === 0,
+    issues:issues,
+    maxDepth:maxDepth,
+    near:issues.length === 0 ? minClear < 1.35 : maxDepth < 1.65
+  };
+}
+
+function makeIssueMessage(result) {
+  if (!result.issues.length) {
+    return "That should fit.";
+  }
+  var issue = result.issues[0];
+  if (issue.kind === "object") {
+    return "Caught: " + objects[issue.ids[0]].name + " is crossing " + objects[issue.ids[1]].name + ".";
+  }
+  if (issue.kind === "divider") {
+    return "Caught: " + objects[issue.ids[0]].name + " is hitting a divider.";
+  }
+  return "Caught: " + objects[issue.ids[0]].name + " sticks past the drawer edge.";
+}
+
+function attemptClose() {
+  if (mode !== "play") {
+    return;
+  }
+
+  ensureAudio();
+  attempts += 1;
+  updateHUD();
+
+  var result = evaluateDrawer();
+  closeResult = result;
+  closeStarted = performance.now();
+  closeProgress = 0;
+  mode = "testing";
+  handleSelected = true;
+
+  if (result.near) {
+    statusText = result.valid ? "Ooh—tight…" : "That edge is scraping…";
+    statusKind = "near";
+    playScrape();
+  } else {
+    statusText = "Testing the fit…";
+    statusKind = "normal";
+  }
+
+  announce(statusText);
+}
+
+function finishBlocked(now) {
+  mode = "play";
+  closeProgress = 0;
+  feedbackType = "blocked";
+  feedbackStarted = now;
+  issueIds = {};
+  issueDividers = {};
+
+  for (var i = 0; i < closeResult.issues.length; i++) {
+    var issue = closeResult.issues[i];
+    for (var j = 0; j < issue.ids.length; j++) {
+      issueIds[issue.ids[j]] = true;
+    }
+    if (typeof issue.divider === "number") {
+      issueDividers[issue.divider] = true;
+    }
+  }
+
+  statusText = makeIssueMessage(closeResult);
+  statusKind = "bad";
+  playClack();
+  updateHUD();
+  announce("Blocked. " + statusText + " The clean-close bonus is lost, but you can keep fixing it.");
+}
+
+function finishSuccess(now) {
+  mode = "complete";
+  closeProgress = 1;
+  feedbackType = "success";
+  feedbackStarted = now;
+  issueIds = {};
+  issueDividers = {};
+
+  var levelBonus = 500 + Math.min(400, (roundNumber - 1) * 35);
+  var moveBonus = Math.max(0, 300 - moves * 18);
+  var neatBonus = 150;
+  var firstBonus = attempts === 1 ? 300 : 0;
+  var earned = levelBonus + moveBonus + neatBonus + firstBonus;
+
+  score += earned;
+  scoreToast = {
+    total:earned,
+    base:levelBonus,
+    moves:moveBonus,
+    neat:neatBonus,
+    first:firstBonus
+  };
+  statusText = closeResult.near ? "SCRAPE… THUNK!" : "CLEAN THUNK!";
+  statusKind = "good";
+  completeAt = now + 1850;
+  playThunk();
+  scoreStat.classList.remove("pop");
+  void scoreStat.offsetWidth;
+  scoreStat.classList.add("pop");
+  updateHUD();
+  announce(statusText + " " + earned + " points.");
+}
+
+function clearCaughtFeedback() {
+  issueIds = {};
+  issueDividers = {};
+  feedbackType = "";
+  statusText = LEVELS[levelIndex % LEVELS.length].name;
+  statusKind = "normal";
+}
+
+function rotateObject(index) {
+  if (mode !== "play" || index < 0 || index >= objects.length) {
+    return;
+  }
+  clearCaughtFeedback();
+  objects[index].rot = (objects[index].rot + 1) % 4;
+  objects[index].pulse = performance.now();
+  moves += 1;
+  updateHUD();
+  playTick(420);
+}
+
+function selectCycle(direction) {
+  var total = objects.length + 1;
+  var current = handleSelected ? objects.length : selectedIndex;
+  if (current < 0) {
+    current = direction > 0 ? -1 : 0;
+  }
+  current = (current + direction + total) % total;
+
+  if (current === objects.length) {
+    selectedIndex = -1;
+    handleSelected = true;
+    statusText = "Handle selected — press Enter to close.";
+  } else {
+    selectedIndex = current;
+    handleSelected = false;
+    statusText = objects[current].name + " selected — arrows move, Space rotates.";
+  }
+  statusKind = "normal";
+  announce(statusText);
+}
+
+function pointInObject(item, wx, wy) {
+  var parts = transformedParts(item);
+  for (var i = 0; i < parts.length; i++) {
+    if (wx >= parts[i].x && wx <= parts[i].x + parts[i].w &&
+        wy >= parts[i].y && wy <= parts[i].y + parts[i].h) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function pointInRect(x, y, r) {
+  return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+
+function getPointerPosition(event) {
+  var r = canvas.getBoundingClientRect();
+  return {x:event.clientX - r.left, y:event.clientY - r.top};
+}
+
+canvas.addEventListener("pointerdown", function (event) {
+  if (mode !== "play") {
+    return;
+  }
+  event.preventDefault();
+  canvas.focus();
+  ensureAudio();
+
+  var pos = getPointerPosition(event);
+  pointer = {
+    id:event.pointerId,
+    startX:pos.x,
+    startY:pos.y,
+    lastX:pos.x,
+    lastY:pos.y,
+    kind:"",
+    index:-1,
+    moved:false,
+    oldX:0,
+    oldY:0,
+    offsetX:0,
+    offsetY:0
+  };
+
+  if (pointInRect(pos.x, pos.y, layout.handle)) {
+    pointer.kind = "handle";
+    handleSelected = true;
+    selectedIndex = -1;
+    statusText = "Swipe up to test the drawer.";
+    statusKind = "normal";
+  } else {
+    var world = screenToWorld(pos.x, pos.y);
+    for (var i = objects.length - 1; i >= 0; i--) {
+      if (pointInObject(objects[i], world.x, world.y)) {
+        pointer.kind = "object";
+        pointer.index = i;
+        pointer.oldX = objects[i].x;
+        pointer.oldY = objects[i].y;
+        pointer.offsetX = world.x - objects[i].x;
+        pointer.offsetY = world.y - objects[i].y;
+        selectedIndex = i;
+        handleSelected = false;
+        statusText = objects[i].name + ": drag to move, tap to rotate.";
+        statusKind = "normal";
+        break;
+      }
+    }
+  }
+
+  try {
+    canvas.setPointerCapture(event.pointerId);
+  } catch (ignore) {}
+});
+
+canvas.addEventListener("pointermove", function (event) {
+  if (!pointer || pointer.id !== event.pointerId || mode !== "play") {
+    return;
+  }
+  event.preventDefault();
+
+  var pos = getPointerPosition(event);
+  pointer.lastX = pos.x;
+  pointer.lastY = pos.y;
+  var dist = Math.hypot(pos.x - pointer.startX, pos.y - pointer.startY);
+
+  if (dist > 6) {
+    pointer.moved = true;
+  }
+
+  if (pointer.kind === "object" && pointer.moved) {
+    clearCaughtFeedback();
+    var world = screenToWorld(pos.x, pos.y);
+    var item = objects[pointer.index];
+    item.x = Math.max(-8, Math.min(108, world.x - pointer.offsetX));
+    item.y = Math.max(-7, Math.min(67, world.y - pointer.offsetY));
+  } else if (pointer.kind === "handle") {
+    handlePull = Math.max(0, Math.min(55, pointer.startY - pos.y));
+  }
+});
+
+canvas.addEventListener("pointerup", function (event) {
+  if (!pointer || pointer.id !== event.pointerId) {
+    return;
+  }
+  event.preventDefault();
+
+  var active = pointer;
+  pointer = null;
+
+  try {
+    canvas.releasePointerCapture(event.pointerId);
+  } catch (ignore) {}
+
+  if (mode !== "play") {
+    handlePull = 0;
+    return;
+  }
+
+  if (active.kind === "object") {
+    if (active.moved) {
+      var item = objects[active.index];
+      if (Math.abs(item.x - active.oldX) > 0.05 || Math.abs(item.y - active.oldY) > 0.05) {
+        moves += 1;
+        updateHUD();
+        playTick(230);
+      }
+    } else {
+      rotateObject(active.index);
+    }
+  } else if (active.kind === "handle") {
+    var swipe = active.startY - active.lastY;
+    handlePull = 0;
+    if (swipe > Math.max(22, layout.handle.h * 0.7)) {
+      attemptClose();
+    } else {
+      statusText = "Give the handle a firm swipe upward.";
+      statusKind = "normal";
+      playTick(150);
+    }
+  }
+});
+
+canvas.addEventListener("pointercancel", function () {
+  pointer = null;
+  handlePull = 0;
+});
+
+canvas.addEventListener("focus", function () {
+  if (selectedIndex < 0 && !handleSelected && mode === "play") {
+    selectedIndex = 0;
+    statusText = objects[0].name + " selected — arrows move, Space rotates.";
+  }
+});
+
+canvas.addEventListener("keydown", function (event) {
+  if (event.key === "Tab") {
+    event.preventDefault();
+    if (mode === "play") {
+      selectCycle(event.shiftKey ? -1 : 1);
+    }
+    return;
+  }
+
+  if (mode !== "play") {
+    event.preventDefault();
+    return;
+  }
+
+  ensureAudio();
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+    attemptClose();
+    return;
+  }
+
+  if (event.key === " " || event.code === "Space") {
+    event.preventDefault();
+    if (selectedIndex >= 0) {
+      rotateObject(selectedIndex);
+    } else {
+      statusText = "Select an item with Tab before rotating.";
+    }
+    return;
+  }
+
+  if (event.key === "ArrowUp" || event.key === "ArrowDown" ||
+      event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    event.preventDefault();
+
+    if (handleSelected) {
+      if (event.key === "ArrowUp") {
+        attemptClose();
+      }
+      return;
+    }
+
+    if (selectedIndex < 0) {
+      selectedIndex = 0;
+    }
+
+    clearCaughtFeedback();
+    var step = event.shiftKey ? 2.5 : 1;
+    if (event.key === "ArrowLeft") {
+      objects[selectedIndex].x -= step;
+    } else if (event.key === "ArrowRight") {
+      objects[selectedIndex].x += step;
+    } else if (event.key === "ArrowUp") {
+      objects[selectedIndex].y -= step;
+    } else if (event.key === "ArrowDown") {
+      objects[selectedIndex].y += step;
+    }
+
+    objects[selectedIndex].x = Math.max(-8, Math.min(108, objects[selectedIndex].x));
+    objects[selectedIndex].y = Math.max(-7, Math.min(67, objects[selectedIndex].y));
+    moves += 1;
+    updateHUD();
+    playTick(190);
+  }
+});
+
+function ensureAudio() {
+  if (!audioContext) {
+    var AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtor) {
+      try {
+        audioContext = new AudioCtor();
+      } catch (ignore) {
+        audioContext = null;
+      }
+    }
+  }
+  if (audioContext && audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+}
+
+function playTick(frequency) {
+  if (!audioContext) {
+    return;
+  }
+  var now = audioContext.currentTime;
+  var oscillator = audioContext.createOscillator();
+  var gain = audioContext.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(frequency, now);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(80, frequency * 0.75), now + 0.045);
+  gain.gain.setValueAtTime(0.035, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.055);
+}
+
+function playNoise(duration, volume, filterFrequency) {
+  if (!audioContext) {
+    return;
+  }
+  var length = Math.max(1, Math.floor(audioContext.sampleRate * duration));
+  var buffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
+  var data = buffer.getChannelData(0);
+  for (var i = 0; i < length; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  }
+  var source = audioContext.createBufferSource();
+  var filter = audioContext.createBiquadFilter();
+  var gain = audioContext.createGain();
+  source.buffer = buffer;
+  filter.type = "bandpass";
+  filter.frequency.value = filterFrequency;
+  filter.Q.value = 0.8;
+  gain.gain.value = volume;
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioContext.destination);
+  source.start();
+}
+
+function playScrape() {
+  playNoise(0.34, 0.085, 2100);
+  playTick(125);
+}
+
+function playClack() {
+  if (!audioContext) {
+    return;
+  }
+  playNoise(0.11, 0.18, 980);
+  var now = audioContext.currentTime;
+  var osc = audioContext.createOscillator();
+  var gain = audioContext.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(150, now);
+  osc.frequency.exponentialRampToValueAtTime(58, now + 0.13);
+  gain.gain.setValueAtTime(0.13, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(now);
+  osc.stop(now + 0.15);
+}
+
+function playThunk() {
+  if (!audioContext) {
+    return;
+  }
+  playNoise(0.14, 0.2, 420);
+  var now = audioContext.currentTime;
+  var osc = audioContext.createOscillator();
+  var gain = audioContext.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(105, now);
+  osc.frequency.exponentialRampToValueAtTime(43, now + 0.22);
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.start(now);
+  osc.stop(now + 0.25);
+}
+
+function roundedRectPath(x, y, w, h, radius) {
+  var r = Math.max(0, Math.min(radius, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawBackground() {
+  var gradient = ctx.createRadialGradient(cw * 0.5, 0, 20, cw * 0.5, ch * 0.4, Math.max(cw, ch));
+  gradient.addColorStop(0, "#31251c");
+  gradient.addColorStop(1, "#15110e");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, cw, ch);
+
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = "#e7b873";
+  ctx.lineWidth = 1;
+  for (var i = 0; i < 10; i++) {
+    var yy = (i + 1) * ch / 11;
+    ctx.beginPath();
+    ctx.moveTo(0, yy);
+    ctx.bezierCurveTo(cw * 0.25, yy + Math.sin(i) * 8, cw * 0.7, yy - 5, cw, yy + 3);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawDrawerBase(shake) {
+  ctx.save();
+  ctx.translate(shake, 0);
+
+  ctx.shadowColor = "rgba(0,0,0,.55)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 12;
+  roundedRectPath(layout.x - 10, layout.y - 10, layout.w + 20, layout.h + 20, 18);
+  var wood = ctx.createLinearGradient(layout.x, layout.y, layout.x, layout.y + layout.h);
+  wood.addColorStop(0, "#9a6039");
+  wood.addColorStop(0.5, "#754329");
+  wood.addColorStop(1, "#5b321f");
+  ctx.fillStyle = wood;
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+
+  roundedRectPath(layout.x, layout.y, layout.w, layout.h, 10);
+  var inside = ctx.createLinearGradient(layout.x, layout.y, layout.x, layout.y + layout.h);
+  inside.addColorStop(0, "#362b24");
+  inside.addColorStop(1, "#241d18");
+  ctx.fillStyle = inside;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,226,181,.2)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.save();
+  roundedRectPath(layout.x, layout.y, layout.w, layout.h, 10);
+  ctx.clip();
+  ctx.globalAlpha = 0.075;
+  ctx.strokeStyle = "#f5d29a";
+  ctx.lineWidth = 1;
+  for (var i = 0; i < 13; i++) {
+    var yy = layout.y + (i + 0.6) * layout.h / 13;
+    ctx.beginPath();
+    ctx.moveTo(layout.x, yy);
+    ctx.bezierCurveTo(
+      layout.x + layout.w * 0.25, yy + Math.sin(i * 1.7) * 5,
+      layout.x + layout.w * 0.7, yy - Math.cos(i) * 4,
+      layout.x + layout.w, yy + 2
+    );
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  for (var d = 0; d < dividers.length; d++) {
+    drawDivider(dividers[d], !!issueDividers[d]);
+  }
+
+  ctx.restore();
+}
+
+function drawDivider(divider, caught) {
+  var x = worldX(divider.x);
+  var y = worldY(divider.y);
+  var w = divider.w * layout.sx;
+  var h = divider.h * layout.sy;
+
+  ctx.save();
+  if (caught) {
+    ctx.shadowColor = "#ff4d43";
+    ctx.shadowBlur = 18;
+  }
+  roundedRectPath(x, y, w, h, 3);
+  var g = ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, caught ? "#e64e43" : "#9b6740");
+  g.addColorStop(1, caught ? "#9f2e29" : "#633a24");
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = caught ? "#ffd0c9" : "rgba(255,225,180,.24)";
+  ctx.lineWidth = caught ? 2 : 1;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function lighten(hex, amount) {
+  var n = parseInt(hex.slice(1), 16);
+  var r = Math.min(255, ((n >> 16) & 255) + amount);
+  var g = Math.min(255, ((n >> 8) & 255) + amount);
+  var b = Math.min(255, (n & 255) + amount);
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+
+function drawObject(item, index, now, shake) {
+  var parts = transformedParts(item);
+  var caught = !!issueIds[index];
+  var jump = 0;
+
+  if (caught && feedbackType === "blocked") {
+    var elapsed = now - feedbackStarted;
+    if (elapsed < 650) {
+      jump = -Math.abs(Math.sin(elapsed / 42)) * (1 - elapsed / 650) * 12;
+    }
+  }
+
+  var pulseScale = 1;
+  if (item.pulse && now - item.pulse < 230) {
+    pulseScale = 1 + Math.sin((now - item.pulse) / 230 * Math.PI) * 0.08;
+  }
+
+  ctx.save();
+  ctx.translate(shake, jump);
+  ctx.translate(worldX(item.x), worldY(item.y));
+  ctx.scale(pulseScale, pulseScale);
+  ctx.translate(-worldX(item.x), -worldY(item.y));
+
+  if (caught) {
+    ctx.shadowColor = "#ff453a";
+    ctx.shadowBlur = 22;
+  } else {
+    ctx.shadowColor = "rgba(0,0,0,.48)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+  }
+
+  for (var p = 0; p < parts.length; p++) {
+    var box = parts[p];
+    var x = worldX(box.x);
+    var y = worldY(box.y);
+    var w = box.w * layout.sx;
+    var h = box.h * layout.sy;
+    roundedRectPath(x, y, w, h, Math.min(7, w * 0.18, h * 0.28));
+    var g = ctx.createLinearGradient(x, y, x + w, y + h);
+    g.addColorStop(0, lighten(item.color, 24));
+    g.addColorStop(1, item.color);
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  ctx.shadowColor = "transparent";
+  ctx.shadowOffsetY = 0;
+
+  for (p = 0; p < parts.length; p++) {
+    box = parts[p];
+    x = worldX(box.x);
+    y = worldY(box.y);
+    w = box.w * layout.sx;
+    h = box.h * layout.sy;
+    roundedRectPath(x, y, w, h, Math.min(7, w * 0.18, h * 0.28));
+    ctx.strokeStyle = caught ? "#ffd3cc" : "rgba(255,255,255,.3)";
+    ctx.lineWidth = caught ? 2.5 : 1.2;
+    ctx.stroke();
+  }
+
+  var cx = worldX(item.x);
+  var cy = worldY(item.y);
+  var bounds = objectBounds(item);
+  var visualW = bounds.w * layout.sx;
+  var visualH = bounds.h * layout.sy;
+  var fontSize = Math.max(8, Math.min(14, Math.min(visualW / Math.max(4, item.name.length * 0.6), visualH * 0.34)));
+
+  if (visualW > 33 && visualH > 17) {
+    ctx.fillStyle = "rgba(20,16,12,.73)";
+    ctx.font = "800 " + fontSize + "px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(item.name.toUpperCase(), cx, cy, Math.max(25, visualW - 8));
+  }
+
+  var angle = item.rot * Math.PI / 2;
+  var lineLength = Math.max(5, Math.min(12, visualW * 0.16));
+  ctx.strokeStyle = "rgba(255,255,255,.58)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - Math.cos(angle) * lineLength, cy - Math.sin(angle) * lineLength);
+  ctx.lineTo(cx + Math.cos(angle) * lineLength, cy + Math.sin(angle) * lineLength);
+  ctx.stroke();
+
+  if (selectedIndex === index && mode === "play") {
+    var bx = worldX(bounds.x) - 5;
+    var by = worldY(bounds.y) - 5;
+    var bw = bounds.w * layout.sx + 10;
+    var bh = bounds.h * layout.sy + 10;
+    ctx.setLineDash([6,4]);
+    ctx.strokeStyle = "#9be9ff";
+    ctx.lineWidth = 2;
+    roundedRectPath(bx, by, bw, bh, 9);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.restore();
+}
+
+function drawCover(shake) {
+  if (closeProgress <= 0) {
+    return;
+  }
+
+  var p = Math.max(0, Math.min(1, closeProgress));
+  var coverH = layout.h * p;
+  var y = layout.y + layout.h - coverH;
+
+  ctx.save();
+  ctx.translate(shake, 0);
+  ctx.shadowColor = "rgba(0,0,0,.65)";
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = -5;
+  roundedRectPath(layout.x - 4, y, layout.w + 8, coverH + 7, 10);
+  var cover = ctx.createLinearGradient(layout.x, y, layout.x, y + coverH);
+  cover.addColorStop(0, "#9a5c35");
+  cover.addColorStop(0.45, "#744027");
+  cover.addColorStop(1, "#4c291b");
+  ctx.fillStyle = cover;
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+
+  ctx.globalAlpha = 0.12;
+  ctx.strokeStyle = "#ffd7a2";
+  for (var i = 0; i < 8; i++) {
+    var gy = y + coverH * (i + 1) / 9;
+    ctx.beginPath();
+    ctx.moveTo(layout.x, gy);
+    ctx.bezierCurveTo(layout.x + layout.w * 0.3, gy + 4, layout.x + layout.w * 0.7, gy - 3, layout.x + layout.w, gy + 1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawHandle() {
+  var normal = layout.handle;
+  var closeLift = closeProgress * (layout.h * 0.64 + 18);
+  var y = normal.y - handlePull - closeLift;
+  var x = normal.x;
+  var w = normal.w;
+  var h = normal.h;
+
+  ctx.save();
+  if (handleSelected) {
+    ctx.shadowColor = mode === "testing" ? "#ffb84d" : "#74dcff";
+    ctx.shadowBlur = 16;
+  } else {
+    ctx.shadowColor = "rgba(0,0,0,.6)";
+    ctx.shadowBlur = 8;
+  }
+  roundedRectPath(x, y, w, h, h / 2);
+  var g = ctx.createLinearGradient(x, y, x, y + h);
+  g.addColorStop(0, "#d5d1c8");
+  g.addColorStop(0.45, "#7f7c76");
+  g.addColorStop(1, "#3d3b38");
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.strokeStyle = "rgba(255,255,255,.5)";
+  ctx.lineWidth = 1.3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#241f1b";
+  ctx.font = "800 " + Math.max(9, Math.min(12, h * 0.38)) + "px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(mode === "testing" ? "CLOSING…" : "SWIPE ↑", x + w / 2, y + h / 2 + 0.5);
+  ctx.restore();
+
+  if (mode === "play" && closeProgress === 0) {
+    ctx.fillStyle = handleSelected ? "#a7eaff" : "rgba(255,244,224,.62)";
+    ctx.font = "700 " + Math.max(9, Math.min(11, cw * 0.014)) + "px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(handleSelected ? "ENTER ALSO CLOSES" : "TEST THE FIT", x + w / 2, normal.y + h + 7);
+  }
+}
+
+function drawStatus(now) {
+  var color = "#ead5b6";
+  var background = "rgba(21,17,14,.82)";
+  if (statusKind === "bad") {
+    color = "#ffd3cd";
+    background = "rgba(112,30,25,.92)";
+  } else if (statusKind === "good") {
+    color = "#d9ffe0";
+    background = "rgba(21,104,49,.92)";
+  } else if (statusKind === "near") {
+    color = "#ffe1af";
+    background = "rgba(135,72,17,.9)";
+  }
+
+  var fontSize = Math.max(11, Math.min(16, cw * 0.022));
+  ctx.font = "800 " + fontSize + "px system-ui, sans-serif";
+  var maxW = Math.min(cw - 24, layout.w * 0.82);
+  var measured = Math.min(maxW, ctx.measureText(statusText).width + 28);
+  var x = cw / 2 - measured / 2;
+  var y = Math.max(5, layout.y + 8);
+  var h = fontSize + 15;
+
+  ctx.save();
+  roundedRectPath(x, y, measured, h, h / 2);
+  ctx.fillStyle = background;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.16)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(statusText, cw / 2, y + h / 2, measured - 18);
+  ctx.restore();
+
+  if (feedbackType === "success") {
+    var elapsed = now - feedbackStarted;
+    var alpha = Math.max(0, 1 - elapsed / 650) * 0.32;
+    ctx.fillStyle = "rgba(80,255,121," + alpha + ")";
+    ctx.fillRect(0, 0, cw, ch);
+  } else if (mode === "testing" && closeResult && closeResult.near) {
+    var pulse = 0.45 + Math.sin(now / 60) * 0.18;
+    ctx.strokeStyle = "rgba(255,154,53," + pulse + ")";
+    ctx.lineWidth = 7;
+    roundedRectPath(layout.x - 7, layout.y - 7, layout.w + 14, layout.h + 14, 14);
+    ctx.stroke();
+  }
+
+  if (scoreToast && mode === "complete") {
+    drawScoreToast();
+  }
+}
+
+function drawScoreToast() {
+  var w = Math.min(320, cw - 28);
+  var h = scoreToast.first > 0 ? 145 : 122;
+  var x = cw / 2 - w / 2;
+  var y = layout.y + layout.h / 2 - h / 2;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.6)";
+  ctx.shadowBlur = 22;
+  roundedRectPath(x, y, w, h, 16);
+  ctx.fillStyle = "rgba(18,26,19,.94)";
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.strokeStyle = "#6be589";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#8cf1a1";
+  ctx.font = "900 25px system-ui, sans-serif";
+  ctx.fillText("+" + scoreToast.total, cw / 2, y + 34);
+
+  ctx.font = "700 12px system-ui, sans-serif";
+  ctx.fillStyle = "#eee5d6";
+  ctx.fillText("Drawer " + scoreToast.base + "   •   Few moves +" + scoreToast.moves, cw / 2, y + 62);
+  ctx.fillText("Neat pack +" + scoreToast.neat, cw / 2, y + 84);
+
+  if (scoreToast.first > 0) {
+    ctx.fillStyle = "#ffd06d";
+    ctx.fillText("FIRST TRY +" + scoreToast.first, cw / 2, y + 107);
+    ctx.fillStyle = "#a9b8aa";
+    ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("Next drawer coming up…", cw / 2, y + 130);
+  } else {
+    ctx.fillStyle = "#a9b8aa";
+    ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("Next drawer coming up…", cw / 2, y + 106);
+  }
+  ctx.restore();
+}
+
+function update(now, dt) {
+  if (shownScore < score) {
+    var difference = score - shownScore;
+    shownScore += Math.max(1, Math.ceil(difference * Math.min(0.22, dt / 220)));
+    if (shownScore > score) {
+      shownScore = score;
+    }
+    scoreEl.textContent = String(shownScore);
+  }
+
+  if (mode === "testing" && closeResult) {
+    var elapsed = now - closeStarted;
+
+    if (closeResult.near) {
+      if (elapsed < 390) {
+        closeProgress = 0.42 * Math.min(1, elapsed / 390);
+      } else if (closeResult.valid) {
+        closeProgress = 0.42 + 0.58 * Math.min(1, (elapsed - 390) / 270);
+      } else {
+        closeProgress = 0.42 + Math.sin(elapsed / 35) * 0.012;
+      }
+
+      if (elapsed >= 660) {
+        if (closeResult.valid) {
+          finishSuccess(now);
+        } else {
+          finishBlocked(now);
+        }
+      }
+    } else {
+      var target = closeResult.valid ? 1 : 0.48;
+      closeProgress = target * Math.min(1, elapsed / 390);
+      if (elapsed >= 430) {
+        if (closeResult.valid) {
+          finishSuccess(now);
+        } else {
+          finishBlocked(now);
+        }
+      }
+    }
+  }
+
+  if (mode === "complete" && now >= completeAt) {
+    roundNumber += 1;
+    levelIndex = (levelIndex + 1) % LEVELS.length;
+    setupRound();
+  }
+}
+
+function render(now) {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cw, ch);
+  drawBackground();
+
+  var shake = 0;
+  if (feedbackType === "blocked") {
+    var elapsed = now - feedbackStarted;
+    if (elapsed < 330) {
+      shake = Math.sin(elapsed / 19) * (1 - elapsed / 330) * 10;
+    }
+  }
+
+  drawDrawerBase(shake);
+
+  for (var i = 0; i < objects.length; i++) {
+    drawObject(objects[i], i, now, shake);
+  }
+
+  drawCover(shake);
+  drawHandle();
+  drawStatus(now);
+}
+
+function frame(now) {
+  var dt = Math.min(50, now - lastTime);
+  lastTime = now;
+  update(now, dt);
+  render(now);
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener("resize", resize);
+resize();
+setupRound();
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>

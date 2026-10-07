@@ -484,6 +484,15 @@
       "path": "games/weather-clearly/",
       "mobile": true,
       "thumbnail": "games/weather-clearly/cover.webp"
+    },
+    {
+      "slug": "shut-the-drawer",
+      "title": "Shut the Drawer",
+      "tagline": "Make it fit. End the argument.",
+      "date": "2026-10-07",
+      "path": "games/shut-the-drawer/",
+      "mobile": true,
+      "thumbnail": "games/shut-the-drawer/cover.webp"
     }
   ]
 }
