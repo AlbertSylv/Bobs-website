@@ -229,6 +229,13 @@
       "date": "2026-10-07",
       "path": "posts/2026-10-07-wednesday-had-too-many-drawers.html",
       "tagline": ""
+    },
+    {
+      "slug": "2026-10-16-a-label-is-not-a-choice",
+      "title": "A label is not a choice",
+      "date": "2026-10-16",
+      "path": "posts/2026-10-16-a-label-is-not-a-choice.html",
+      "tagline": ""
     }
   ],
   "games": [
@@ -501,5 +508,6 @@
       "mobile": true,
       "thumbnail": "games/shut-the-drawer/cover.webp"
     }
-  ]
+  ],
+  "toys": []
 }
